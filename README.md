@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 校招雷达
 
-## Getting Started
+面向 2027 届秋招与全年级实习的公开招聘信息聚合和简历匹配 MVP。
 
-First, run the development server:
+项目在没有云服务密钥时可以完整运行演示模式；配置 Supabase 和 OpenAI 后，会自动启用邮箱验证码、私有临时简历存储、结构化解析、用户画像、收藏、真实数据同步和公开网页发现。
+
+## 技术栈
+
+- Next.js 16.2.11 Active LTS、React 19、TypeScript、Tailwind CSS v4
+- Supabase PostgreSQL、Auth、Storage、RLS、pgvector、pg_cron、pg_net
+- OpenAI Responses API、`gpt-5.6-luna`、`text-embedding-3-small`
+- Vitest、Playwright
+
+## 本地启动
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000)。空环境变量会启用演示模式。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 启用真实后端
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. 创建 Supabase 项目，使用 Supabase CLI 关联项目。
+2. 执行 `supabase db push` 应用 `supabase/migrations`。
+3. 在 Supabase 邮件模板中将 OTP 显示为六位验证码。
+4. 在 `.env.local` 填写：
 
-## Learn More
+```dotenv
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+OPENAI_API_KEY=
+CRON_SECRET=
+```
 
-To learn more about Next.js, take a look at the following resources:
+`SUPABASE_SERVICE_ROLE_KEY`、`OPENAI_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 数据同步
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+先在无数据库模式验证远端格式：
 
-## Deploy on Vercel
+```bash
+npm run ingest:xixicc
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+配置 Supabase 后，同一命令会将岗位幂等写入 `jobs`。线上定时入口：
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `GET /api/cron/ingest`：每 6 小时同步 `xixicc2027`
+- `GET /api/cron/discover`：每天搜索新的企业官方招聘页面，候选只进入审核队列
+
+两个入口都要求 `Authorization: Bearer $CRON_SECRET`。Vercel Cron 已在 `vercel.json` 配置；如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
+
+## 简历隐私
+
+- 仅接受 PDF、DOCX，最大 5 MB。
+- 真实模式下文件先进入按用户隔离的私有 `resume-temp` 桶。
+- 模型请求设置 `store: false`，附件被视为不可信数据，不允许改变系统指令。
+- 原文件在成功或失败路径的 `finally` 中删除。
+- 结构化画像不包含姓名、电话、邮箱、照片、性别、年龄、民族和详细地址。
+
+## 质量检查
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+npm run test:e2e
+```
+
+Playwright 首次运行前可能需要：
+
+```bash
+npx playwright install chromium
+```
+
+## 部署
+
+1. 将仓库导入 Vercel。
+2. 在 Vercel 添加 `.env.example` 中的变量。
+3. 将 `NEXT_PUBLIC_SITE_URL` 改为正式域名。
+4. 在 Supabase Auth 添加正式域名和 `/auth/callback` 回调地址。
+5. 应用数据库迁移并运行一次 `/api/cron/ingest`。
+6. 为管理员用户设置 `user_metadata.role = admin`。
+
+岗位正文、截止日期和申请资格可能变化，产品始终回链原始招聘页面，不镜像完整内容。

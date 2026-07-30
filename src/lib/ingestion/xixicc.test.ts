@@ -1,0 +1,53 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fetchXixiccJobs } from "@/lib/ingestion/xixicc";
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("xixicc2027 adapter", () => {
+  it("expands position arrays and generates stable normalized jobs", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              company: "示例科技",
+              cohort: "2027届",
+              batch: "实习",
+              program: null,
+              industry: "互联网",
+              positions: ["后端实习生", "产品实习生"],
+              locations: ["深圳"],
+              apply_url: "https://example.com/apply?utm_source=test",
+              deadline: null,
+              first_seen: "2026-07-30",
+              last_seen: "2026-07-30",
+              confirmed_by: 2,
+            },
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    );
+
+    const jobs = await fetchXixiccJobs();
+    expect(jobs).toHaveLength(2);
+    expect(jobs[0]).toMatchObject({
+      company: "示例科技",
+      type: "实习",
+      sourceConfidence: "已核验",
+      applyUrl: "https://example.com/apply",
+    });
+    expect(jobs[0].fingerprint).not.toBe(jobs[1].fingerprint);
+  });
+
+  it("rejects invalid upstream data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify([{ positions: [] }]), { status: 200 }),
+      ),
+    );
+    await expect(fetchXixiccJobs()).rejects.toThrow();
+  });
+});
