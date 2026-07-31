@@ -87,6 +87,23 @@ export async function fetchXixiccJobs() {
   });
 }
 
+/**
+ * The upstream community feed can occasionally contain the same position more
+ * than once. PostgreSQL cannot upsert two rows with the same conflict key in a
+ * single statement, so collapse those records before batching writes.
+ */
+export function dedupeJobsByFingerprint(jobs: Job[]) {
+  return Array.from(
+    jobs.reduce((unique, job) => {
+      const existing = unique.get(job.fingerprint);
+      if (!existing || job.lastSeen > existing.lastSeen) {
+        unique.set(job.fingerprint, job);
+      }
+      return unique;
+    }, new Map<string, Job>()),
+  ).map(([, job]) => job);
+}
+
 export function toJobRow(job: Job) {
   return {
     id: job.id,

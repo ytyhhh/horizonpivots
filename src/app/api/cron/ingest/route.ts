@@ -1,5 +1,9 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
-import { fetchXixiccJobs, toJobRow } from "@/lib/ingestion/xixicc";
+import {
+  dedupeJobsByFingerprint,
+  fetchXixiccJobs,
+  toJobRow,
+} from "@/lib/ingestion/xixicc";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function authorized(request: Request) {
@@ -27,7 +31,7 @@ async function runIngestion() {
 
   try {
     const jobs = await fetchXixiccJobs();
-    const rows = jobs.map(toJobRow);
+    const rows = dedupeJobsByFingerprint(jobs).map(toJobRow);
     let updated = 0;
     for (let index = 0; index < rows.length; index += 100) {
       const { data, error } = await admin
@@ -56,7 +60,12 @@ async function runIngestion() {
       .eq("id", runId);
     return { runId, fetched: jobs.length, updated };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown";
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error && "message" in error
+          ? String(error.message)
+          : "unknown";
     await admin
       .from("sources")
       .update({ last_run_at: new Date().toISOString(), health: "degraded" })

@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchXixiccJobs } from "@/lib/ingestion/xixicc";
+import {
+  dedupeJobsByFingerprint,
+  fetchXixiccJobs,
+} from "@/lib/ingestion/xixicc";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -49,5 +52,45 @@ describe("xixicc2027 adapter", () => {
       ),
     );
     await expect(fetchXixiccJobs()).rejects.toThrow();
+  });
+
+  it("collapses duplicate source positions before database batching", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              company: "示例科技",
+              cohort: "2027届",
+              batch: "秋招",
+              industry: "互联网",
+              positions: ["后端开发工程师"],
+              locations: ["深圳"],
+              apply_url: "https://example.com/apply",
+              last_seen: "2026-07-30",
+            },
+            {
+              company: "示例科技",
+              cohort: "2027届",
+              batch: "秋招",
+              industry: "互联网",
+              positions: ["后端开发工程师"],
+              locations: ["深圳"],
+              apply_url: "https://example.com/apply",
+              last_seen: "2026-07-31",
+            },
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    );
+
+    const jobs = await fetchXixiccJobs();
+    const uniqueJobs = dedupeJobsByFingerprint(jobs);
+
+    expect(jobs).toHaveLength(2);
+    expect(uniqueJobs).toHaveLength(1);
+    expect(uniqueJobs[0].lastSeen).toBe("2026-07-31");
   });
 });
