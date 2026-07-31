@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { demoProfile } from "@/data/demo-jobs";
+import { getCurrentUserId } from "@/lib/auth";
 import { extractResumeProfile } from "@/lib/openai";
 import { resumeFileSchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { isConfigured } from "@/lib/utils";
 import type { CandidateProfile } from "@/types";
 
@@ -31,23 +31,20 @@ export async function POST(request: Request) {
     });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase!.auth.getUser();
-  if (!user) return Response.json({ message: "请先登录" }, { status: 401 });
+  const userId = await getCurrentUserId();
+  if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
   if (!process.env.OPENAI_API_KEY) {
     return Response.json({ message: "简历解析服务尚未配置" }, { status: 503 });
   }
 
   const admin = createAdminClient();
   const parseJobId = randomUUID();
-  const storagePath = `${user.id}/${parseJobId}/${safeStorageName(result.data.name)}`;
+  const storagePath = `${userId}/${parseJobId}/${safeStorageName(result.data.name)}`;
   const bytes = Buffer.from(await result.data.arrayBuffer());
 
   await admin.from("resume_parse_jobs").insert({
     id: parseJobId,
-    user_id: user.id,
+    user_id: userId,
     status: "processing",
     storage_path: storagePath,
   });
@@ -63,7 +60,7 @@ export async function POST(request: Request) {
 
     const extracted = await extractResumeProfile(result.data);
     const profile: CandidateProfile = {
-      userId: user.id,
+      userId,
       ...extracted,
       preferredLocations: [],
       preferredIndustries: [],
@@ -75,13 +72,13 @@ export async function POST(request: Request) {
     const { data: current } = await admin
       .from("candidate_profiles")
       .select("version")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
     profile.version = (current?.version ?? 0) + 1;
 
     const { error: profileError } = await admin.from("candidate_profiles").upsert(
       {
-        user_id: user.id,
+        user_id: userId,
         graduation_year: profile.graduationYear,
         education: profile.education,
         major: profile.major,

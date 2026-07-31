@@ -1,9 +1,6 @@
-import type { NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/proxy";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export async function proxy(request: NextRequest) {
-  return updateSession(request);
-}
+export default clerkMiddleware();
 
 export const config = {
   matcher: [

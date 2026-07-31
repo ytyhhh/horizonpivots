@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   _request: Request,
@@ -8,17 +9,13 @@ export async function GET(
   if (parseJobId.startsWith("demo_")) {
     return Response.json({ data: { id: parseJobId, status: "succeeded" } });
   }
-  const supabase = await createClient();
-  if (!supabase) return Response.json({ message: "未配置" }, { status: 503 });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ message: "请先登录" }, { status: 401 });
-  const { data, error } = await supabase
+  const userId = await getCurrentUserId();
+  if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
+  const { data, error } = await createAdminClient()
     .from("resume_parse_jobs")
     .select("id,status,error,created_at,finished_at")
     .eq("id", parseJobId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
   if (error || !data) return Response.json({ message: "任务不存在" }, { status: 404 });
   return Response.json({ data });

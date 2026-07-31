@@ -1,6 +1,6 @@
-import { demoProfile } from "@/data/demo-jobs";
+import { getCurrentUserId } from "@/lib/auth";
 import { candidateProfileSchema } from "@/lib/schemas";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 function mapProfile(data: Record<string, unknown>) {
   return {
@@ -21,16 +21,12 @@ function mapProfile(data: Record<string, unknown>) {
 }
 
 export async function GET() {
-  const supabase = await createClient();
-  if (!supabase) return Response.json({ data: demoProfile, demo: true });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ message: "请先登录" }, { status: 401 });
-  const { data, error } = await supabase
+  const userId = await getCurrentUserId();
+  if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
+  const { data, error } = await createAdminClient()
     .from("candidate_profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
   if (error) return Response.json({ message: error.message }, { status: 500 });
   return Response.json({ data: data ? mapProfile(data) : null });
@@ -45,23 +41,14 @@ export async function PATCH(request: Request) {
       { status: 400 },
     );
   }
-  const supabase = await createClient();
-  if (!supabase) {
-    return Response.json({
-      data: { ...parsed.data, confirmed: true },
-      demo: true,
-    });
-  }
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ message: "请先登录" }, { status: 401 });
+  const userId = await getCurrentUserId();
+  if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
   const profile = parsed.data;
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .from("candidate_profiles")
     .upsert(
       {
-        user_id: user.id,
+        user_id: userId,
         graduation_year: profile.graduationYear,
         education: profile.education,
         major: profile.major,

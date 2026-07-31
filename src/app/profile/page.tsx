@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { ProfileClient } from "@/components/profile-client";
 import { demoProfile } from "@/data/demo-jobs";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { CandidateProfile } from "@/types";
 
 export const metadata: Metadata = {
@@ -10,22 +11,18 @@ export const metadata: Metadata = {
 };
 
 async function loadProfile() {
-  const supabase = await createClient();
-  if (!supabase) return { profile: demoProfile, demoMode: true };
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { profile: demoProfile, demoMode: true };
-  const { data } = await supabase
+  const userId = await getCurrentUserId();
+  if (!userId) return { profile: demoProfile, demoMode: true };
+  const { data } = await createAdminClient()
     .from("candidate_profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
   if (!data) {
     return {
       profile: {
         ...demoProfile,
-        userId: user.id,
+        userId,
         confirmed: false,
       } satisfies CandidateProfile,
       demoMode: false,
@@ -34,7 +31,7 @@ async function loadProfile() {
   return {
     demoMode: false,
     profile: {
-      userId: user.id,
+      userId,
       graduationYear: data.graduation_year,
       education: data.education,
       major: data.major,

@@ -8,7 +8,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth";
 
 const links = [
   { href: "/jobs", label: "岗位库", icon: Briefcase },
@@ -18,8 +18,7 @@ const links = [
 ];
 
 export async function AppHeader() {
-  const supabase = await createClient();
-  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
+  const userId = await getCurrentUserId();
 
   return (
     <>
@@ -40,12 +39,12 @@ export async function AppHeader() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
-              href={user ? "/profile" : "/login"}
+              href={userId ? "/profile" : "/login"}
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-foreground px-3.5 text-sm font-semibold text-background hover:opacity-85"
             >
               <UserCircle size={18} weight="bold" aria-hidden="true" />
               <span className="hidden sm:inline">
-                {user ? "我的账号" : "登录"}
+                {userId ? "我的账号" : "登录"}
               </span>
             </Link>
           </div>

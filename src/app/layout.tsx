@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "geist/font/sans";
 import "geist/font/mono";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
 
@@ -42,17 +43,19 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="flex min-h-[100dvh] flex-col">
-        <a
-          href="#main-content"
-          className="fixed left-3 top-3 -translate-y-24 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white focus:translate-y-0"
-        >
-          跳到主要内容
-        </a>
-        <AppHeader />
-        <main id="main-content" className="flex-1">
-          {children}
-        </main>
-        <AppFooter />
+        <ClerkProvider>
+          <a
+            href="#main-content"
+            className="fixed left-3 top-3 -translate-y-24 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white focus:translate-y-0"
+          >
+            跳到主要内容
+          </a>
+          <AppHeader />
+          <main id="main-content" className="flex-1">
+            {children}
+          </main>
+          <AppFooter />
+        </ClerkProvider>
       </body>
     </html>
   );
