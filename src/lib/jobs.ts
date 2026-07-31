@@ -16,6 +16,12 @@ export interface JobQuery {
   limit?: string | number;
 }
 
+export interface JobPage {
+  data: Job[];
+  nextCursor: string | null;
+  total: number;
+}
+
 export function filterJobs(jobs: Job[], input: JobQuery, now = new Date()) {
   const parsed = jobQuerySchema.parse(input);
   const normalized = parsed.query.toLocaleLowerCase();
@@ -63,6 +69,96 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
     lastSeen: String(row.last_seen),
     status: row.status as Job["status"],
     fingerprint: String(row.fingerprint),
+  };
+}
+
+function encodeCursor(job: Job) {
+  return Buffer.from(JSON.stringify([job.firstSeen, job.id])).toString("base64url");
+}
+
+function decodeCursor(cursor?: string) {
+  if (!cursor) return null;
+  try {
+    const [firstSeen, id] = JSON.parse(
+      Buffer.from(cursor, "base64url").toString("utf8"),
+    );
+    return typeof firstSeen === "string" && typeof id === "string" ? { firstSeen, id } : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeSearchTerm(value: string) {
+  return value.replace(/[,.()%]/g, " ").trim();
+}
+
+export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
+  const parsed = jobQuerySchema.parse(input);
+  const limit = parsed.limit;
+
+  if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const jobs = filterJobs(demoJobs, parsed);
+    const start = parsed.cursor
+      ? Math.max(0, jobs.findIndex((job) => job.id === parsed.cursor) + 1)
+      : 0;
+    const data = jobs.slice(start, start + limit);
+    return {
+      data,
+      nextCursor: start + limit < jobs.length ? data.at(-1)?.id ?? null : null,
+      total: jobs.length,
+    };
+  }
+
+  const admin = createAdminClient();
+  let request = admin
+    .from("jobs")
+    .select("*", { count: "exact" })
+    .in("status", ["active", "stale"])
+    .order("first_seen", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit + 1);
+
+  if (parsed.type) request = request.eq("job_type", parsed.type);
+  if (parsed.industry) request = request.eq("industry", parsed.industry);
+  if (parsed.location) request = request.contains("locations", [parsed.location]);
+  if (parsed.cohort) request = request.eq("cohort", parsed.cohort);
+  if (parsed.confidence) request = request.eq("source_confidence", parsed.confidence);
+  if (parsed.deadlineWithin) {
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + parsed.deadlineWithin);
+    request = request
+      .not("deadline", "is", null)
+      .lte("deadline", deadline.toISOString().slice(0, 10));
+  }
+  const search = safeSearchTerm(parsed.query);
+  const searchExpression = search
+    ? `company.ilike.%${search}%,title.ilike.%${search}%,summary.ilike.%${search}%`
+    : null;
+  const cursor = decodeCursor(parsed.cursor);
+  const cursorExpression = cursor
+    ? `first_seen.lt.${cursor.firstSeen},and(first_seen.eq.${cursor.firstSeen},id.lt.${cursor.id})`
+    : null;
+  if (searchExpression && cursorExpression) {
+    request = request.or(
+      `and(or(${searchExpression}),or(${cursorExpression}))`,
+    );
+  } else if (searchExpression || cursorExpression) {
+    request = request.or(searchExpression ?? cursorExpression!);
+  }
+
+  const { data, error, count } = await request;
+  if (error || !data) {
+    console.error("Unable to load job page:", error?.message);
+    const jobs = filterJobs(demoJobs, parsed);
+    return { data: jobs.slice(0, limit), nextCursor: null, total: jobs.length };
+  }
+  const mapped = data.map(mapDatabaseJob);
+  const hasMore = mapped.length > limit;
+  const page = hasMore ? mapped.slice(0, limit) : mapped;
+  return {
+    data: page,
+    nextCursor: hasMore && page.length ? encodeCursor(page.at(-1)!) : null,
+    total: count ?? page.length,
   };
 }
 

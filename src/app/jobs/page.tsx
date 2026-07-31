@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JobsExplorer } from "@/components/jobs-explorer";
-import { getJobs } from "@/lib/jobs";
+import { getJobsPage } from "@/lib/jobs";
 
 export const metadata: Metadata = {
   title: "岗位库",
@@ -13,8 +13,9 @@ export default async function JobsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const jobs = await getJobs({
+  const initialPage = await getJobsPage({
     industry: typeof params.industry === "string" ? params.industry : undefined,
+    limit: 50,
   });
 
   return (
@@ -28,7 +29,12 @@ export default async function JobsPage({
         </p>
       </div>
       <div className="mt-8">
-        <JobsExplorer jobs={jobs} />
+        <JobsExplorer
+          initialJobs={initialPage.data}
+          initialCursor={initialPage.nextCursor}
+          initialTotal={initialPage.total}
+          initialIndustry={typeof params.industry === "string" ? params.industry : "全部行业"}
+        />
       </div>
     </div>
   );

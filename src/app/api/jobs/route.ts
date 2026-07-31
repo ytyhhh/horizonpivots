@@ -1,18 +1,9 @@
-import { getJobs } from "@/lib/jobs";
+import { getJobsPage } from "@/lib/jobs";
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   try {
-    const jobs = await getJobs(Object.fromEntries(params.entries()));
-    const limit = Math.min(Number(params.get("limit") ?? 20), 50);
-    const cursor = params.get("cursor");
-    const start = cursor ? Math.max(0, jobs.findIndex((job) => job.id === cursor) + 1) : 0;
-    const data = jobs.slice(start, start + limit);
-    return Response.json({
-      data,
-      nextCursor: start + limit < jobs.length ? data.at(-1)?.id ?? null : null,
-      total: jobs.length,
-    });
+    return Response.json(await getJobsPage(Object.fromEntries(params.entries())));
   } catch (error) {
     return Response.json(
       {

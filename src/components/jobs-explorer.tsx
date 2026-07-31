@@ -1,19 +1,36 @@
 "use client";
 
-import { FunnelSimple, MagnifyingGlass, X } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { FunnelSimple, MagnifyingGlass, SpinnerGap, X } from "@phosphor-icons/react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui";
 import { JobCard, JobDetailPanel } from "@/components/job-card";
 import type { Job } from "@/types";
 
 const types = ["全部", "秋招", "实习"] as const;
 
-export function JobsExplorer({ jobs }: { jobs: Job[] }) {
+interface JobsExplorerProps {
+  initialJobs: Job[];
+  initialCursor: string | null;
+  initialTotal: number;
+  initialIndustry: string;
+}
+
+export function JobsExplorer({
+  initialJobs,
+  initialCursor,
+  initialTotal,
+  initialIndustry,
+}: JobsExplorerProps) {
+  const [jobs, setJobs] = useState(initialJobs);
+  const [nextCursor, setNextCursor] = useState(initialCursor);
+  const [total, setTotal] = useState(initialTotal);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<(typeof types)[number]>("全部");
-  const [industry, setIndustry] = useState("全部行业");
+  const [industry, setIndustry] = useState(initialIndustry);
   const [location, setLocation] = useState("全部地点");
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const industries = useMemo(
     () => ["全部行业", ...new Set(jobs.map((job) => job.industry))],
@@ -23,29 +40,76 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
     () => ["全部地点", ...new Set(jobs.flatMap((job) => job.locations))],
     [jobs],
   );
-  const visible = useMemo(() => {
-    const normalized = query.toLocaleLowerCase().trim();
-    return jobs.filter((job) => {
-      const text = [
-        job.company,
-        job.title,
-        job.summary,
-        job.skills.join(" "),
-        job.locations.join(" "),
-      ]
-        .join(" ")
-        .toLocaleLowerCase();
-      return (
-        (!normalized || text.includes(normalized)) &&
-        (type === "全部" || job.type === type) &&
-        (industry === "全部行业" || job.industry === industry) &&
-        (location === "全部地点" || job.locations.includes(location))
-      );
-    });
-  }, [industry, jobs, location, query, type]);
+  const filters = useMemo(
+    () => ({
+      query,
+      type: type === "全部" ? "" : type,
+      industry: industry === "全部行业" ? "" : industry,
+      location: location === "全部地点" ? "" : location,
+    }),
+    [industry, location, query, type],
+  );
 
-  const selected =
-    visible.find((job) => job.id === selectedId) ?? visible[0] ?? null;
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ limit: "50" });
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) params.set(key, value);
+        });
+        const response = await fetch(`/api/jobs?${params}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("请求失败");
+        const page = (await response.json()) as {
+          data: Job[];
+          nextCursor: string | null;
+          total: number;
+        };
+        setJobs(page.data);
+        setNextCursor(page.nextCursor);
+        setTotal(page.total);
+        setSelectedId(page.data[0]?.id ?? "");
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setJobs([]);
+          setTotal(0);
+          setNextCursor(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, query ? 250 : 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [filters, query]);
+
+  async function loadMore() {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({ limit: "50", cursor: nextCursor });
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+      });
+      const response = await fetch(`/api/jobs?${params}`);
+      if (!response.ok) throw new Error("请求失败");
+      const page = (await response.json()) as {
+        data: Job[];
+        nextCursor: string | null;
+        total: number;
+      };
+      setJobs((current) => [...current, ...page.data]);
+      setNextCursor(page.nextCursor);
+      setTotal(page.total);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  const selected = jobs.find((job) => job.id === selectedId) ?? jobs[0] ?? null;
   const hasFilters =
     query || type !== "全部" || industry !== "全部行业" || location !== "全部地点";
 
@@ -138,16 +202,15 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
 
       <div className="mt-5 flex items-center justify-between text-sm">
         <p className="text-muted">
-          找到 <strong className="font-semibold text-foreground">{visible.length}</strong>{" "}
-          个岗位
+          找到 <strong className="font-semibold text-foreground">{total}</strong> 个岗位
         </p>
         <p className="hidden text-xs text-subtle sm:block">按最新收录排序</p>
       </div>
 
-      {visible.length ? (
+      {jobs.length ? (
         <div className="mt-4 grid items-start gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <div className="grid gap-3">
-            {visible.map((job) => (
+            {jobs.map((job) => (
               <div
                 key={job.id}
                 onClick={(event) => {
@@ -176,6 +239,20 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
           <EmptyState />
         </div>
       )}
+      {nextCursor ? (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="inline-flex h-11 items-center gap-2 rounded-xl border bg-surface px-5 text-sm font-semibold text-muted hover:border-border-strong hover:text-foreground disabled:opacity-55"
+          >
+            {loadingMore ? <SpinnerGap size={18} className="animate-spin" /> : null}
+            {loadingMore ? "正在加载" : `加载更多（已显示 ${jobs.length} / ${total}）`}
+          </button>
+        </div>
+      ) : null}
+      {loading ? <p className="mt-4 text-center text-sm text-muted">正在更新岗位列表…</p> : null}
     </div>
   );
 }
