@@ -20,16 +20,16 @@ export default function LoginPage() {
           只属于你的账号。
         </h1>
         <p className="mt-5 max-w-md text-base leading-7 text-muted">
-          使用邮箱验证码登录，无需设置密码。我们不会把你的简历原文件长期保存在服务器。
+          使用邮箱和密码创建账号。我们不会把你的简历原文件长期保存在服务器。
         </p>
       </div>
       <section className="mx-auto w-full max-w-md rounded-[1.6rem] border bg-surface p-6 card-shadow sm:p-8">
         <span className="grid size-11 place-items-center rounded-xl bg-surface-muted text-accent">
           <LockKey size={23} weight="duotone" aria-hidden="true" />
         </span>
-        <h2 className="mt-5 text-2xl font-semibold tracking-[-0.035em]">邮箱登录</h2>
+        <h2 className="mt-5 text-2xl font-semibold tracking-[-0.035em]">账号登录</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          验证码有效期较短，请使用你能正常收信的邮箱。
+          注册后请通过确认邮件激活账号；之后使用邮箱和密码登录。
         </p>
         <div className="mt-7">
           <LoginForm configured={isConfigured()} />
