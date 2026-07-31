@@ -231,12 +231,14 @@ set search_path = ''
 as $$
   select
     jobs.id,
-    1 - (jobs.embedding <=> query_embedding) as similarity
+    1 - (
+      jobs.embedding OPERATOR(extensions.<=>) query_embedding
+    ) as similarity
   from public.jobs
   where jobs.status = 'active'
     and jobs.embedding is not null
     and (jobs.deadline is null or jobs.deadline >= current_date)
-  order by jobs.embedding <=> query_embedding
+  order by jobs.embedding OPERATOR(extensions.<=>) query_embedding
   limit least(match_count, 100);
 $$;
 
