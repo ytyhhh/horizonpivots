@@ -28,7 +28,7 @@ export default function LoginPage() {
         </span>
         <h2 className="mt-5 text-2xl font-semibold tracking-[-0.035em]">账号登录</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          仅限 @link.cuhk.edu.cn 学校邮箱登录。
+          使用你在账号中心选定的方式登录。
         </p>
         <div className="mt-7 flex justify-center">
           <EmailDomainAuth mode="sign-in" />
