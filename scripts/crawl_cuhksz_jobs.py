@@ -16,7 +16,8 @@ from scrapling.fetchers import Fetcher
 
 BASE_URL = "https://career.cuhk.edu.cn/job/search/?domain=careercuhk"
 ORIGIN = "https://career.cuhk.edu.cn"
-MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "3")), 10))
+MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "7")), 7))
+DETAIL_DELAY_SECONDS = 0.35
 
 
 def clean(value: str | None) -> str:
@@ -34,6 +35,20 @@ def fetch_page(page_number: int):
     return Fetcher.get(url, impersonate="chrome", stealthy_headers=True)
 
 
+def fetch_description(source_url: str) -> str:
+    """Return the public job description as plain text, never as mirrored HTML."""
+    try:
+        page = Fetcher.get(source_url, impersonate="chrome", stealthy_headers=True)
+        for section in page.css(".article .mb20"):
+            heading = clean(" ".join(section.css("h3.subart_h3::text").getall()))
+            if "工作内容描述" not in heading:
+                continue
+            return clean(" ".join(section.css("h3.subart_h3 + div ::text").getall()))[:12_000]
+    except Exception as error:
+        print(f"Description fetch failed for {source_url}: {error}", file=sys.stderr)
+    return ""
+
+
 def extract_jobs(page):
     jobs = []
     for card in page.css(".sousuo_list > ul > li"):
@@ -49,6 +64,7 @@ def extract_jobs(page):
         deadline = parse_date(clean(card.css(".sousuo_span2::text").get()))
         location = clean(text.split("｜")[0])
         locations = [] if location in {"", "不限", "不限 - 不限"} else [location]
+        source_url = urljoin(ORIGIN, href)
         jobs.append(
             {
                 "id": re.search(r"/id/(\d+)", href).group(1),
@@ -59,7 +75,7 @@ def extract_jobs(page):
                 "cohort": "2027届" if "2027" in f"{title} {text}" else "不限",
                 "summary": f"{text}。".strip("。"),
                 "deadline": deadline,
-                "sourceUrl": urljoin(ORIGIN, href),
+                "sourceUrl": source_url,
                 "firstSeen": published,
             }
         )
@@ -89,7 +105,12 @@ def main():
             time.sleep(1.2)
     if not deduped:
         raise RuntimeError("No jobs found; refusing to report a successful empty crawl")
-    result = post_jobs(list(deduped.values()))
+    jobs = list(deduped.values())
+    for index, job in enumerate(jobs):
+        job["description"] = fetch_description(job["sourceUrl"])
+        if index < len(jobs) - 1:
+            time.sleep(DETAIL_DELAY_SECONDS)
+    result = post_jobs(jobs)
     print(json.dumps(result, ensure_ascii=False))
 
 

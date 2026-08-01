@@ -68,6 +68,7 @@ export const cuhkShenzhenIngestJobSchema = z.object({
   locations: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
   cohort: z.string().trim().min(1).max(30).default("不限"),
   summary: z.string().trim().max(500).default(""),
+  description: z.string().trim().max(12_000).default(""),
   deadline: z.string().date().nullable().optional(),
   sourceUrl: z
     .string()

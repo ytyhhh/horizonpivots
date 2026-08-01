@@ -33,6 +33,8 @@ export interface Job {
   cohort: string;
   skills: string[];
   summary: string;
+  /** 招聘方公开页面中的纯文本岗位说明；不保存原始 HTML。 */
+  description?: string;
   deadline?: string | null;
   applyUrl?: string | null;
   sourceUrl: string;

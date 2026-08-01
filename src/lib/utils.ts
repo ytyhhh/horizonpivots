@@ -74,6 +74,7 @@ export function toJobSearchText(job: {
   locations: string[];
   skills: string[];
   summary: string;
+  description?: string;
 }) {
   return [
     job.company,
@@ -82,6 +83,7 @@ export function toJobSearchText(job: {
     job.locations.join(" "),
     job.skills.join(" "),
     job.summary,
+    job.description ?? "",
   ]
     .join(" ")
     .toLocaleLowerCase();

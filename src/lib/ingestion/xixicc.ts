@@ -117,6 +117,7 @@ export function toJobRow(job: Job) {
     cohort: job.cohort,
     skills: job.skills,
     summary: job.summary.slice(0, 500),
+    description: job.description?.slice(0, 12_000) ?? "",
     deadline: job.deadline || null,
     apply_url: job.applyUrl,
     source_url: job.sourceUrl,

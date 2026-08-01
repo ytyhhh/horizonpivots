@@ -127,6 +127,15 @@ export function JobDetailPanel({ job }: { job: Job }) {
 
       <p className="mt-7 text-[15px] leading-7 text-muted">{job.summary}</p>
 
+      {job.description ? (
+        <section className="mt-7 border-t pt-7">
+          <h3 className="text-sm font-semibold">岗位描述</h3>
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-muted">
+            {job.description}
+          </p>
+        </section>
+      ) : null}
+
       <dl className="mt-7 grid gap-5 rounded-2xl bg-surface-muted p-5 sm:grid-cols-2">
         <div>
           <dt className="text-xs font-medium text-subtle">工作地点</dt>

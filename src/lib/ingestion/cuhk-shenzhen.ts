@@ -28,6 +28,7 @@ export function parseCuhkShenzhenJobs(payload: unknown): Job[] {
     cohort: item.cohort,
     skills: [],
     summary: item.summary || `${item.company}在港中深就业中心发布的${item.type}岗位。`,
+    description: item.description,
     deadline: item.deadline ?? null,
     applyUrl: item.sourceUrl,
     sourceUrl: item.sourceUrl,

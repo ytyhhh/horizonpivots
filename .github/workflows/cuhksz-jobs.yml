@@ -22,5 +22,5 @@ jobs:
         env:
           CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
           CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
-          CUHKSZ_MAX_PAGES: "3"
+          CUHKSZ_MAX_PAGES: "7"
         run: python scripts/crawl_cuhksz_jobs.py

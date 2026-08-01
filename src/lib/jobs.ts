@@ -69,6 +69,7 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
     cohort: String(row.cohort),
     skills: (row.skills as string[]) ?? [],
     summary: String(row.summary ?? ""),
+    description: String(row.description ?? ""),
     deadline: (row.deadline as string | null) ?? null,
     applyUrl: (row.apply_url as string | null) ?? null,
     sourceUrl: String(row.source_url),
@@ -144,7 +145,7 @@ export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   }
   const search = safeSearchTerm(parsed.query);
   const searchExpression = search
-    ? `company.ilike.%${search}%,title.ilike.%${search}%,summary.ilike.%${search}%`
+    ? `company.ilike.%${search}%,title.ilike.%${search}%,summary.ilike.%${search}%,description.ilike.%${search}%`
     : null;
   const cursor = decodeCursor(parsed.cursor);
   const cursorExpression = cursor

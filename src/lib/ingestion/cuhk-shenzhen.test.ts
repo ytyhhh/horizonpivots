@@ -12,6 +12,7 @@ describe("CUHK-Shenzhen job ingestion", () => {
         locations: ["深圳"],
         cohort: "2027届",
         summary: "公开招聘信息",
+        description: "负责算法模型的训练与部署。",
         deadline: "2026-09-30",
         sourceUrl: "https://career.cuhk.edu.cn/job/view/id/468922",
         firstSeen: "2026-08-01",
@@ -26,6 +27,7 @@ describe("CUHK-Shenzhen job ingestion", () => {
       cuhkShenzhenOnly: true,
       sourceConfidence: "官方",
       sourceName: "香港中文大学（深圳）职业规划与发展处",
+      description: "负责算法模型的训练与部署。",
     });
   });
 
