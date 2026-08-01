@@ -5,6 +5,7 @@ create index if not exists jobs_cuhk_shenzhen_only_idx
   on public.jobs (cuhk_shenzhen_only, first_seen desc);
 
 drop policy if exists "active jobs are publicly readable" on public.jobs;
+drop policy if exists "active public jobs are readable" on public.jobs;
 create policy "active public jobs are readable"
 on public.jobs for select
 using (
