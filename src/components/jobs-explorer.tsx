@@ -13,6 +13,8 @@ interface JobsExplorerProps {
   initialCursor: string | null;
   initialTotal: number;
   initialIndustry: string;
+  initialCuhkShenzhenOnly: boolean;
+  canFilterCuhkShenzhen: boolean;
 }
 
 export function JobsExplorer({
@@ -20,6 +22,8 @@ export function JobsExplorer({
   initialCursor,
   initialTotal,
   initialIndustry,
+  initialCuhkShenzhenOnly,
+  canFilterCuhkShenzhen,
 }: JobsExplorerProps) {
   const [jobs, setJobs] = useState(initialJobs);
   const [nextCursor, setNextCursor] = useState(initialCursor);
@@ -28,6 +32,7 @@ export function JobsExplorer({
   const [type, setType] = useState<(typeof types)[number]>("全部");
   const [industry, setIndustry] = useState(initialIndustry);
   const [location, setLocation] = useState("全部地点");
+  const [cuhkShenzhenOnly, setCuhkShenzhenOnly] = useState(initialCuhkShenzhenOnly);
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -46,8 +51,9 @@ export function JobsExplorer({
       type: type === "全部" ? "" : type,
       industry: industry === "全部行业" ? "" : industry,
       location: location === "全部地点" ? "" : location,
+      cuhkShenzhenOnly: cuhkShenzhenOnly ? "true" : "",
     }),
-    [industry, location, query, type],
+    [cuhkShenzhenOnly, industry, location, query, type],
   );
 
   useEffect(() => {
@@ -111,13 +117,18 @@ export function JobsExplorer({
 
   const selected = jobs.find((job) => job.id === selectedId) ?? jobs[0] ?? null;
   const hasFilters =
-    query || type !== "全部" || industry !== "全部行业" || location !== "全部地点";
+    query ||
+    type !== "全部" ||
+    industry !== "全部行业" ||
+    location !== "全部地点" ||
+    cuhkShenzhenOnly;
 
   function reset() {
     setQuery("");
     setType("全部");
     setIndustry("全部行业");
     setLocation("全部地点");
+    setCuhkShenzhenOnly(false);
   }
 
   return (
@@ -187,6 +198,20 @@ export function JobsExplorer({
               ))}
             </select>
           </label>
+          {canFilterCuhkShenzhen ? (
+            <button
+              type="button"
+              onClick={() => setCuhkShenzhenOnly((current) => !current)}
+              aria-pressed={cuhkShenzhenOnly}
+              className={`h-9 rounded-xl border px-3 text-xs font-semibold transition-colors ${
+                cuhkShenzhenOnly
+                  ? "border-accent bg-accent text-white"
+                  : "bg-surface text-muted hover:border-border-strong hover:text-foreground"
+              }`}
+            >
+              港中深专属
+            </button>
+          ) : null}
           {hasFilters ? (
             <button
               type="button"

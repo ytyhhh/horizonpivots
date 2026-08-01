@@ -9,6 +9,7 @@ export const jobQuerySchema = z.object({
   cohort: z.string().trim().max(20).optional(),
   deadlineWithin: z.coerce.number().int().min(1).max(180).optional(),
   confidence: z.enum(["官方", "已核验", "社区线索"]).optional(),
+  cuhkShenzhenOnly: z.enum(["true"]).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

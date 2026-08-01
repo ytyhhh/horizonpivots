@@ -13,6 +13,7 @@ export interface JobQuery {
   cohort?: string;
   deadlineWithin?: string | number;
   confidence?: string;
+  cuhkShenzhenOnly?: string;
   cursor?: string;
   limit?: string | number;
 }
@@ -34,6 +35,7 @@ export function filterJobs(jobs: Job[], input: JobQuery, now = new Date()) {
     if (parsed.location && !job.locations.includes(parsed.location)) return false;
     if (parsed.cohort && job.cohort !== parsed.cohort) return false;
     if (parsed.confidence && job.sourceConfidence !== parsed.confidence) return false;
+    if (parsed.cuhkShenzhenOnly === "true" && !job.cuhkShenzhenOnly) return false;
     if (parsed.deadlineWithin) {
       const days = daysUntil(job.deadline, now);
       if (days === null || days < 0 || days > parsed.deadlineWithin) return false;
@@ -108,6 +110,10 @@ export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   const limit = parsed.limit;
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
 
+  if (parsed.cuhkShenzhenOnly === "true" && !canViewCuhkShenzhenOnly) {
+    return { data: [], nextCursor: null, total: 0 };
+  }
+
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const jobs = filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), parsed);
     const start = parsed.cursor
@@ -135,7 +141,11 @@ export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   if (parsed.location) request = request.contains("locations", [parsed.location]);
   if (parsed.cohort) request = request.eq("cohort", parsed.cohort);
   if (parsed.confidence) request = request.eq("source_confidence", parsed.confidence);
-  if (!canViewCuhkShenzhenOnly) request = request.eq("cuhk_shenzhen_only", false);
+  if (parsed.cuhkShenzhenOnly === "true") {
+    request = request.eq("cuhk_shenzhen_only", true);
+  } else if (!canViewCuhkShenzhenOnly) {
+    request = request.eq("cuhk_shenzhen_only", false);
+  }
   if (parsed.deadlineWithin) {
     const deadline = new Date();
     deadline.setDate(deadline.getDate() + parsed.deadlineWithin);

@@ -37,4 +37,14 @@ describe("job filtering", () => {
     expect(filterJobsByAudience(jobs, false)).toEqual([demoJobs[0]]);
     expect(filterJobsByAudience(jobs, true)).toHaveLength(2);
   });
+
+  it("filters to CUHK-Shenzhen-exclusive jobs when requested", () => {
+    const jobs = [
+      { ...demoJobs[0], id: "general" },
+      { ...demoJobs[1], id: "exclusive", cuhkShenzhenOnly: true },
+    ];
+    const results = filterJobs(jobs, { cuhkShenzhenOnly: "true" }, now);
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("exclusive");
+  });
 });
