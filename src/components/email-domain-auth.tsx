@@ -29,19 +29,9 @@ export function EmailDomainAuth({ mode }: EmailDomainAuthProps) {
 
   if (submitted) {
     return mode === "sign-in" ? (
-      <SignIn
-        routing="path"
-        path="/login"
-        signUpUrl="/sign-up"
-        initialValues={{ identifier: email }}
-      />
+      <SignIn routing="path" path="/login" signUpUrl="/sign-up" />
     ) : (
-      <SignUp
-        routing="path"
-        path="/sign-up"
-        signInUrl="/login"
-        initialValues={{ emailAddress: email }}
-      />
+      <SignUp routing="path" path="/sign-up" signInUrl="/login" />
     );
   }
 
