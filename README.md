@@ -54,6 +54,19 @@ npm run ingest:xixicc
 
 两个入口都要求 `Authorization: Bearer $CRON_SECRET`。Vercel Cron 已在 `vercel.json` 配置；如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
 
+### 港中深专属岗位
+
+仓库内的 GitHub Action 每日抓取香港中文大学（深圳）职业规划与发展处公开岗位页的最新三页，再发送到生产接口。只有 Clerk 主邮箱为 `@link.cuhk.edu.cn` 的账号会得到这些岗位；服务端和 Supabase RLS 都不会向其他账号返回它们。
+
+应用 `202608010003_cuhksz_exclusive_jobs.sql` 后，在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加：
+
+```dotenv
+CAMPUS_RADAR_INGEST_URL=https://jobs.horizonpivots.com
+CAMPUS_RADAR_CRON_SECRET=<与 Vercel 的 CRON_SECRET 相同>
+```
+
+随后在 Actions 中手动运行一次 **Ingest CUHK-Shenzhen jobs**。工作流每天 09:19（中国标准时间）自动执行；每次限速抓取三页公开列表。
+
 ## 简历隐私
 
 - 仅接受 PDF、DOCX，最大 5 MB。

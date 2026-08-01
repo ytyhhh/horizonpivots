@@ -60,6 +60,29 @@ export const rawXixiccJobSchema = z.object({
 
 export const rawXixiccJobsSchema = z.array(rawXixiccJobSchema);
 
+export const cuhkShenzhenIngestJobSchema = z.object({
+  id: z.string().trim().min(1).max(160),
+  company: z.string().trim().min(1).max(120),
+  title: z.string().trim().min(1).max(180),
+  type: z.enum(["秋招", "实习"]),
+  locations: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
+  cohort: z.string().trim().min(1).max(30).default("不限"),
+  summary: z.string().trim().max(500).default(""),
+  deadline: z.string().date().nullable().optional(),
+  sourceUrl: z
+    .string()
+    .url()
+    .refine(
+      (url) => new URL(url).hostname === "career.cuhk.edu.cn",
+      "来源必须为港中深就业中心网站",
+    ),
+  firstSeen: z.string().date(),
+});
+
+export const cuhkShenzhenIngestPayloadSchema = z.object({
+  jobs: z.array(cuhkShenzhenIngestJobSchema).min(1).max(250),
+});
+
 export const resumeExtractionSchema = {
   type: "object",
   additionalProperties: false,

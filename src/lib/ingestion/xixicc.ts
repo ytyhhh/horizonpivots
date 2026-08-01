@@ -126,5 +126,6 @@ export function toJobRow(job: Job) {
     last_seen: job.lastSeen,
     status: job.status,
     fingerprint: job.fingerprint,
+    cuhk_shenzhen_only: Boolean(job.cuhkShenzhenOnly),
   };
 }

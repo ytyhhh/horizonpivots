@@ -1,0 +1,26 @@
+name: Ingest CUHK-Shenzhen jobs
+
+on:
+  schedule:
+    - cron: "19 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Scrapling
+        run: pip install "scrapling[fetchers]>=0.3,<1"
+      - name: Crawl and ingest
+        env:
+          CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
+          CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
+          CUHKSZ_MAX_PAGES: "3"
+        run: python scripts/crawl_cuhksz_jobs.py

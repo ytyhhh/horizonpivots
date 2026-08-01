@@ -80,7 +80,7 @@ export function JobCard({
       <div className="mt-4 flex flex-wrap gap-2">
         {job.cuhkShenzhenOnly ? (
           <span className="rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-white">
-            港中深专属 · 演示
+            港中深专属
           </span>
         ) : null}
         <span className="rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent">
@@ -118,7 +118,7 @@ export function JobDetailPanel({ job }: { job: Job }) {
           </p>
           {job.cuhkShenzhenOnly ? (
             <p className="mt-3 inline-flex rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-white">
-              港中深学生专属 · 演示岗位
+              港中深学生专属
             </p>
           ) : null}
         </div>

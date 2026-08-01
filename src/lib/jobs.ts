@@ -1,5 +1,4 @@
 import { demoJobs } from "@/data/demo-jobs";
-import { cuhkShenzhenDemoJobs } from "@/data/cuhk-shenzhen-jobs";
 import { canViewCuhkShenzhenJobs } from "@/lib/auth";
 import { jobQuerySchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -54,8 +53,7 @@ export function filterJobsByAudience(jobs: Job[], canViewCuhkShenzhenOnly: boole
 }
 
 function withCuhkShenzhenJobs(jobs: Job[], canViewCuhkShenzhenOnly: boolean) {
-  const visible = canViewCuhkShenzhenOnly ? [...jobs, ...cuhkShenzhenDemoJobs] : jobs;
-  return filterJobsByAudience(visible, canViewCuhkShenzhenOnly);
+  return filterJobsByAudience(jobs, canViewCuhkShenzhenOnly);
 }
 
 function mapDatabaseJob(row: Record<string, unknown>): Job {
@@ -80,6 +78,7 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
     lastSeen: String(row.last_seen),
     status: row.status as Job["status"],
     fingerprint: String(row.fingerprint),
+    cuhkShenzhenOnly: Boolean(row.cuhk_shenzhen_only),
   };
 }
 
@@ -135,6 +134,7 @@ export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   if (parsed.location) request = request.contains("locations", [parsed.location]);
   if (parsed.cohort) request = request.eq("cohort", parsed.cohort);
   if (parsed.confidence) request = request.eq("source_confidence", parsed.confidence);
+  if (!canViewCuhkShenzhenOnly) request = request.eq("cuhk_shenzhen_only", false);
   if (parsed.deadlineWithin) {
     const deadline = new Date();
     deadline.setDate(deadline.getDate() + parsed.deadlineWithin);
@@ -164,23 +164,13 @@ export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
     const jobs = filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), parsed);
     return { data: jobs.slice(0, limit), nextCursor: null, total: jobs.length };
   }
-  const exclusiveCount = canViewCuhkShenzhenOnly
-    ? filterJobs(cuhkShenzhenDemoJobs, parsed).length
-    : 0;
-  // 演示岗位的收录时间最新，因此只应出现在第一页，不能在翻页时重复追加。
-  const exclusive = canViewCuhkShenzhenOnly && !parsed.cursor
-    ? filterJobs(cuhkShenzhenDemoJobs, parsed)
-    : [];
-  const mapped = [...data.map(mapDatabaseJob), ...exclusive].sort((a, b) => {
-    const freshness = b.firstSeen.localeCompare(a.firstSeen);
-    return freshness !== 0 ? freshness : b.id.localeCompare(a.id);
-  });
+  const mapped = data.map(mapDatabaseJob);
   const hasMore = mapped.length > limit;
   const page = mapped.slice(0, limit);
   return {
     data: page,
     nextCursor: hasMore && page.length ? encodeCursor(page.at(-1)!) : null,
-    total: (count ?? data.length) + exclusiveCount,
+    total: count ?? page.length,
   };
 }
 
