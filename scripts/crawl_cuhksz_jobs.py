@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
@@ -17,7 +18,8 @@ from scrapling.fetchers import Fetcher
 BASE_URL = "https://career.cuhk.edu.cn/job/search/?domain=careercuhk"
 ORIGIN = "https://career.cuhk.edu.cn"
 MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "7")), 7))
-DETAIL_DELAY_SECONDS = 0.35
+DETAIL_WORKERS = max(1, min(int(os.getenv("CUHKSZ_DETAIL_WORKERS", "4")), 4))
+DETAIL_BATCH_SIZE = 25
 
 
 def clean(value: str | None) -> str:
@@ -96,6 +98,31 @@ def post_jobs(jobs: list[dict]):
         return json.loads(response.read())
 
 
+def enrich_descriptions(jobs: list[dict]) -> list[dict]:
+    """Fetch detail pages concurrently and persist every completed batch.
+
+    The base listings are posted before this function starts. Therefore an
+    interrupted run can leave some descriptions blank, but can never discard
+    the seven pages of already discovered jobs.
+    """
+    results = []
+    completed: list[dict] = []
+    with ThreadPoolExecutor(max_workers=DETAIL_WORKERS) as executor:
+        pending = {
+            executor.submit(fetch_description, job["sourceUrl"]): job for job in jobs
+        }
+        for future in as_completed(pending):
+            job = pending[future]
+            job["description"] = future.result()
+            completed.append(job)
+            if len(completed) == DETAIL_BATCH_SIZE:
+                results.append(post_jobs(completed))
+                completed = []
+    if completed:
+        results.append(post_jobs(completed))
+    return results
+
+
 def main():
     deduped = {}
     for page_number in range(1, MAX_PAGES + 1):
@@ -106,12 +133,17 @@ def main():
     if not deduped:
         raise RuntimeError("No jobs found; refusing to report a successful empty crawl")
     jobs = list(deduped.values())
-    for index, job in enumerate(jobs):
-        job["description"] = fetch_description(job["sourceUrl"])
-        if index < len(jobs) - 1:
-            time.sleep(DETAIL_DELAY_SECONDS)
-    result = post_jobs(jobs)
-    print(json.dumps(result, ensure_ascii=False))
+    base_result = post_jobs(jobs)
+    description_results = enrich_descriptions(jobs)
+    print(
+        json.dumps(
+            {
+                "baseIngest": base_result,
+                "descriptionBatches": description_results,
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":
