@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LockKey, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
-import { SignIn } from "@clerk/nextjs";
+import { EmailDomainAuth } from "@/components/email-domain-auth";
 
 export const metadata: Metadata = {
   title: "登录",
@@ -28,10 +28,10 @@ export default function LoginPage() {
         </span>
         <h2 className="mt-5 text-2xl font-semibold tracking-[-0.035em]">账号登录</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          使用你在 Clerk 中配置的方式注册或登录。
+          仅限 @link.cuhk.edu.cn 学校邮箱登录。
         </p>
         <div className="mt-7 flex justify-center">
-          <SignIn routing="path" path="/login" signUpUrl="/sign-up" />
+          <EmailDomainAuth mode="sign-in" />
         </div>
         <p className="mt-6 border-t pt-5 text-xs leading-5 text-subtle">
           登录即表示你同意仅将结构化求职画像用于本人岗位推荐。

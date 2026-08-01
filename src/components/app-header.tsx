@@ -6,6 +6,7 @@ import {
   FileText,
   UserCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { AccountActions } from "@/components/account-actions";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getCurrentUserId } from "@/lib/auth";
@@ -47,6 +48,7 @@ export async function AppHeader() {
                 {userId ? "我的账号" : "登录"}
               </span>
             </Link>
+            {userId ? <AccountActions /> : null}
           </div>
         </div>
       </header>
