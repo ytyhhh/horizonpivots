@@ -1,0 +1,23 @@
+name: Ingest xixicc2027 jobs
+
+on:
+  schedule:
+    # 10:29 China Standard Time (UTC+8), after the Vercel Cron fallback.
+    - cron: "29 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions: {}
+    steps:
+      - name: Sync xixicc2027 to production
+        env:
+          CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
+          CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-all-errors --connect-timeout 15 --max-time 300 \
+            --header "Authorization: Bearer ${CAMPUS_RADAR_CRON_SECRET}" \
+            "${CAMPUS_RADAR_INGEST_URL}/api/cron/ingest"

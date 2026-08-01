@@ -49,10 +49,10 @@ npm run ingest:xixicc
 
 配置 Supabase 后，同一命令会将岗位幂等写入 `jobs`。线上定时入口：
 
-- `GET /api/cron/ingest`：每 6 小时同步 `xixicc2027`
+- `GET /api/cron/ingest`：同步 `xixicc2027`
 - `GET /api/cron/discover`：每天搜索新的企业官方招聘页面，候选只进入审核队列
 
-两个入口都要求 `Authorization: Bearer $CRON_SECRET`。Vercel Cron 已在 `vercel.json` 配置；如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
+两个入口都要求 `Authorization: Bearer $CRON_SECRET`。`xixicc2027` 同步同时配置了 Vercel Cron（每天 10:17，中国标准时间）与 GitHub Actions（每天 10:29，中国标准时间）；写入按指纹幂等，因此重复触发不会重复展示岗位。GitHub 工作流为 `.github/workflows/xixicc-jobs.yml`，使用下文的 `CAMPUS_RADAR_INGEST_URL` 与 `CAMPUS_RADAR_CRON_SECRET`。如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
 
 ### 港中深专属岗位
 
