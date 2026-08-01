@@ -1,4 +1,6 @@
 import { demoJobs } from "@/data/demo-jobs";
+import { cuhkShenzhenDemoJobs } from "@/data/cuhk-shenzhen-jobs";
+import { canViewCuhkShenzhenJobs } from "@/lib/auth";
 import { jobQuerySchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { daysUntil, isConfigured, isExpired, toJobSearchText } from "@/lib/utils";
@@ -45,6 +47,15 @@ export function filterJobs(jobs: Job[], input: JobQuery, now = new Date()) {
     if (freshness !== 0) return freshness;
     return a.company.localeCompare(b.company, "zh-CN");
   });
+}
+
+export function filterJobsByAudience(jobs: Job[], canViewCuhkShenzhenOnly: boolean) {
+  return jobs.filter((job) => !job.cuhkShenzhenOnly || canViewCuhkShenzhenOnly);
+}
+
+function withCuhkShenzhenJobs(jobs: Job[], canViewCuhkShenzhenOnly: boolean) {
+  const visible = canViewCuhkShenzhenOnly ? [...jobs, ...cuhkShenzhenDemoJobs] : jobs;
+  return filterJobsByAudience(visible, canViewCuhkShenzhenOnly);
 }
 
 function mapDatabaseJob(row: Record<string, unknown>): Job {
@@ -95,9 +106,10 @@ function safeSearchTerm(value: string) {
 export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   const parsed = jobQuerySchema.parse(input);
   const limit = parsed.limit;
+  const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
 
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    const jobs = filterJobs(demoJobs, parsed);
+    const jobs = filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), parsed);
     const start = parsed.cursor
       ? Math.max(0, jobs.findIndex((job) => job.id === parsed.cursor) + 1)
       : 0;
@@ -149,22 +161,37 @@ export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   const { data, error, count } = await request;
   if (error || !data) {
     console.error("Unable to load job page:", error?.message);
-    const jobs = filterJobs(demoJobs, parsed);
+    const jobs = filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), parsed);
     return { data: jobs.slice(0, limit), nextCursor: null, total: jobs.length };
   }
-  const mapped = data.map(mapDatabaseJob);
+  const exclusiveCount = canViewCuhkShenzhenOnly
+    ? filterJobs(cuhkShenzhenDemoJobs, parsed).length
+    : 0;
+  // 演示岗位的收录时间最新，因此只应出现在第一页，不能在翻页时重复追加。
+  const exclusive = canViewCuhkShenzhenOnly && !parsed.cursor
+    ? filterJobs(cuhkShenzhenDemoJobs, parsed)
+    : [];
+  const mapped = [...data.map(mapDatabaseJob), ...exclusive].sort((a, b) => {
+    const freshness = b.firstSeen.localeCompare(a.firstSeen);
+    return freshness !== 0 ? freshness : b.id.localeCompare(a.id);
+  });
   const hasMore = mapped.length > limit;
-  const page = hasMore ? mapped.slice(0, limit) : mapped;
+  const page = mapped.slice(0, limit);
   return {
     data: page,
     nextCursor: hasMore && page.length ? encodeCursor(page.at(-1)!) : null,
-    total: count ?? page.length,
+    total: (count ?? data.length) + exclusiveCount,
   };
 }
 
 export async function getJobs(input: JobQuery = {}): Promise<Job[]> {
+  const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return filterJobs(demoJobs, input, new Date("2026-07-30T12:00:00+08:00"));
+    return filterJobs(
+      withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly),
+      input,
+      new Date("2026-07-30T12:00:00+08:00"),
+    );
   }
 
   const admin = createAdminClient();
@@ -177,9 +204,12 @@ export async function getJobs(input: JobQuery = {}): Promise<Job[]> {
 
   if (error || !data) {
     console.error("Falling back to demo jobs:", error?.message);
-    return filterJobs(demoJobs, input);
+    return filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), input);
   }
-  return filterJobs(data.map(mapDatabaseJob), input);
+  return filterJobs(
+    withCuhkShenzhenJobs(data.map(mapDatabaseJob), canViewCuhkShenzhenOnly),
+    input,
+  );
 }
 
 export async function getJob(id: string) {

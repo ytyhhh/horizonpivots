@@ -42,6 +42,8 @@ export interface Job {
   lastSeen: string;
   status: JobStatus;
   fingerprint: string;
+  /** 仅面向已验证的港中深学校邮箱账号展示。 */
+  cuhkShenzhenOnly?: boolean;
 }
 
 export interface CandidateProfile {

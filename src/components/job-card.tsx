@@ -78,6 +78,11 @@ export function JobCard({
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
+        {job.cuhkShenzhenOnly ? (
+          <span className="rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-white">
+            港中深专属 · 演示
+          </span>
+        ) : null}
         <span className="rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent">
           {job.type}
         </span>
@@ -111,6 +116,11 @@ export function JobDetailPanel({ job }: { job: Job }) {
           <p className="mt-3 text-sm text-muted">
             {job.batch} / {job.cohort} / {job.industry}
           </p>
+          {job.cuhkShenzhenOnly ? (
+            <p className="mt-3 inline-flex rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-white">
+              港中深学生专属 · 演示岗位
+            </p>
+          ) : null}
         </div>
         <SaveButton jobId={job.id} compact />
       </div>
