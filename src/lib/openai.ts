@@ -70,6 +70,40 @@ function parseJsonObject(content: string) {
   }
 }
 
+function toStringList(value: unknown, maxItems: number, maxLength: number) {
+  const entries = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(/[、,，\n；;]+/)
+      : [];
+  return entries
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.replace(/\s+/g, " ").trim().slice(0, maxLength))
+    .filter(Boolean)
+    .slice(0, maxItems);
+}
+
+/** DeepSeek may represent dates as “2027届” and lists as plain strings. */
+export function normalizeExtractionPayload(value: unknown) {
+  const object = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const rawYear = object.graduationYear ?? object.graduation_year;
+  const yearText = typeof rawYear === "number" || typeof rawYear === "string" ? String(rawYear) : "";
+  const year = Number(yearText.match(/20\d{2}/)?.[0] ?? "");
+  const text = (field: string, maxLength: number) =>
+    typeof object[field] === "string"
+      ? object[field].replace(/\s+/g, " ").trim().slice(0, maxLength)
+      : "";
+
+  return {
+    graduationYear: year >= 2024 && year <= 2035 ? year : null,
+    education: text("education", 30),
+    major: text("major", 80),
+    skills: toStringList(object.skills, 40, 50),
+    experiences: toStringList(object.experiences, 12, 240),
+    projectDomains: toStringList(object.projectDomains ?? object.project_domains, 20, 60),
+  };
+}
+
 export async function extractResumeProfile(
   file: File,
 ): Promise<Pick<
@@ -118,7 +152,7 @@ export async function extractResumeProfile(
   if (!content) {
     throw new Error("模型没有返回可用的结构化画像");
   }
-  return extractionSchema.parse(parseJsonObject(content));
+  return extractionSchema.parse(normalizeExtractionPayload(parseJsonObject(content)));
 }
 
 export const explanationSchema = z.object({
