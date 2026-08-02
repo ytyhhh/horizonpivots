@@ -8,7 +8,7 @@
 
 - Next.js 16.2.11 Active LTS、React 19、TypeScript、Tailwind CSS v4
 - Supabase PostgreSQL、Auth、Storage、RLS、pgvector、pg_cron、pg_net
-- Firecrawl `@firecrawl/pdf-inspector`（本地 PDF 文本提取）、OpenAI Responses API（现有结构化解析与推荐说明）、SiliconFlow `BAAI/bge-m3`（语义检索向量）
+- Firecrawl `@firecrawl/pdf-inspector` 与 Mammoth（本地 PDF/DOCX 文本提取）、硅基流动 DeepSeek（结构化解析）、SiliconFlow `BAAI/bge-m3`（语义检索向量）
 - Vitest、Playwright
 
 ## 本地启动
@@ -33,12 +33,11 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-OPENAI_API_KEY=
 SILICONFLOW_API_KEY=
 CRON_SECRET=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY`、`OPENAI_API_KEY`、`SILICONFLOW_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
+`SUPABASE_SERVICE_ROLE_KEY`、`SILICONFLOW_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
 
 向量使用 SiliconFlow 的 `BAAI/bge-m3`（1024 维）。应用 `202608030001_switch_to_bge_m3_embeddings.sql` 后，旧 OpenAI 向量会被安全清空；新入库岗位会按内容变动重建向量。已有岗位可通过下文的向量重建入口分批补齐。
 
@@ -59,7 +58,7 @@ npm run ingest:xixicc
 配置 Supabase 后，同一命令会将岗位幂等写入 `jobs`。线上定时入口：
 
 - `GET /api/cron/ingest`：同步 `xixicc2027`
-- `GET /api/cron/discover`：每天搜索新的企业官方招聘页面，候选只进入审核队列
+- `GET /api/cron/discover`：保留为审核队列入口；硅基流动 DeepSeek 没有可信网页搜索工具，因此在接入独立搜索服务前不会生成候选 URL
 
 两个入口都要求 `Authorization: Bearer $CRON_SECRET`。`xixicc2027` 同步同时配置了 Vercel Cron（每天 10:17，中国标准时间）与 GitHub Actions（每天 10:29，中国标准时间）；写入按指纹幂等，因此重复触发不会重复展示岗位。GitHub 工作流为 `.github/workflows/xixicc-jobs.yml`，使用下文的 `CAMPUS_RADAR_INGEST_URL` 与 `CAMPUS_RADAR_CRON_SECRET`。如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
 
@@ -93,9 +92,9 @@ gh run list --repo ytyhhh/hiring --workflow cuhksz-jobs.yml
 ## 简历隐私
 
 - 仅接受 PDF、DOCX，最大 5 MB。
-- 文本型 PDF 使用 `pdf-inspector` 在服务端本地转换为 Markdown；扫描件、图片型 PDF 或文字编码异常的 PDF 会提示改传 DOCX 或可复制文字的 PDF，不会自动调用 OCR。
+- 文本型 PDF 使用 `pdf-inspector`、DOCX 使用 Mammoth 在服务端本地提取文字；扫描件、图片型 PDF 或文字编码异常的 PDF 会提示改传 DOCX 或可复制文字的 PDF，不会自动调用 OCR。
 - 真实模式下文件先进入按用户隔离的私有 `resume-temp` 桶。
-- 模型请求设置 `store: false`，附件被视为不可信数据，不允许改变系统指令。
+- 简历原文只在服务端本地提取为文本后发送给硅基流动 DeepSeek；简历内容被视为不可信数据，不允许改变系统指令。
 - 原文件在成功或失败路径的 `finally` 中删除。
 - 结构化画像不包含姓名、电话、邮箱、照片、性别、年龄、民族和详细地址。
 

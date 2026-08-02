@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
   const userId = await getCurrentUserId();
   if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.SILICONFLOW_API_KEY) {
     return Response.json({ message: "简历解析服务尚未配置" }, { status: 503 });
   }
 
