@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { loadEnvConfig } from "@next/env";
 import { fetchXixiccJobs, toJobRow } from "../src/lib/ingestion/xixicc";
+import { syncJobEmbeddings } from "../src/lib/vector-sync";
 
 loadEnvConfig(process.cwd());
 
@@ -38,7 +39,13 @@ async function main() {
     if (error) throw error;
     upserted += data?.length ?? 0;
   }
-  console.log(JSON.stringify({ fetched: jobs.length, upserted }, null, 2));
+  let embeddings = { attempted: 0, updated: 0 };
+  try {
+    embeddings = await syncJobEmbeddings(supabase, jobs);
+  } catch (error) {
+    console.error("Embedding sync failed; jobs were still saved:", error);
+  }
+  console.log(JSON.stringify({ fetched: jobs.length, upserted, embeddings }, null, 2));
 }
 
 main().catch((error) => {

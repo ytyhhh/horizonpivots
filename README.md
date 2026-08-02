@@ -8,7 +8,7 @@
 
 - Next.js 16.2.11 Active LTS、React 19、TypeScript、Tailwind CSS v4
 - Supabase PostgreSQL、Auth、Storage、RLS、pgvector、pg_cron、pg_net
-- Firecrawl `@firecrawl/pdf-inspector`（本地 PDF 文本提取）、OpenAI Responses API、`gpt-5.6-luna`、`text-embedding-3-small`
+- Firecrawl `@firecrawl/pdf-inspector`（本地 PDF 文本提取）、OpenAI Responses API（现有结构化解析与推荐说明）、SiliconFlow `BAAI/bge-m3`（语义检索向量）
 - Vitest、Playwright
 
 ## 本地启动
@@ -34,10 +34,19 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 OPENAI_API_KEY=
+SILICONFLOW_API_KEY=
 CRON_SECRET=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY`、`OPENAI_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
+`SUPABASE_SERVICE_ROLE_KEY`、`OPENAI_API_KEY`、`SILICONFLOW_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
+
+向量使用 SiliconFlow 的 `BAAI/bge-m3`（1024 维）。应用 `202608030001_switch_to_bge_m3_embeddings.sql` 后，旧 OpenAI 向量会被安全清空；新入库岗位会按内容变动重建向量。已有岗位可通过下文的向量重建入口分批补齐。
+
+向量服务出错不会阻断岗位同步或画像保存；未生成的向量可使用以下受 `CRON_SECRET` 保护的入口重试。每次最多处理 48 个岗位和 12 个画像，重复调用直至返回的 `jobs.attempted` 为 `0`：
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://jobs.horizonpivots.com/api/cron/embed
+```
 
 ## 数据同步
 

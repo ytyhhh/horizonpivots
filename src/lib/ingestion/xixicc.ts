@@ -1,4 +1,5 @@
 import { rawXixiccJobsSchema } from "@/lib/schemas";
+import { embeddingContentHash, jobEmbeddingText } from "@/lib/embeddings";
 import { normalizeUrl, slugifyFingerprint } from "@/lib/utils";
 import type { Industry, Job } from "@/types";
 
@@ -105,6 +106,7 @@ export function dedupeJobsByFingerprint(jobs: Job[]) {
 }
 
 export function toJobRow(job: Job) {
+  const embeddingText = jobEmbeddingText(job);
   return {
     id: job.id,
     company: job.company,
@@ -128,5 +130,6 @@ export function toJobRow(job: Job) {
     status: job.status,
     fingerprint: job.fingerprint,
     cuhk_shenzhen_only: Boolean(job.cuhkShenzhenOnly),
+    embedding_content_hash: embeddingContentHash(embeddingText),
   };
 }

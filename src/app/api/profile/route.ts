@@ -1,6 +1,7 @@
 import { getCurrentUserId } from "@/lib/auth";
 import { candidateProfileSchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncProfileEmbedding } from "@/lib/vector-sync";
 
 function mapProfile(data: Record<string, unknown>) {
   return {
@@ -44,7 +45,8 @@ export async function PATCH(request: Request) {
   const userId = await getCurrentUserId();
   if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
   const profile = parsed.data;
-  const { data, error } = await createAdminClient()
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("candidate_profiles")
     .upsert(
       {
@@ -68,5 +70,14 @@ export async function PATCH(request: Request) {
     .select()
     .single();
   if (error) return Response.json({ message: error.message }, { status: 500 });
+  try {
+    await syncProfileEmbedding(admin, userId, {
+      ...profile,
+      userId,
+      version: profile.version + 1,
+    });
+  } catch (embeddingError) {
+    console.error("Profile embedding sync failed; profile remains saved:", embeddingError);
+  }
   return Response.json({ data: mapProfile(data) });
 }

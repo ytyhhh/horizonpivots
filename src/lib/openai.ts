@@ -4,6 +4,7 @@ import { z } from "zod";
 import { processPdf } from "@firecrawl/pdf-inspector";
 import { candidateProfileSchema } from "@/lib/schemas";
 import type { CandidateProfile } from "@/types";
+export { createEmbeddings } from "@/lib/embeddings";
 
 const extractionSchema = candidateProfileSchema.pick({
   graduationYear: true,
@@ -119,16 +120,6 @@ export async function extractResumeProfile(
     throw new Error("模型没有返回可用的结构化画像");
   }
   return extractionSchema.parse(response.output_parsed);
-}
-
-export async function createEmbeddings(inputs: string[]) {
-  if (!inputs.length) return [];
-  const response = await client().embeddings.create({
-    model: process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small",
-    input: inputs,
-    encoding_format: "float",
-  });
-  return response.data.map((item) => item.embedding);
 }
 
 export const explanationSchema = z.object({

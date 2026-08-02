@@ -2,6 +2,7 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { parseCuhkShenzhenJobs } from "@/lib/ingestion/cuhk-shenzhen";
 import { dedupeJobsByFingerprint, toJobRow } from "@/lib/ingestion/xixicc";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncJobEmbeddings } from "@/lib/vector-sync";
 
 function authorized(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -41,6 +42,11 @@ export async function POST(request: Request) {
         .select("id");
       if (error) throw error;
       updated += data?.length ?? 0;
+    }
+    try {
+      await syncJobEmbeddings(admin, jobs);
+    } catch (embeddingError) {
+      console.error("Job embedding sync failed; jobs remain available:", embeddingError);
     }
     await admin
       .from("sources")

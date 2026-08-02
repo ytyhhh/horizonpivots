@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/lib/auth";
 import { extractResumeProfile } from "@/lib/openai";
 import { resumeFileSchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncProfileEmbedding } from "@/lib/vector-sync";
 import { isConfigured } from "@/lib/utils";
 import type { CandidateProfile } from "@/types";
 
@@ -91,6 +92,11 @@ export async function POST(request: Request) {
       { onConflict: "user_id" },
     );
     if (profileError) throw profileError;
+    try {
+      await syncProfileEmbedding(admin, userId, profile);
+    } catch (embeddingError) {
+      console.error("Profile embedding sync failed; profile remains saved:", embeddingError);
+    }
     await admin
       .from("resume_parse_jobs")
       .update({ status: "succeeded", finished_at: new Date().toISOString() })
