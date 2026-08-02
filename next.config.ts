@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // pdf-inspector is a native N-API module and must be loaded with Node.js require.
+  serverExternalPackages: ["@firecrawl/pdf-inspector"],
   async headers() {
     return [
       {

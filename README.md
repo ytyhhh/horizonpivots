@@ -8,7 +8,7 @@
 
 - Next.js 16.2.11 Active LTS、React 19、TypeScript、Tailwind CSS v4
 - Supabase PostgreSQL、Auth、Storage、RLS、pgvector、pg_cron、pg_net
-- OpenAI Responses API、`gpt-5.6-luna`、`text-embedding-3-small`
+- Firecrawl `@firecrawl/pdf-inspector`（本地 PDF 文本提取）、OpenAI Responses API、`gpt-5.6-luna`、`text-embedding-3-small`
 - Vitest、Playwright
 
 ## 本地启动
@@ -84,6 +84,7 @@ gh run list --repo ytyhhh/hiring --workflow cuhksz-jobs.yml
 ## 简历隐私
 
 - 仅接受 PDF、DOCX，最大 5 MB。
+- 文本型 PDF 使用 `pdf-inspector` 在服务端本地转换为 Markdown；扫描件、图片型 PDF 或文字编码异常的 PDF 会提示改传 DOCX 或可复制文字的 PDF，不会自动调用 OCR。
 - 真实模式下文件先进入按用户隔离的私有 `resume-temp` 桶。
 - 模型请求设置 `store: false`，附件被视为不可信数据，不允许改变系统指令。
 - 原文件在成功或失败路径的 `finally` 中删除。

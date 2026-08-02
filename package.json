@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.6.4",
+    "@firecrawl/pdf-inspector": "^1.11.2",
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.111.0",

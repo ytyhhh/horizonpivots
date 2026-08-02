@@ -184,7 +184,7 @@ export function ProfileClient({
                 aria-hidden="true"
               />
               <p className="mt-4 font-semibold">选择或拖入简历</p>
-              <p className="mt-2 text-xs text-muted">PDF / DOCX，最大 5 MB</p>
+              <p className="mt-2 text-xs text-muted">PDF（需可复制文字）/ DOCX，最大 5 MB</p>
               <div className="mt-4 flex justify-center gap-2 text-subtle">
                 <FilePdf size={20} weight="duotone" aria-hidden="true" />
                 <FileDoc size={20} weight="duotone" aria-hidden="true" />
