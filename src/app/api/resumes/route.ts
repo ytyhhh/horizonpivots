@@ -103,6 +103,7 @@ export async function POST(request: Request) {
       .eq("id", parseJobId);
     return Response.json({ parseJobId, profile });
   } catch (error) {
+    console.error("Resume parsing failed:", error);
     await admin
       .from("resume_parse_jobs")
       .update({
@@ -111,7 +112,10 @@ export async function POST(request: Request) {
         finished_at: new Date().toISOString(),
       })
       .eq("id", parseJobId);
-    return Response.json({ message: "解析失败，请稍后重试" }, { status: 502 });
+    return Response.json({
+      parseJobId,
+      message: "解析失败，请检查硅基流动密钥、模型权限与账户余额后重试",
+    }, { status: 502 });
   } finally {
     await admin.storage.from("resume-temp").remove([storagePath]);
     await admin
