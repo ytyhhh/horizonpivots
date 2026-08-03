@@ -39,4 +39,18 @@ describe("CUHK-Shenzhen job ingestion", () => {
       }),
     ).toThrow("来源必须为港中深就业中心网站");
   });
+
+  it("uses an external application URL from the public description", () => {
+    const [job] = parseCuhkShenzhenJobs({
+      ...payload,
+      jobs: [
+        {
+          ...payload.jobs[0],
+          description: "工作内容描述\nhttps://mp.weixin.qq.com/s/a9ciLHOIWWFNJm4hsNNB7Q",
+        },
+      ],
+    });
+    expect(job.applyUrl).toBe("https://mp.weixin.qq.com/s/a9ciLHOIWWFNJm4hsNNB7Q");
+    expect(job.sourceUrl).toBe(payload.jobs[0].sourceUrl);
+  });
 });

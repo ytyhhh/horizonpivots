@@ -71,6 +71,7 @@ export const cuhkShenzhenIngestJobSchema = z.object({
   summary: z.string().trim().max(500).default(""),
   description: z.string().trim().max(12_000).default(""),
   deadline: z.string().date().nullable().optional(),
+  applyUrl: z.string().url().nullable().optional(),
   sourceUrl: z
     .string()
     .url()

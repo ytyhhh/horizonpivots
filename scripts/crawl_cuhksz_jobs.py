@@ -10,7 +10,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from scrapling.fetchers import Fetcher
@@ -20,6 +20,7 @@ ORIGIN = "https://career.cuhk.edu.cn"
 MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "3")), 3))
 DETAIL_WORKERS = max(1, min(int(os.getenv("CUHKSZ_DETAIL_WORKERS", "4")), 4))
 DETAIL_BATCH_SIZE = 25
+TRAILING_URL_PUNCTUATION = ".,;:!?，。；：！？)]}）】》〉\"”'’"
 
 
 def clean(value: str | None) -> str:
@@ -37,18 +38,44 @@ def fetch_page(page_number: int):
     return Fetcher.get(url, impersonate="chrome", stealthy_headers=True)
 
 
-def fetch_description(source_url: str) -> str:
-    """Return the public job description as plain text, never as mirrored HTML."""
+def external_http_url(value: str, source_url: str) -> str | None:
+    """Only accept a public, non-campus http(s) URL as an application target."""
+    candidate = urljoin(source_url, value.strip()).rstrip(TRAILING_URL_PUNCTUATION)
+    try:
+        parsed = urlparse(candidate)
+    except ValueError:
+        return None
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    if parsed.hostname == "career.cuhk.edu.cn":
+        return None
+    return candidate
+
+
+def extract_apply_url(section, source_url: str) -> str | None:
+    """Prefer a real anchor href, then recognize an external URL written as text."""
+    candidates = section.css("a::attr(href)").getall()
+    candidates.extend(re.findall(r"https?://[^\s<>'\"]+", " ".join(section.css("::text").getall())))
+    for candidate in candidates:
+        url = external_http_url(candidate, source_url)
+        if url:
+            return url
+    return None
+
+
+def fetch_description(source_url: str) -> tuple[str, str | None]:
+    """Return plain-text description and an optional external application URL."""
     try:
         page = Fetcher.get(source_url, impersonate="chrome", stealthy_headers=True)
         for section in page.css(".article .mb20"):
             heading = clean(" ".join(section.css("h3.subart_h3::text").getall()))
             if "工作内容描述" not in heading:
                 continue
-            return clean(" ".join(section.css("h3.subart_h3 + div ::text").getall()))[:12_000]
+            description = clean(" ".join(section.css("h3.subart_h3 + div ::text").getall()))[:12_000]
+            return description, extract_apply_url(section, source_url)
     except Exception as error:
         print(f"Description fetch failed for {source_url}: {error}", file=sys.stderr)
-    return ""
+    return "", None
 
 
 def extract_jobs(page):
@@ -113,7 +140,7 @@ def enrich_descriptions(jobs: list[dict]) -> list[dict]:
         }
         for future in as_completed(pending):
             job = pending[future]
-            job["description"] = future.result()
+            job["description"], job["applyUrl"] = future.result()
             completed.append(job)
             if len(completed) == DETAIL_BATCH_SIZE:
                 results.append(post_jobs(completed))
