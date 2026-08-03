@@ -51,9 +51,10 @@ async function loadProfile() {
 export default async function ProfilePage() {
   const { profile, demoMode } = await loadProfile();
   return (
-    <div className="page-shell py-10 sm:py-14">
+    <div className="page-shell pb-12 pt-7 sm:pt-10">
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+        <p className="eyebrow">Private profile</p>
+        <h1 className="utility-title mt-5">
           让岗位先理解你的经历
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted sm:text-base">

@@ -122,11 +122,36 @@ export function ProfileClient({
     setMessage("结构化画像已从当前页面清除。");
   }
 
+  const steps = [
+    { label: "上传", active: true },
+    {
+      label: "解析",
+      active:
+        profile.confirmed || uploadState === "uploading" || uploadState === "success",
+    },
+    { label: "确认", active: uploadState === "success" || profile.confirmed },
+    { label: "用于推荐", active: profile.confirmed },
+  ];
+
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[.8fr_1.2fr]">
-      <section className="rounded-2xl border bg-surface p-5 sm:p-6">
+    <>
+      <ol className="mb-6 grid grid-cols-4 overflow-hidden rounded-[1rem] bg-surface" aria-label="简历画像流程">
+        {steps.map((step, index) => (
+          <li key={step.label} className="relative flex min-h-16 items-center gap-3 px-3 sm:px-5">
+            {index ? <span className="absolute left-0 top-1/2 hidden h-6 w-px -translate-y-1/2 bg-border sm:block" /> : null}
+            <span className={`grid size-6 shrink-0 place-items-center rounded-full font-mono text-[10px] ${step.active ? "bg-accent text-white" : "bg-surface-muted text-subtle"}`}>
+              {index + 1}
+            </span>
+            <span className={`hidden text-xs font-semibold sm:block ${step.active ? "text-foreground" : "text-subtle"}`}>{step.label}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="grid items-start gap-5 lg:grid-cols-[.78fr_1.22fr]">
+      <section className="panel-shell">
+        <div className="panel-core p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-accent-soft text-accent">
+          <span className="grid size-10 place-items-center rounded-full bg-accent-soft text-accent">
             <ShieldCheck size={22} weight="duotone" aria-hidden="true" />
           </span>
           <div>
@@ -158,14 +183,14 @@ export function ProfileClient({
             setDragging(false);
             submitFile(event.dataTransfer.files[0]);
           }}
-          className={`mt-6 grid min-h-56 w-full place-items-center rounded-2xl border border-dashed p-6 text-center ${
+          className={`mt-6 grid min-h-60 w-full place-items-center rounded-[1rem] border border-dashed p-6 text-center ${
             dragging
               ? "border-accent bg-accent-soft"
               : "bg-background hover:border-accent"
           }`}
         >
           {uploadState === "uploading" ? (
-            <div>
+            <div data-reveal>
               <SpinnerGap
                 size={34}
                 weight="bold"
@@ -196,7 +221,7 @@ export function ProfileClient({
         {message ? (
           <div
             role={uploadState === "error" ? "alert" : "status"}
-            className={`mt-4 flex gap-2 rounded-xl p-3 text-xs leading-5 ${
+            className={`mt-4 flex gap-2 rounded-[0.85rem] p-3 text-xs leading-5 ${
               uploadState === "error"
                 ? "bg-danger-soft text-danger"
                 : "bg-accent-soft text-accent"
@@ -210,9 +235,11 @@ export function ProfileClient({
             {message}
           </div>
         ) : null}
+        </div>
       </section>
 
-      <section className="rounded-2xl border bg-surface p-5 sm:p-7">
+      <section className="panel-shell">
+        <div className="panel-core p-5 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold tracking-[-0.03em]">求职画像</h2>
@@ -223,7 +250,7 @@ export function ProfileClient({
           <button
             type="button"
             onClick={clearProfile}
-            className="grid size-10 place-items-center rounded-xl border text-muted hover:border-danger hover:text-danger"
+            className="grid size-10 place-items-center rounded-full border border-border/75 text-muted hover:border-danger hover:text-danger"
             aria-label="清除画像"
           >
             <Trash size={18} weight="bold" aria-hidden="true" />
@@ -244,7 +271,7 @@ export function ProfileClient({
                     : null,
                 })
               }
-              className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm"
+              className="mt-2 h-11 w-full rounded-[0.8rem] border border-border/75 bg-background px-3 text-sm"
             />
           </label>
           <label>
@@ -254,7 +281,7 @@ export function ProfileClient({
               onChange={(event) =>
                 setProfile({ ...profile, education: event.target.value })
               }
-              className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm"
+              className="mt-2 h-11 w-full rounded-[0.8rem] border border-border/75 bg-background px-3 text-sm"
             />
           </label>
           <label className="sm:col-span-2">
@@ -264,7 +291,7 @@ export function ProfileClient({
               onChange={(event) =>
                 setProfile({ ...profile, major: event.target.value })
               }
-              className="mt-2 h-11 w-full rounded-xl border bg-background px-3 text-sm"
+              className="mt-2 h-11 w-full rounded-[0.8rem] border border-border/75 bg-background px-3 text-sm"
             />
           </label>
         </div>
@@ -278,7 +305,7 @@ export function ProfileClient({
           {profile.experiences.length ? (
             <ul className="grid gap-2 text-sm leading-6 text-muted">
               {profile.experiences.map((item) => (
-                <li key={item} className="rounded-xl bg-surface-muted px-4 py-3">
+                <li key={item} className="rounded-[0.8rem] bg-surface-muted px-4 py-3">
                   {item}
                 </li>
               ))}
@@ -291,11 +318,13 @@ export function ProfileClient({
         <button
           type="button"
           onClick={saveProfile}
-          className="tactile mt-7 h-11 w-full rounded-xl bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-strong"
+          className="tactile mt-7 h-12 w-full rounded-full bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-strong"
         >
           确认并用于推荐
         </button>
+        </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

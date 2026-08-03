@@ -21,7 +21,7 @@ export function SavedJobsClient({ jobs }: { jobs: Job[] }) {
         <div className="mt-5 text-center">
           <Link
             href="/jobs"
-            className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white"
+            className="button-primary !px-5"
           >
             <BookmarkSimple size={18} weight="bold" />
             去发现岗位
@@ -32,7 +32,7 @@ export function SavedJobsClient({ jobs }: { jobs: Job[] }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 md:grid-cols-2">
       {saved.map((job) => (
         <JobCard key={job.id} job={job} />
       ))}

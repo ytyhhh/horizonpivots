@@ -37,8 +37,8 @@ export function SaveButton({
       aria-pressed={saved}
       aria-label={saved ? "取消收藏岗位" : "收藏岗位"}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl border bg-surface font-semibold text-muted hover:border-border-strong hover:text-foreground",
-        compact ? "size-10" : "h-11 px-4 text-sm",
+        "inline-flex items-center justify-center gap-2 border border-border/75 bg-surface font-semibold text-muted hover:border-accent/45 hover:text-foreground",
+        compact ? "size-10 rounded-full" : "h-11 rounded-full px-4 text-sm",
       )}
     >
       <BookmarkSimple

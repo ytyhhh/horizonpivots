@@ -24,9 +24,10 @@ export default async function JobsPage({
   });
 
   return (
-    <div className="page-shell py-10 sm:py-14">
+    <div className="page-shell pb-10 pt-7 sm:pb-14 sm:pt-10">
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+        <p className="eyebrow">Opportunity index</p>
+        <h1 className="utility-title mt-5">
           找到值得投递的岗位
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted sm:text-base">

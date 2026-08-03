@@ -12,14 +12,14 @@ export function SectionHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-7">
+    <div className="mb-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-balance text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">
+          <h2 className="section-title">
             {title}
           </h2>
           {description ? (
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted sm:text-base">
               {description}
             </p>
           ) : null}
@@ -43,12 +43,19 @@ export function ArrowLink({
     <a
       href={href}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg text-sm font-semibold text-accent hover:text-accent-strong",
+        "group inline-flex items-center gap-2 rounded-full text-sm font-semibold text-accent hover:text-accent-strong",
         className,
       )}
     >
       {children}
-      <ArrowRight size={16} weight="bold" aria-hidden="true" />
+      <span className="grid size-8 place-items-center rounded-full bg-accent-soft">
+        <ArrowRight
+          size={14}
+          weight="bold"
+          className="transition-transform duration-500 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </span>
     </a>
   );
 }
@@ -61,13 +68,15 @@ export function EmptyState({
   description?: string;
 }) {
   return (
-    <div className="grid min-h-72 place-items-center rounded-2xl border border-dashed bg-surface p-8 text-center">
+    <div className="panel-shell">
+      <div className="panel-core grid min-h-72 place-items-center p-8 text-center">
       <div>
-        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-surface-muted text-muted">
+        <span className="mx-auto grid size-12 place-items-center rounded-full bg-surface-muted text-muted">
           <MagnifyingGlass size={24} weight="duotone" aria-hidden="true" />
         </span>
         <h3 className="mt-4 font-semibold">{title}</h3>
         <p className="mt-2 max-w-sm text-sm leading-6 text-muted">{description}</p>
+      </div>
       </div>
     </div>
   );

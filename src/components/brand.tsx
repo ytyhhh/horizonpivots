@@ -9,8 +9,8 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       className="group inline-flex items-center gap-2.5 rounded-lg text-foreground"
       aria-label="校招雷达首页"
     >
-      <span className="grid size-9 place-items-center rounded-xl bg-accent text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25)]">
-        <Broadcast size={21} weight="duotone" aria-hidden="true" />
+      <span className="brand-mark">
+        <Broadcast size={19} weight="duotone" aria-hidden="true" />
       </span>
       <span
         className={cn(

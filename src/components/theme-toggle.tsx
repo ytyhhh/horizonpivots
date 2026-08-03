@@ -16,7 +16,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="grid size-10 place-items-center rounded-xl border bg-surface text-muted hover:border-border-strong hover:text-foreground"
+      className="icon-button"
       aria-label="切换明暗主题"
     >
       <Sun size={18} weight="bold" className="theme-icon-sun" aria-hidden="true" />

@@ -123,6 +123,20 @@ export function JobsExplorer({
     location !== "全部地点" ||
     cuhkShenzhenOnly;
 
+  const activeFilters = [
+    query ? { label: `关键词：${query}`, clear: () => setQuery("") } : null,
+    type !== "全部" ? { label: type, clear: () => setType("全部") } : null,
+    industry !== "全部行业"
+      ? { label: industry, clear: () => setIndustry("全部行业") }
+      : null,
+    location !== "全部地点"
+      ? { label: location, clear: () => setLocation("全部地点") }
+      : null,
+    cuhkShenzhenOnly
+      ? { label: "港中深专属", clear: () => setCuhkShenzhenOnly(false) }
+      : null,
+  ].filter((item): item is { label: string; clear: () => void } => Boolean(item));
+
   function reset() {
     setQuery("");
     setType("全部");
@@ -133,7 +147,7 @@ export function JobsExplorer({
 
   return (
     <div>
-      <section aria-label="岗位筛选" className="rounded-2xl border bg-surface p-4">
+      <section aria-label="岗位筛选" className="sticky top-[4.75rem] z-20 rounded-[1.15rem] border border-border/75 bg-surface/94 p-3 shadow-[0_12px_40px_rgba(20,35,24,.07)] backdrop-blur-xl sm:p-4">
         <div className="relative">
           <MagnifyingGlass
             size={20}
@@ -149,17 +163,17 @@ export function JobsExplorer({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="搜索公司、岗位或技能"
-            className="h-12 w-full rounded-xl border bg-background pl-12 pr-4 text-sm text-foreground placeholder:text-subtle hover:border-border-strong focus:border-accent"
+            className="h-11 w-full rounded-[0.85rem] border border-border/75 bg-background pl-11 pr-4 text-sm text-foreground placeholder:text-subtle hover:border-border-strong focus:border-accent"
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <div className="flex rounded-xl bg-surface-muted p-1">
+          <div className="flex rounded-[0.8rem] bg-surface-muted p-1">
             {types.map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setType(item)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                className={`rounded-[0.6rem] px-3 py-1.5 text-xs font-semibold ${
                   type === item
                     ? "bg-surface text-foreground shadow-sm"
                     : "text-muted hover:text-foreground"
@@ -174,7 +188,7 @@ export function JobsExplorer({
             <select
               value={industry}
               onChange={(event) => setIndustry(event.target.value)}
-              className="h-9 appearance-none rounded-xl border bg-surface px-3 pr-8 text-xs font-semibold text-muted hover:border-border-strong"
+              className="filter-control h-9 appearance-none px-3 pr-8"
             >
               {industries.map((item) => (
                 <option key={item}>{item}</option>
@@ -191,7 +205,7 @@ export function JobsExplorer({
             <select
               value={location}
               onChange={(event) => setLocation(event.target.value)}
-              className="h-9 rounded-xl border bg-surface px-3 text-xs font-semibold text-muted hover:border-border-strong"
+              className="filter-control h-9 px-3"
             >
               {locations.map((item) => (
                 <option key={item}>{item}</option>
@@ -203,7 +217,7 @@ export function JobsExplorer({
               type="button"
               onClick={() => setCuhkShenzhenOnly((current) => !current)}
               aria-pressed={cuhkShenzhenOnly}
-              className={`h-9 rounded-xl border px-3 text-xs font-semibold transition-colors ${
+              className={`h-9 rounded-[0.8rem] border px-3 text-xs font-semibold transition-colors ${
                 cuhkShenzhenOnly
                   ? "border-accent bg-accent text-white"
                   : "bg-surface text-muted hover:border-border-strong hover:text-foreground"
@@ -216,24 +230,40 @@ export function JobsExplorer({
             <button
               type="button"
               onClick={reset}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold text-muted hover:bg-surface-muted hover:text-foreground"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[0.8rem] px-3 text-xs font-semibold text-muted hover:bg-surface-muted hover:text-foreground"
             >
               <X size={14} weight="bold" aria-hidden="true" />
               清除筛选
             </button>
           ) : null}
         </div>
+        {activeFilters.length ? (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-3">
+            <span className="mr-1 text-[10px] font-medium text-subtle">已选择</span>
+            {activeFilters.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.clear}
+                className="inline-flex items-center gap-1 rounded-md bg-accent-soft px-2 py-1 text-[10px] font-semibold text-accent hover:bg-surface-strong"
+              >
+                {item.label}
+                <X size={11} weight="bold" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <div className="mt-5 flex items-center justify-between text-sm">
-        <p className="text-muted">
+        <p className="text-xs text-muted sm:text-sm">
           找到 <strong className="font-semibold text-foreground">{total}</strong> 个岗位
         </p>
         <p className="hidden text-xs text-subtle sm:block">按最新收录排序</p>
       </div>
 
       {jobs.length ? (
-        <div className="mt-4 grid items-start gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <div className="mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,.82fr)_minmax(0,1.18fr)]">
           <div className="grid gap-3">
             {jobs.map((job) => (
               <div
@@ -254,7 +284,7 @@ export function JobsExplorer({
             ))}
           </div>
           {selected ? (
-            <div className="sticky top-24 hidden lg:block">
+            <div className="sticky top-[10.6rem] hidden lg:block">
               <JobDetailPanel job={selected} />
             </div>
           ) : null}
@@ -270,7 +300,7 @@ export function JobsExplorer({
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border bg-surface px-5 text-sm font-semibold text-muted hover:border-border-strong hover:text-foreground disabled:opacity-55"
+            className="button-secondary !min-h-11 !px-5 disabled:opacity-55"
           >
             {loadingMore ? <SpinnerGap size={18} className="animate-spin" /> : null}
             {loadingMore ? "正在加载" : `加载更多（已显示 ${jobs.length} / ${total}）`}

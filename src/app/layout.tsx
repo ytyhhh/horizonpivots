@@ -5,6 +5,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
+import { MotionRuntime } from "@/components/motion-runtime";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
@@ -44,6 +45,7 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-[100dvh] flex-col">
         <ClerkProvider>
+          <MotionRuntime />
           <a
             href="#main-content"
             className="fixed left-3 top-3 -translate-y-24 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white focus:translate-y-0"

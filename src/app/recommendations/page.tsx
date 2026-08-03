@@ -54,10 +54,11 @@ export default async function RecommendationsPage() {
   const recommendations = recommendJobs(profileResult.profile, jobs);
 
   return (
-    <div className="page-shell py-10 sm:py-14">
+    <div className="page-shell pb-12 pt-7 sm:pt-10">
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="max-w-2xl">
-          <h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+          <p className="eyebrow">Personal signal</p>
+          <h1 className="utility-title mt-5">
             更适合你的机会
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted sm:text-base">
@@ -66,7 +67,7 @@ export default async function RecommendationsPage() {
         </div>
         <Link
           href="/profile"
-          className="inline-flex h-11 items-center gap-2 rounded-xl border bg-surface px-4 text-sm font-semibold text-muted hover:border-border-strong hover:text-foreground"
+          className="button-secondary !min-h-11 !px-4"
         >
           <SlidersHorizontal size={18} weight="bold" aria-hidden="true" />
           调整画像
@@ -74,7 +75,7 @@ export default async function RecommendationsPage() {
       </div>
 
       {profileResult.demoMode ? (
-        <div className="mt-7 flex gap-3 rounded-2xl border bg-accent-soft p-4 text-sm text-accent">
+        <div className="mt-7 flex gap-3 rounded-[1rem] bg-accent-soft p-4 text-sm text-accent">
           <Info size={20} weight="fill" className="shrink-0" aria-hidden="true" />
           <p className="leading-6">
             当前展示计算机专业学生的示例推荐。登录并确认简历画像后会替换为你的结果。
@@ -82,17 +83,18 @@ export default async function RecommendationsPage() {
         </div>
       ) : null}
 
-      <div className="mt-10 grid gap-12">
+      <div className="mt-12 grid gap-14">
         {tiers.map((tier) => {
           const items = recommendations.filter((item) => item.tier === tier).slice(0, 4);
           if (!items.length) return null;
           return (
-            <section key={tier}>
-              <div className="mb-5 flex items-baseline gap-3">
+            <section key={tier} data-reveal>
+              <div className="mb-5 flex items-center gap-4 border-b border-border/70 pb-4">
+                <span className="size-2 rounded-full bg-accent" />
                 <h2 className="text-xl font-semibold tracking-[-0.03em]">{tier}</h2>
-                <span className="font-mono text-xs text-subtle">{items.length}</span>
+                <span className="font-mono text-[10px] text-subtle">0{items.length}</span>
               </div>
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-3 lg:grid-cols-2">
                 {items.map((recommendation) => (
                   <RecommendationCard
                     key={recommendation.job.id}

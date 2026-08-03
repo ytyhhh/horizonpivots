@@ -40,10 +40,10 @@ export default async function JobPage({
     .slice(0, 3);
 
   return (
-    <div className="page-shell py-8 sm:py-12">
+    <div className="page-shell pb-12 pt-6 sm:pt-9">
       <Link
         href="/jobs"
-        className="mb-6 inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-muted hover:text-foreground"
+        className="mb-6 inline-flex items-center gap-2 rounded-full text-sm font-semibold text-muted hover:text-foreground"
       >
         <ArrowLeft size={17} weight="bold" aria-hidden="true" />
         返回岗位库
@@ -53,7 +53,7 @@ export default async function JobPage({
       </div>
 
       {similar.length ? (
-        <section className="mt-16">
+        <section data-reveal className="mt-18">
           <SectionHeading title="相似岗位" />
           <div className="grid gap-4 md:grid-cols-3">
             {similar.map((item) => (
