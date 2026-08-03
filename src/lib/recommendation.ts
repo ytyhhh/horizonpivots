@@ -42,7 +42,13 @@ function scoreSkills(profile: CandidateProfile, job: Job) {
   return clamp(matched / job.skills.length);
 }
 
-function scoreSemantic(profile: CandidateProfile, job: Job) {
+function scoreSemantic(
+  profile: CandidateProfile,
+  job: Job,
+  vectorSimilarities?: ReadonlyMap<string, number>,
+) {
+  const vectorSimilarity = vectorSimilarities?.get(job.id);
+  if (vectorSimilarity !== undefined) return clamp(vectorSimilarity);
   const terms = [
     ...profile.skills,
     ...profile.preferredRoles,
@@ -117,12 +123,13 @@ export function recommendJobs(
   profile: CandidateProfile,
   jobs: Job[],
   now = new Date("2026-07-30T12:00:00+08:00"),
+  vectorSimilarities?: ReadonlyMap<string, number>,
 ): Recommendation[] {
   return jobs
     .filter((job) => isEligible(profile, job, now))
     .map((job) => {
       const scores: RecommendationScores = {
-        semantic: scoreSemantic(profile, job),
+        semantic: scoreSemantic(profile, job, vectorSimilarities),
         skills: scoreSkills(profile, job),
         preference: scorePreference(profile, job),
         freshness: scoreFreshness(job, now),

@@ -38,4 +38,17 @@ describe("recommendation ranking", () => {
     const total = 0.5 + 0.25 + 0.1 + 0.1 + 0.05;
     expect(total).toBe(1);
   });
+
+  it("uses pgvector similarity when it is available for a job", () => {
+    const jobs = demoJobs.slice(0, 2);
+    const similarities = new Map([
+      [jobs[0].id, 0.05],
+      [jobs[1].id, 0.95],
+    ]);
+    const recommendations = recommendJobs(demoProfile, jobs, now, similarities);
+    const first = recommendations.find((item) => item.job.id === jobs[0].id);
+    const second = recommendations.find((item) => item.job.id === jobs[1].id);
+    expect(first?.scores.semantic).toBe(0.05);
+    expect(second?.scores.semantic).toBe(0.95);
+  });
 });

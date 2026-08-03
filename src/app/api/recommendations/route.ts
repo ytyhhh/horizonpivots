@@ -5,13 +5,44 @@ import { recommendJobs } from "@/lib/recommendation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { CandidateProfile } from "@/types";
 
+function serializeVector(value: unknown) {
+  if (typeof value === "string" && value.startsWith("[")) return value;
+  if (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => typeof item === "number" && Number.isFinite(item))
+  ) {
+    return `[${value.join(",")}]`;
+  }
+  return null;
+}
+
+async function getVectorSimilarities(admin: ReturnType<typeof createAdminClient>, embedding: unknown) {
+  const vector = serializeVector(embedding);
+  if (!vector) return new Map<string, number>();
+  const { data, error } = await admin.rpc("match_jobs", {
+    query_embedding: vector,
+    match_count: 100,
+  });
+  if (error) {
+    console.error("Vector recommendation lookup failed; using keyword fallback:", error.message);
+    return new Map<string, number>();
+  }
+  return new Map(
+    (data ?? [])
+      .map((row) => [String(row.job_id), Number(row.similarity)] as const)
+      .filter(([, similarity]) => Number.isFinite(similarity)),
+  );
+}
+
 export async function GET() {
   let profile = demoProfile;
   let demo = true;
 
   const userId = await getCurrentUserId();
   if (!userId) return Response.json({ message: "请先登录" }, { status: 401 });
-  const { data } = await createAdminClient()
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("candidate_profiles")
     .select("*")
     .eq("user_id", userId)
@@ -36,9 +67,11 @@ export async function GET() {
   }
 
   const jobs = await getJobs({});
+  const vectorSimilarities = await getVectorSimilarities(admin, data?.embedding);
   return Response.json({
-    data: recommendJobs(profile, jobs),
+    data: recommendJobs(profile, jobs, undefined, vectorSimilarities),
     profileVersion: profile.version,
     demo,
+    semanticMode: vectorSimilarities.size ? "vector" : "keyword-fallback",
   });
 }
