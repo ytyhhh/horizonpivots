@@ -5,6 +5,11 @@ import { recommendJobs } from "@/lib/recommendation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { CandidateProfile } from "@/types";
 
+type MatchJobRow = {
+  job_id: string;
+  similarity: number | string;
+};
+
 function serializeVector(value: unknown) {
   if (typeof value === "string" && value.startsWith("[")) return value;
   if (
@@ -28,8 +33,9 @@ async function getVectorSimilarities(admin: ReturnType<typeof createAdminClient>
     console.error("Vector recommendation lookup failed; using keyword fallback:", error.message);
     return new Map<string, number>();
   }
+  const rows = (data ?? []) as MatchJobRow[];
   return new Map(
-    (data ?? [])
+    rows
       .map((row) => [String(row.job_id), Number(row.similarity)] as const)
       .filter(([, similarity]) => Number.isFinite(similarity)),
   );
