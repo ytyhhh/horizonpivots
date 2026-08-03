@@ -66,10 +66,11 @@ export async function PATCH(request: Request) {
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" },
-    )
+  )
     .select()
     .single();
   if (error) return Response.json({ message: error.message }, { status: 500 });
+  await admin.from("recommendation_cache").delete().eq("user_id", userId);
   try {
     await syncProfileEmbedding(admin, userId, {
       ...profile,

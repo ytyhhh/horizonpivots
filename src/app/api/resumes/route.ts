@@ -92,6 +92,7 @@ export async function POST(request: Request) {
       { onConflict: "user_id" },
     );
     if (profileError) throw profileError;
+    await admin.from("recommendation_cache").delete().eq("user_id", userId);
     try {
       await syncProfileEmbedding(admin, userId, profile);
     } catch (embeddingError) {

@@ -42,6 +42,8 @@ export interface Job {
   sourceConfidence: SourceConfidence;
   firstSeen: string;
   lastSeen: string;
+  /** 数据库记录更新时间，仅用于推荐缓存失效。 */
+  updatedAt?: string | null;
   status: JobStatus;
   fingerprint: string;
   /** 仅面向已验证的港中深学校邮箱账号展示。 */

@@ -86,6 +86,7 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
     sourceConfidence: row.source_confidence as Job["sourceConfidence"],
     firstSeen: String(row.first_seen),
     lastSeen: String(row.last_seen),
+    updatedAt: (row.updated_at as string | null) ?? null,
     status: row.status as Job["status"],
     fingerprint: String(row.fingerprint),
     cuhkShenzhenOnly,
