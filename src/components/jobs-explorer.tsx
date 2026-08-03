@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui";
 import { JobCard, JobDetailPanel } from "@/components/job-card";
 import type { Job } from "@/types";
 
-const types = ["全部", "秋招", "实习"] as const;
+const types = ["全部", "秋招", "春招", "实习"] as const;
 
 interface JobsExplorerProps {
   initialJobs: Job[];

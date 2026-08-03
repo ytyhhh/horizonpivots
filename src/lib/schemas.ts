@@ -3,7 +3,7 @@ import { INDUSTRIES } from "@/types";
 
 export const jobQuerySchema = z.object({
   query: z.string().trim().max(100).default(""),
-  type: z.enum(["秋招", "实习"]).optional(),
+  type: z.enum(["秋招", "春招", "实习"]).optional(),
   industry: z.enum(INDUSTRIES).optional(),
   location: z.string().trim().max(30).optional(),
   cohort: z.string().trim().max(20).optional(),
@@ -65,7 +65,7 @@ export const cuhkShenzhenIngestJobSchema = z.object({
   id: z.string().trim().min(1).max(160),
   company: z.string().trim().min(1).max(120),
   title: z.string().trim().min(1).max(180),
-  type: z.enum(["秋招", "实习"]),
+  type: z.enum(["秋招", "春招", "实习"]),
   locations: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
   cohort: z.string().trim().min(1).max(30).default("不限"),
   summary: z.string().trim().max(500).default(""),

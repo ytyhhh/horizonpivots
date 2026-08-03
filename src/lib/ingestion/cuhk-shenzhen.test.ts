@@ -53,4 +53,12 @@ describe("CUHK-Shenzhen job ingestion", () => {
     expect(job.applyUrl).toBe("https://mp.weixin.qq.com/s/a9ciLHOIWWFNJm4hsNNB7Q");
     expect(job.sourceUrl).toBe(payload.jobs[0].sourceUrl);
   });
+
+  it("keeps spring recruitment as a distinct job type", () => {
+    const [job] = parseCuhkShenzhenJobs({
+      ...payload,
+      jobs: [{ ...payload.jobs[0], type: "春招" }],
+    });
+    expect(job.type).toBe("春招");
+  });
 });

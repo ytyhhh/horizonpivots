@@ -16,7 +16,7 @@ export const INDUSTRIES = [
 ] as const;
 
 export type Industry = (typeof INDUSTRIES)[number];
-export type JobType = "秋招" | "实习";
+export type JobType = "秋招" | "春招" | "实习";
 export type JobStatus = "active" | "stale" | "archived" | "review";
 export type SourceConfidence = "官方" | "已核验" | "社区线索";
 export type RecommendationTier = "高匹配" | "值得尝试" | "拓展机会";

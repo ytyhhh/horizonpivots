@@ -1,5 +1,6 @@
 import { demoJobs } from "@/data/demo-jobs";
 import { canViewCuhkShenzhenJobs } from "@/lib/auth";
+import { externalApplyUrl } from "@/lib/ingestion/cuhk-shenzhen";
 import { jobQuerySchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { daysUntil, isConfigured, isExpired, toJobSearchText } from "@/lib/utils";
@@ -59,6 +60,9 @@ function withCuhkShenzhenJobs(jobs: Job[], canViewCuhkShenzhenOnly: boolean) {
 }
 
 function mapDatabaseJob(row: Record<string, unknown>): Job {
+  const sourceUrl = String(row.source_url);
+  const description = String(row.description ?? "");
+  const cuhkShenzhenOnly = Boolean(row.cuhk_shenzhen_only);
   return {
     id: String(row.id),
     company: String(row.company),
@@ -71,17 +75,20 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
     cohort: String(row.cohort),
     skills: (row.skills as string[]) ?? [],
     summary: String(row.summary ?? ""),
-    description: String(row.description ?? ""),
+    description,
     deadline: (row.deadline as string | null) ?? null,
-    applyUrl: (row.apply_url as string | null) ?? null,
-    sourceUrl: String(row.source_url),
+    applyUrl:
+      (cuhkShenzhenOnly ? externalApplyUrl(description, sourceUrl) : null) ??
+      (row.apply_url as string | null) ??
+      null,
+    sourceUrl,
     sourceName: String(row.source_name),
     sourceConfidence: row.source_confidence as Job["sourceConfidence"],
     firstSeen: String(row.first_seen),
     lastSeen: String(row.last_seen),
     status: row.status as Job["status"],
     fingerprint: String(row.fingerprint),
-    cuhkShenzhenOnly: Boolean(row.cuhk_shenzhen_only),
+    cuhkShenzhenOnly,
   };
 }
 

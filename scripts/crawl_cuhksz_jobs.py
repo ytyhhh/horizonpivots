@@ -99,7 +99,13 @@ def extract_jobs(page):
                 "id": re.search(r"/id/(\d+)", href).group(1),
                 "company": company,
                 "title": title,
-                "type": "实习" if "实习" in f"{title} {text}" else "秋招",
+                "type": (
+                    "实习"
+                    if "实习" in f"{title} {text}"
+                    else "春招"
+                    if re.search(r"春招|春季", f"{title} {text}")
+                    else "秋招"
+                ),
                 "locations": locations,
                 "cohort": "2027届" if "2027" in f"{title} {text}" else "不限",
                 "summary": f"{text}。".strip("。"),

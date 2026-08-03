@@ -6,7 +6,7 @@ const CUHK_SHENZHEN_SOURCE = "香港中文大学（深圳）职业规划与发�
 const EXTERNAL_HTTP_URL = /https?:\/\/[^\s<>'"`]+/gi;
 const TRAILING_URL_PUNCTUATION = /[.,;:!?，。；：！？)}\]）】》〉”’]+$/;
 
-function externalApplyUrl(description: string, sourceUrl: string) {
+export function externalApplyUrl(description: string, sourceUrl: string) {
   for (const rawUrl of description.match(EXTERNAL_HTTP_URL) ?? []) {
     const candidate = rawUrl.replace(TRAILING_URL_PUNCTUATION, "");
     try {

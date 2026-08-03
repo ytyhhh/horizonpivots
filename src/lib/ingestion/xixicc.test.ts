@@ -93,4 +93,26 @@ describe("xixicc2027 adapter", () => {
     expect(uniqueJobs).toHaveLength(1);
     expect(uniqueJobs[0].lastSeen).toBe("2026-07-31");
   });
+
+  it("classifies spring recruiting independently from autumn recruiting", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              company: "示例科技",
+              batch: "2027 春招",
+              industry: "互联网",
+              positions: ["后端开发工程师"],
+              locations: ["深圳"],
+              apply_url: "https://example.com/apply",
+            },
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    );
+    await expect(fetchXixiccJobs()).resolves.toMatchObject([{ type: "春招" }]);
+  });
 });

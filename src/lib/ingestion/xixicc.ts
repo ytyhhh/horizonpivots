@@ -39,7 +39,11 @@ export async function fetchXixiccJobs() {
       : [item.program || `${item.batch || "校招"}岗位`];
     return positions.map((title, index) => {
       const applyUrl = normalizeUrl(item.apply_url);
-      const type = item.batch?.includes("实习") ? "实习" : "秋招";
+      const type = item.batch?.includes("实习")
+        ? "实习"
+        : /春招|春季/.test(item.batch ?? "")
+          ? "春招"
+          : "秋招";
       const industry = knownIndustries.has(item.industry as Industry)
         ? (item.industry as Industry)
         : "其他";
@@ -58,14 +62,15 @@ export async function fetchXixiccJobs() {
         title,
         program: item.program,
         type,
-        batch: item.batch || (type === "实习" ? "实习" : "正式批"),
+        batch:
+          item.batch || (type === "实习" ? "实习" : type === "春招" ? "春招" : "正式批"),
         industry,
         locations: item.locations,
         cohort: item.cohort || "不限",
         skills: [],
         summary: [
           item.program ? `${item.program}项目。` : "",
-          `${item.company}${type === "实习" ? "实习" : "校园招聘"}岗位，`,
+          `${item.company}${type === "实习" ? "实习" : type === "春招" ? "春季招聘" : "校园招聘"}岗位，`,
           item.locations.length
             ? `工作地点包括${item.locations.slice(0, 5).join("、")}。`
             : "工作地点待招聘方确认。",
