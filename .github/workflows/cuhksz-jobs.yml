@@ -22,7 +22,7 @@ jobs:
         env:
           CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
           CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
-          CUHKSZ_MAX_PAGES: "8"
+          CUHKSZ_MAX_PAGES: "3"
           CUHKSZ_DETAIL_WORKERS: "4"
           CUHKSZ_INGEST_BATCH_SIZE: "40"
           CUHKSZ_INGEST_RETRIES: "4"

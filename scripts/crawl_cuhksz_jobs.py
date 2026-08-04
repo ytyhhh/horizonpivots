@@ -19,7 +19,7 @@ from scrapling.fetchers import Fetcher
 
 BASE_URL = "https://career.cuhk.edu.cn/job/search/?domain=careercuhk"
 ORIGIN = "https://career.cuhk.edu.cn"
-MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "8")), 8))
+MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "3")), 3))
 DETAIL_WORKERS = max(1, min(int(os.getenv("CUHKSZ_DETAIL_WORKERS", "4")), 4))
 DETAIL_BATCH_SIZE = 25
 INGEST_BATCH_SIZE = max(1, min(int(os.getenv("CUHKSZ_INGEST_BATCH_SIZE", "40")), 50))
@@ -189,7 +189,7 @@ def enrich_descriptions(jobs: list[dict]) -> list[dict]:
 
     The base listings are posted before this function starts. Therefore an
     interrupted run can leave some descriptions blank, but can never discard
-    the eight pages of already discovered jobs.
+    the three pages of already discovered jobs.
     """
     results = []
     completed: list[dict] = []
