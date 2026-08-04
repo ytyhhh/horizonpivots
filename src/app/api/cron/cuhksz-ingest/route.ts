@@ -2,7 +2,8 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { parseCuhkShenzhenJobs } from "@/lib/ingestion/cuhk-shenzhen";
 import { dedupeJobsByFingerprint, toJobRow } from "@/lib/ingestion/xixicc";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { syncJobEmbeddings } from "@/lib/vector-sync";
+
+const UPSERT_BATCH_SIZE = 50;
 
 function authorized(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -35,18 +36,13 @@ export async function POST(request: Request) {
     const jobs = dedupeJobsByFingerprint(parseCuhkShenzhenJobs(await request.json()));
     const rows = jobs.map(toJobRow);
     let updated = 0;
-    for (let index = 0; index < rows.length; index += 100) {
+    for (let index = 0; index < rows.length; index += UPSERT_BATCH_SIZE) {
       const { data, error } = await admin
         .from("jobs")
-        .upsert(rows.slice(index, index + 100), { onConflict: "fingerprint" })
+        .upsert(rows.slice(index, index + UPSERT_BATCH_SIZE), { onConflict: "fingerprint" })
         .select("id");
       if (error) throw error;
       updated += data?.length ?? 0;
-    }
-    try {
-      await syncJobEmbeddings(admin, jobs);
-    } catch (embeddingError) {
-      console.error("Job embedding sync failed; jobs remain available:", embeddingError);
     }
     await admin
       .from("sources")
@@ -60,9 +56,15 @@ export async function POST(request: Request) {
       .from("ingestion_runs")
       .update({ status: "succeeded", finished_at: new Date().toISOString(), fetched: jobs.length, updated })
       .eq("id", runId);
-    return Response.json({ runId, fetched: jobs.length, updated });
+    return Response.json({
+      runId,
+      fetched: jobs.length,
+      updated,
+      embeddings: "pending",
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Ingestion failed";
+    console.error("CUHK-Shenzhen ingestion failed:", error);
     await admin
       .from("sources")
       .update({ last_run_at: new Date().toISOString(), health: "degraded" })
@@ -71,6 +73,9 @@ export async function POST(request: Request) {
       .from("ingestion_runs")
       .update({ status: "failed", finished_at: new Date().toISOString(), error: message.slice(0, 1000) })
       .eq("id", runId);
-    return Response.json({ message: "Ingestion failed" }, { status: 502 });
+    return Response.json(
+      { message: "Ingestion failed", error: message.slice(0, 500), runId },
+      { status: 500 },
+    );
   }
 }

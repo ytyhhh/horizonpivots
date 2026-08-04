@@ -6,10 +6,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
+from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
@@ -20,6 +22,8 @@ ORIGIN = "https://career.cuhk.edu.cn"
 MAX_PAGES = max(1, min(int(os.getenv("CUHKSZ_MAX_PAGES", "8")), 8))
 DETAIL_WORKERS = max(1, min(int(os.getenv("CUHKSZ_DETAIL_WORKERS", "4")), 4))
 DETAIL_BATCH_SIZE = 25
+INGEST_BATCH_SIZE = max(1, min(int(os.getenv("CUHKSZ_INGEST_BATCH_SIZE", "40")), 50))
+INGEST_RETRIES = max(1, min(int(os.getenv("CUHKSZ_INGEST_RETRIES", "4")), 6))
 TRAILING_URL_PUNCTUATION = ".,;:!?，。；：！？)]}）】》〉\"”'’"
 
 
@@ -117,18 +121,67 @@ def extract_jobs(page):
     return jobs
 
 
-def post_jobs(jobs: list[dict]):
+def post_jobs(jobs: list[dict], label: str):
     endpoint = os.environ["CAMPUS_RADAR_INGEST_URL"].rstrip("/")
     secret = os.environ["CAMPUS_RADAR_CRON_SECRET"]
     body = json.dumps({"jobs": jobs}, ensure_ascii=False).encode()
-    request = Request(
-        f"{endpoint}/api/cron/cuhksz-ingest",
-        data=body,
-        headers={"Authorization": f"Bearer {secret}", "Content-Type": "application/json"},
-        method="POST",
-    )
-    with urlopen(request, timeout=60) as response:
-        return json.loads(response.read())
+    url = f"{endpoint}/api/cron/cuhksz-ingest"
+
+    for attempt in range(1, INGEST_RETRIES + 1):
+        request = Request(
+            url,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {secret}",
+                "Content-Type": "application/json",
+                "User-Agent": "campus-radar-cuhksz-crawler/1.0",
+            },
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=60) as response:
+                response_body = response.read().decode("utf-8", errors="replace")
+            return json.loads(response_body)
+        except HTTPError as error:
+            response_body = error.read().decode("utf-8", errors="replace")[:1_000]
+            retryable = error.code in {429, 500, 502, 503, 504}
+            detail = f"HTTP {error.code}: {response_body or error.reason}"
+            if not retryable or attempt == INGEST_RETRIES:
+                raise RuntimeError(f"Ingest {label} failed after {attempt} attempt(s): {detail}") from error
+        except (URLError, TimeoutError, socket.timeout) as error:
+            detail = str(getattr(error, "reason", error))
+            if attempt == INGEST_RETRIES:
+                raise RuntimeError(
+                    f"Ingest {label} failed after {attempt} attempt(s): {detail}"
+                ) from error
+        except json.JSONDecodeError as error:
+            raise RuntimeError(
+                f"Ingest {label} returned invalid JSON: {response_body[:500]}"
+            ) from error
+
+        wait_seconds = min(2 ** (attempt - 1), 8)
+        print(
+            f"Ingest {label} attempt {attempt} failed ({detail}); "
+            f"retrying in {wait_seconds}s",
+            file=sys.stderr,
+        )
+        time.sleep(wait_seconds)
+
+    raise RuntimeError(f"Ingest {label} failed unexpectedly")
+
+
+def post_job_batches(jobs: list[dict], label: str) -> list[dict]:
+    results = []
+    batch_count = (len(jobs) + INGEST_BATCH_SIZE - 1) // INGEST_BATCH_SIZE
+    for index in range(0, len(jobs), INGEST_BATCH_SIZE):
+        batch_number = index // INGEST_BATCH_SIZE + 1
+        batch = jobs[index : index + INGEST_BATCH_SIZE]
+        print(
+            f"Uploading {label} batch {batch_number}/{batch_count} ({len(batch)} jobs)",
+            file=sys.stderr,
+        )
+        results.append(post_jobs(batch, f"{label} {batch_number}/{batch_count}"))
+    return results
 
 
 def enrich_descriptions(jobs: list[dict]) -> list[dict]:
@@ -136,7 +189,7 @@ def enrich_descriptions(jobs: list[dict]) -> list[dict]:
 
     The base listings are posted before this function starts. Therefore an
     interrupted run can leave some descriptions blank, but can never discard
-    the seven pages of already discovered jobs.
+    the eight pages of already discovered jobs.
     """
     results = []
     completed: list[dict] = []
@@ -149,10 +202,10 @@ def enrich_descriptions(jobs: list[dict]) -> list[dict]:
             job["description"], job["applyUrl"] = future.result()
             completed.append(job)
             if len(completed) == DETAIL_BATCH_SIZE:
-                results.append(post_jobs(completed))
+                results.extend(post_job_batches(completed, "description"))
                 completed = []
     if completed:
-        results.append(post_jobs(completed))
+        results.extend(post_job_batches(completed, "description"))
     return results
 
 
@@ -166,12 +219,12 @@ def main():
     if not deduped:
         raise RuntimeError("No jobs found; refusing to report a successful empty crawl")
     jobs = list(deduped.values())
-    base_result = post_jobs(jobs)
+    base_results = post_job_batches(jobs, "base")
     description_results = enrich_descriptions(jobs)
     print(
         json.dumps(
             {
-                "baseIngest": base_result,
+                "baseIngestBatches": base_results,
                 "descriptionBatches": description_results,
             },
             ensure_ascii=False,

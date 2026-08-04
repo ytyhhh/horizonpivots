@@ -39,7 +39,7 @@ CRON_SECRET=
 
 `SUPABASE_SERVICE_ROLE_KEY`、`SILICONFLOW_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
 
-向量使用 SiliconFlow 的 `BAAI/bge-m3`（1024 维）。应用 `202608030001_switch_to_bge_m3_embeddings.sql` 后，旧 OpenAI 向量会被安全清空；新入库岗位会按内容变动重建向量。已有岗位可通过下文的向量重建入口分批补齐。
+向量使用 SiliconFlow 的 `BAAI/bge-m3`（1024 维）。应用 `202608030001_switch_to_bge_m3_embeddings.sql` 后，旧 OpenAI 向量会被安全清空。岗位入库与向量生成相互独立：采集接口先快速完成数据库写入，随后由下文的向量入口分批处理，避免 AI 服务延迟阻塞采集。
 
 向量服务出错不会阻断岗位同步或画像保存；未生成的向量可使用以下受 `CRON_SECRET` 保护的入口重试。每次最多处理 48 个岗位和 12 个画像，重复调用直至返回的 `jobs.attempted` 为 `0`：
 
@@ -68,10 +68,11 @@ npm run ingest:xixicc
 
 抓取过程分为两个可恢复阶段：
 
-1. 抓完八页列表后，立即幂等写入基础岗位信息。
+1. 抓完八页列表后，以每批最多 40 条幂等写入基础岗位信息。
 2. 使用最多 4 个并发请求读取公开详情页，将纯文本“工作内容描述”分批（每 25 条）补写到 `jobs.description`。
+3. 每次上传遇到 `429` 或临时 `5xx` 时最多重试 4 次，并采用递增等待；最终失败时 Actions 日志会显示接口返回的具体错误。
 
-因此，若详情页抓取被网络错误或任务时限打断，已经发现的岗位仍会保留在数据库中；下次任务会继续补全描述。描述字段最长 12,000 个字符，不保存原始 HTML、图片或附件。
+因此，若详情页抓取被网络错误或任务时限打断，已经发现的岗位仍会保留在数据库中；下次任务会继续补全描述。描述字段最长 12,000 个字符，不保存原始 HTML、图片或附件。岗位向量不在上传请求内同步生成，需要由 `/api/cron/embed` 独立补齐。
 
 应用 `202608010003_cuhksz_exclusive_jobs.sql` 和 `202608010004_job_descriptions.sql` 后，在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加：
 

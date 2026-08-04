@@ -24,4 +24,6 @@ jobs:
           CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
           CUHKSZ_MAX_PAGES: "8"
           CUHKSZ_DETAIL_WORKERS: "4"
+          CUHKSZ_INGEST_BATCH_SIZE: "40"
+          CUHKSZ_INGEST_RETRIES: "4"
         run: python scripts/crawl_cuhksz_jobs.py
