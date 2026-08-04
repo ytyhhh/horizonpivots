@@ -47,6 +47,8 @@ CRON_SECRET=
 curl -H "Authorization: Bearer $CRON_SECRET" https://jobs.horizonpivots.com/api/cron/embed
 ```
 
+GitHub Actions 工作流 `.github/workflows/embed-jobs.yml` 每天 10:45（中国标准时间）自动调用该入口，晚于港中深与 `xixicc2027` 的每日采集任务。单次最多连续处理 8 批，即 384 个岗位；如仍有积压，会在下一次定时任务继续处理，也可从 Actions 页面手动运行 **Build pending job embeddings**。
+
 ## 数据同步
 
 先在无数据库模式验证远端格式：

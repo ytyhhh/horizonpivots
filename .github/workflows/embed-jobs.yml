@@ -1,0 +1,40 @@
+name: Build pending job embeddings
+
+on:
+  schedule:
+    # 10:45 China Standard Time (UTC+8), after both daily ingestion workflows.
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  embed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {}
+    steps:
+      - name: Build pending vectors in batches
+        env:
+          CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
+          CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          for batch in $(seq 1 8); do
+            echo "Embedding batch ${batch}/8"
+            response="$(curl --fail-with-body --silent --show-error \
+                --retry 3 --retry-all-errors --retry-delay 3 \
+                --connect-timeout 15 --max-time 300 \
+                --header "Authorization: Bearer ${CAMPUS_RADAR_CRON_SECRET}" \
+                "${CAMPUS_RADAR_INGEST_URL}/api/cron/embed")"
+            echo "${response}" | jq .
+
+            attempted="$(echo "${response}" | jq -er '.jobs.attempted')"
+            if [ "${attempted}" -eq 0 ]; then
+              echo "No pending job embeddings remain."
+              exit 0
+            fi
+
+            sleep 3
+          done
+
+          echo "Reached the daily limit of 8 batches; remaining jobs will continue on the next run."
