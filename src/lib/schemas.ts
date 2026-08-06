@@ -86,6 +86,32 @@ export const cuhkShenzhenIngestPayloadSchema = z.object({
   jobs: z.array(cuhkShenzhenIngestJobSchema).min(1).max(250),
 });
 
+const officialJobEvidenceSchema = z.object({
+  company: z.string().trim().min(1).max(200),
+  title: z.string().trim().min(1).max(240),
+  type: z.string().trim().min(1).max(100),
+  cohort: z.string().trim().min(1).max(100),
+  deadline: z.string().trim().max(100).default(""),
+  applyUrl: z.string().trim().min(1).max(500),
+});
+
+export const officialJobExtractionSchema = z.object({
+  company: z.string().trim().min(1).max(120),
+  title: z.string().trim().min(1).max(180),
+  externalId: z.string().trim().max(160).nullable().optional(),
+  type: z.enum(["秋招", "实习"]),
+  locations: z.array(z.string().trim().min(1).max(30)).max(20).default([]),
+  cohort: z.string().trim().min(1).max(30),
+  summary: z.string().trim().max(500).default(""),
+  description: z.string().trim().max(12_000).default(""),
+  deadline: z.string().date().nullable().optional(),
+  applyUrl: z.string().url().nullable().optional(),
+  confidence: z.number().min(0).max(1),
+  evidence: officialJobEvidenceSchema,
+});
+
+export const officialJobExtractionsSchema = z.array(officialJobExtractionSchema).max(100);
+
 export const resumeExtractionSchema = {
   type: "object",
   additionalProperties: false,

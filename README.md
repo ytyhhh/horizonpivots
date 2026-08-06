@@ -35,6 +35,10 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SILICONFLOW_API_KEY=
 CRON_SECRET=
+TAVILY_API_KEY=
+RESEND_API_KEY=
+DAILY_DIGEST_FROM=校招雷达 <jobs@已验证域名>
+DAILY_DIGEST_TO=运营邮箱1,运营邮箱2
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY`、`SILICONFLOW_API_KEY` 和 `CRON_SECRET` 仅允许在服务端使用，禁止添加 `NEXT_PUBLIC_` 前缀。
@@ -60,9 +64,13 @@ npm run ingest:xixicc
 配置 Supabase 后，同一命令会将岗位幂等写入 `jobs`。线上定时入口：
 
 - `GET /api/cron/ingest`：同步 `xixicc2027`
-- `GET /api/cron/discover`：保留为审核队列入口；硅基流动 DeepSeek 没有可信网页搜索工具，因此在接入独立搜索服务前不会生成候选 URL
+- `GET /api/cron/discover`：通过 Tavily 搜索最新官方秋招和日常实习页面，自动计算来源信任分
+- `POST /api/cron/official-ingest`：分批抓取信任分不低于 85 的官方来源并幂等入库
+- `POST /api/cron/digest`：可选的 Resend 运营日报入口，当前不设自动调度
 
-两个入口都要求 `Authorization: Bearer $CRON_SECRET`。`xixicc2027` 同步同时配置了 Vercel Cron（每天 10:17，中国标准时间）与 GitHub Actions（每天 10:29，中国标准时间）；写入按指纹幂等，因此重复触发不会重复展示岗位。GitHub 工作流为 `.github/workflows/xixicc-jobs.yml`，使用下文的 `CAMPUS_RADAR_INGEST_URL` 与 `CAMPUS_RADAR_CRON_SECRET`。如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
+所有入口都要求 `Authorization: Bearer $CRON_SECRET`。官方流程每天 09:30 发现、09:50 抓取，10:45 补齐向量（中国标准时间）；邮件日报代码保留但默认不调度。Vercel Cron 与 GitHub Actions 可以重复触发，岗位指纹和来源域名均有幂等约束。GitHub 工作流使用下文的 `CAMPUS_RADAR_INGEST_URL` 与 `CAMPUS_RADAR_CRON_SECRET`。如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
+
+官方页面只允许 HTTPS，并限制 DNS、重定向、响应类型、响应大小和并发数，同时遵守 `robots.txt`。抽取顺序为 JSON-LD、来源 CSS 选择器、DeepSeek；模型结果必须逐字段提供能在原文中找到的证据，申请地址也必须属于官方域名或 `OFFICIAL_ATS_DOMAINS` 配置的 ATS 域名。低信任来源和未通过证据校验的页面进入 `/admin` 审核队列。
 
 ### 港中深专属岗位
 
@@ -124,6 +132,6 @@ npx playwright install chromium
 3. 将 `NEXT_PUBLIC_SITE_URL` 改为正式域名。
 4. 在 Supabase Auth 添加正式域名和 `/auth/callback` 回调地址。
 5. 应用数据库迁移并运行一次 `/api/cron/ingest`。
-6. 为管理员用户设置 `user_metadata.role = admin`。
+6. 为管理员用户设置 Clerk `publicMetadata.role = admin`。
 
 岗位描述、截止日期和申请资格可能变化，产品始终回链原始招聘页面；港中深来源仅保留长度受限的纯文本岗位描述，不保存原始 HTML、图片或附件。

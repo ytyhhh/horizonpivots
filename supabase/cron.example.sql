@@ -47,7 +47,7 @@ where not exists (
 
 select cron.schedule(
   'discover-official-recruiting-pages-daily',
-  '41 1 * * *',
+  '30 1 * * *',
   $$
   select net.http_post(
     url := (
@@ -71,4 +71,30 @@ select cron.schedule(
 where not exists (
   select 1 from cron.job
   where jobname = 'discover-official-recruiting-pages-daily'
+);
+
+select cron.schedule(
+  'ingest-official-recruiting-pages-daily',
+  '50 1 * * *',
+  $$
+  select net.http_post(
+    url := (
+      select decrypted_secret from vault.decrypted_secrets
+      where name = 'campus_radar_site_url'
+    ) || '/api/cron/official-ingest',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (
+        select decrypted_secret from vault.decrypted_secrets
+        where name = 'campus_radar_cron_secret'
+      )
+    ),
+    body := '{"limit":5}'::jsonb,
+    timeout_milliseconds := 300000
+  );
+  $$
+)
+where not exists (
+  select 1 from cron.job
+  where jobname = 'ingest-official-recruiting-pages-daily'
 );

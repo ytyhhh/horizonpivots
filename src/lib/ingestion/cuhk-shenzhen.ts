@@ -7,11 +7,12 @@ const EXTERNAL_HTTP_URL = /https?:\/\/[^\s<>'"`]+/gi;
 const TRAILING_URL_PUNCTUATION = /[.,;:!?，。；：！？)}\]）】》〉”’]+$/;
 
 export function externalApplyUrl(description: string, sourceUrl: string) {
+  const sourceHostname = new URL(sourceUrl).hostname;
   for (const rawUrl of description.match(EXTERNAL_HTTP_URL) ?? []) {
     const candidate = rawUrl.replace(TRAILING_URL_PUNCTUATION, "");
     try {
       const url = new URL(candidate);
-      if (url.protocol.startsWith("http") && url.hostname !== "career.cuhk.edu.cn") {
+      if (url.protocol.startsWith("http") && url.hostname !== sourceHostname) {
         return url.toString();
       }
     } catch {

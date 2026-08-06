@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { load } from "cheerio";
+import { fetchSafeText } from "@/lib/ingestion/web-safety";
 
 export interface DiscoveredPage {
   url: string;
@@ -13,21 +14,6 @@ export interface SourceAdapter {
   discover(url: string): Promise<DiscoveredPage[]>;
 }
 
-async function fetchText(url: string) {
-  const response = await fetch(url, {
-    headers: { "User-Agent": "CampusRadar/1.0 (+public-job-index)" },
-    cache: "no-store",
-    redirect: "follow",
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("text") && !contentType.includes("xml")) {
-    throw new Error(`${url} returned unsupported content type`);
-  }
-  return response.text();
-}
-
 function toArray<T>(value: T | T[] | undefined): T[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
@@ -36,7 +22,7 @@ function toArray<T>(value: T | T[] | undefined): T[] {
 export const rssAdapter: SourceAdapter = {
   kind: "rss",
   async discover(url) {
-    const xml = await fetchText(url);
+    const xml = await fetchSafeText(url);
     const parser = new XMLParser({ ignoreAttributes: false });
     const parsed = parser.parse(xml);
     const items = [
@@ -59,14 +45,15 @@ export const rssAdapter: SourceAdapter = {
           description: String(item.description ?? item.summary ?? "").slice(0, 500),
         };
       })
-      .filter((item: DiscoveredPage) => item.url.startsWith("http"));
+      .filter((item: DiscoveredPage) => item.url.startsWith("http"))
+      .slice(0, 200);
   },
 };
 
 export const sitemapAdapter: SourceAdapter = {
   kind: "sitemap",
   async discover(url) {
-    const xml = await fetchText(url);
+    const xml = await fetchSafeText(url);
     const parser = new XMLParser();
     const parsed = parser.parse(xml);
     return toArray(parsed?.urlset?.url)
@@ -75,14 +62,15 @@ export const sitemapAdapter: SourceAdapter = {
         title: "招聘页面",
         publishedAt: String(item.lastmod ?? "") || null,
       }))
-      .filter((item: DiscoveredPage) => item.url.startsWith("http"));
+      .filter((item: DiscoveredPage) => item.url.startsWith("http"))
+      .slice(0, 200);
   },
 };
 
 export const htmlAdapter: SourceAdapter = {
   kind: "html",
   async discover(url) {
-    const html = await fetchText(url);
+    const html = await fetchSafeText(url);
     const $ = load(html);
     const pages = new Map<string, DiscoveredPage>();
 

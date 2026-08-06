@@ -92,9 +92,40 @@ export interface Source {
   url: string;
   enabled: boolean;
   confidence: SourceConfidence;
+  rootDomain?: string | null;
+  trustScore: number;
+  trustSignals: string[];
+  nextRunAt?: string | null;
+  consecutiveFailures: number;
+  lastError?: string | null;
+  config?: Record<string, unknown>;
   lastRunAt?: string | null;
   lastSuccessAt?: string | null;
   health: "healthy" | "degraded" | "paused";
+}
+
+export interface OfficialJobEvidence {
+  company: string;
+  title: string;
+  type: string;
+  cohort: string;
+  deadline: string;
+  applyUrl: string;
+}
+
+export interface OfficialJobExtraction {
+  company: string;
+  title: string;
+  externalId?: string | null;
+  type: "秋招" | "实习";
+  locations: string[];
+  cohort: string;
+  summary: string;
+  description: string;
+  deadline?: string | null;
+  applyUrl?: string | null;
+  confidence: number;
+  evidence: OfficialJobEvidence;
 }
 
 export interface IngestionRun {

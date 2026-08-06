@@ -1,0 +1,40 @@
+name: Ingest official recruiting sites
+
+on:
+  schedule:
+    # 09:50 China Standard Time (UTC+8), after daily discovery.
+    - cron: "50 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: {}
+    steps:
+      - name: Process due official sources in batches
+        env:
+          CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
+          CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          for batch in $(seq 1 12); do
+            response="$(curl --fail-with-body --silent --show-error \
+              --retry 3 --retry-all-errors --retry-delay 3 \
+              --connect-timeout 15 --max-time 330 \
+              --request POST \
+              --header "Authorization: Bearer ${CAMPUS_RADAR_CRON_SECRET}" \
+              --header "Content-Type: application/json" \
+              --data '{"limit":5}' \
+              "${CAMPUS_RADAR_INGEST_URL}/api/cron/official-ingest")"
+            echo "${response}" | jq .
+            remaining="$(echo "${response}" | jq -er '.remaining')"
+            processed="$(echo "${response}" | jq -er '.processed')"
+            if [ "${remaining}" -eq 0 ] || [ "${processed}" -eq 0 ]; then
+              exit 0
+            fi
+          done
+
+          echo "Reached the 12-batch safety limit; remaining sources continue tomorrow."
+
