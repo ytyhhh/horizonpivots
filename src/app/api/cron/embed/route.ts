@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { jobFromEmbeddingRow, syncJobEmbeddings, syncProfileEmbedding } from "@/lib/vector-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SILICONFLOW_EMBEDDING_MODEL } from "@/lib/embeddings";
 
 const JOB_BATCH_SIZE = 48;
 const PROFILE_BATCH_SIZE = 12;
@@ -22,14 +23,13 @@ export async function GET(request: Request) {
 
   const admin = createAdminClient();
   try {
-    const { data: jobRows, error: jobError } = await admin
-      .from("jobs")
-      .select("*")
-      .is("embedding", null)
-      .order("updated_at", { ascending: false })
-      .limit(JOB_BATCH_SIZE);
+    const expectedModel = process.env.SILICONFLOW_EMBEDDING_MODEL ?? SILICONFLOW_EMBEDDING_MODEL;
+    const { data: jobRows, error: jobError } = await admin.rpc("pending_job_embeddings", {
+      expected_model: expectedModel,
+      max_count: JOB_BATCH_SIZE,
+    });
     if (jobError) throw jobError;
-    const jobs = (jobRows ?? []).map((row) => jobFromEmbeddingRow(row));
+    const jobs = (jobRows ?? []).map((row: Record<string, unknown>) => jobFromEmbeddingRow(row));
     const jobsResult = await syncJobEmbeddings(admin, jobs);
 
     const { data: profiles, error: profileError } = await admin

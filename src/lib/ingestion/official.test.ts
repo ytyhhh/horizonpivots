@@ -7,6 +7,8 @@ import {
   type OfficialSourceRecord,
 } from "@/lib/ingestion/official-extraction";
 import { assessOfficialSource, isBlockedRecruitingDomain, rootDomain } from "@/lib/ingestion/trust";
+import { OFFICIAL_COMPANY_SEEDS, rotatingOfficialCompanySeeds } from "@/data/official-company-seeds";
+import { discoveryQueries } from "@/lib/ingestion/discovery";
 
 const source: OfficialSourceRecord = {
   id: "00000000-0000-0000-0000-000000000001",
@@ -52,10 +54,35 @@ describe("official source trust", () => {
     ]);
   });
 
+  it("trusts an ATS page explicitly linked from a known corporate homepage", () => {
+    const atsUrl = "https://jobs.feishu.cn/tencent/campus";
+    const assessment = assessOfficialSource({
+      url: atsUrl,
+      title: "腾讯2027届校园招聘",
+      pageHtml: "腾讯2027届校园招聘，欢迎应届生申请",
+      homepageHtml: `<a href="${atsUrl}">校园招聘</a>`,
+      expectedCompany: "腾讯",
+      expectedAliases: ["Tencent"],
+    });
+    expect(assessment.score).toBe(100);
+    expect(assessment.signals).toContain("corporate-homepage-link");
+    expect(assessment.signals).toContain("verified-seed-company");
+  });
+
   it("blocks aggregators and calculates registrable Chinese domains", () => {
     expect(isBlockedRecruitingDomain("www.nowcoder.com")).toBe(true);
     expect(isBlockedRecruitingDomain("mp.weixin.qq.com")).toBe(true);
     expect(rootDomain("career.example.com.cn")).toBe("example.com.cn");
+  });
+});
+
+describe("official company discovery seeds", () => {
+  it("contains 30 unique companies and rotates five targeted queries per day", () => {
+    expect(OFFICIAL_COMPANY_SEEDS).toHaveLength(30);
+    expect(new Set(OFFICIAL_COMPANY_SEEDS.map((seed) => seed.companyDomain)).size).toBe(30);
+    expect(rotatingOfficialCompanySeeds(0)).toHaveLength(5);
+    expect(discoveryQueries(0)).toHaveLength(10);
+    expect(discoveryQueries(0).some((query) => query.includes("腾讯"))).toBe(true);
   });
 });
 
@@ -87,6 +114,16 @@ describe("official job extraction", () => {
     expect(validateOfficialExtraction(item, html, source.url, source)).toBe(false);
   });
 
+  it("accepts a verified application link on a supported shared ATS domain", () => {
+    const applyUrl = "https://jobs.feishu.cn/example/job/123";
+    const html = jobPostingHtml({ url: applyUrl }).replaceAll(
+      "https://jobs.example.com/job/123",
+      applyUrl,
+    );
+    const [item] = extractJsonLdOfficialJobs(html, source.url, "示例科技");
+    expect(validateOfficialExtraction(item, html, source.url, source)).toBe(true);
+  });
+
   it("ignores spring and experienced hiring even when structured as JobPosting", () => {
     expect(extractJsonLdOfficialJobs(jobPostingHtml({ description: "2027届春招岗位" }), source.url)).toEqual([]);
     expect(extractJsonLdOfficialJobs(jobPostingHtml({ description: "社会招聘，三年经验" }), source.url)).toEqual([]);
@@ -107,4 +144,3 @@ describe("official job extraction", () => {
     });
   });
 });
-

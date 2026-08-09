@@ -93,6 +93,11 @@ export interface Source {
   enabled: boolean;
   confidence: SourceConfidence;
   rootDomain?: string | null;
+  canonicalUrl?: string | null;
+  companyDomain?: string | null;
+  fetchMode?: "auto" | "http" | "browser";
+  browserPending?: boolean;
+  lastFetchMode?: "http" | "browser" | null;
   trustScore: number;
   trustSignals: string[];
   nextRunAt?: string | null;

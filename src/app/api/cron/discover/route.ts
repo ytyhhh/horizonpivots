@@ -3,8 +3,15 @@ import { isCronAuthorized } from "@/lib/cron-auth";
 import { discoverOfficialRecruitingPages } from "@/lib/ingestion/discovery";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-function reviewKey(rootDomain: string) {
-  return `official-source:${createHash("sha256").update(rootDomain).digest("hex").slice(0, 32)}`;
+export const maxDuration = 300;
+
+function reviewKey(canonicalUrl: string) {
+  return `official-source:${createHash("sha256").update(canonicalUrl).digest("hex").slice(0, 32)}`;
+}
+
+function sourceName(company: string, rootDomain: string, canonicalUrl: string) {
+  const suffix = createHash("sha256").update(canonicalUrl).digest("hex").slice(0, 6);
+  return `${company} 官方招聘 (${rootDomain}/${suffix})`;
 }
 
 export async function runOfficialDiscovery() {
@@ -27,28 +34,31 @@ export async function runOfficialDiscovery() {
     let reviewed = 0;
     for (const candidate of candidates) {
       if (candidate.trusted) {
-        const { data: existing } = await admin
-          .from("sources")
-          .select("id")
-          .eq("root_domain", candidate.rootDomain)
-          .maybeSingle();
+          const { data: existing } = await admin
+            .from("sources")
+            .select("id")
+            .eq("canonical_url", candidate.canonicalUrl)
+            .maybeSingle();
         if (existing) {
           const { error } = await admin
             .from("sources")
             .update({
               trust_score: candidate.trustScore,
               trust_signals: candidate.trustSignals,
+              company_domain: candidate.companyDomain,
               last_error: null,
             })
             .eq("id", existing.id);
           if (error) throw error;
         } else {
           const { error } = await admin.from("sources").insert({
-            name: `${candidate.company} 官方招聘 (${candidate.rootDomain})`,
+            name: sourceName(candidate.company, candidate.rootDomain, candidate.canonicalUrl),
             kind: candidate.kind,
             url: candidate.url,
             confidence: "官方",
             root_domain: candidate.rootDomain,
+            canonical_url: candidate.canonicalUrl,
+            company_domain: candidate.companyDomain,
             trust_score: candidate.trustScore,
             trust_signals: candidate.trustSignals,
             discovered_by: "tavily",
@@ -62,7 +72,7 @@ export async function runOfficialDiscovery() {
         const { error } = await admin.from("review_items").upsert(
           {
             source_id: discoverySource?.id,
-            review_key: reviewKey(candidate.rootDomain),
+            review_key: reviewKey(candidate.canonicalUrl),
             reason: candidate.reason,
             confidence: candidate.trustScore / 100,
             payload: candidate,
@@ -119,4 +129,3 @@ export async function GET(request: Request) {
 }
 
 export const POST = GET;
-

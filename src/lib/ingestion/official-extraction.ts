@@ -8,13 +8,15 @@ import type { Industry, Job, OfficialJobExtraction } from "@/types";
 const SILICONFLOW_BASE_URL = "https://api.siliconflow.cn/v1";
 const MAX_MODEL_TEXT_CHARS = 30_000;
 const MIN_MODEL_CONFIDENCE = 0.9;
-const DEFAULT_ATS_DOMAINS = ["mokahr.com", "hotjob.cn", "jobs.feishu.cn"];
+const DEFAULT_ATS_DOMAINS = ["mokahr.com", "hotjob.cn", "feishu.cn"];
 
 export interface OfficialSourceRecord {
   id: string;
   name: string;
   url: string;
   root_domain: string;
+  canonical_url?: string | null;
+  company_domain?: string | null;
   trust_score: number;
   config: Record<string, unknown>;
 }
@@ -283,7 +285,18 @@ function allowedAtsDomains() {
       .split(",")
       .map((domain) => domain.trim().toLocaleLowerCase())
       .filter(Boolean),
-  ]);
+  ].map((domain) => rootDomain(domain)));
+}
+
+function configuredSourceDomains(source: OfficialSourceRecord) {
+  const configured = Array.isArray(source.config.approvedDomains)
+    ? source.config.approvedDomains.map((value) => rootDomain(String(value).toLocaleLowerCase()))
+    : [];
+  return new Set([
+    source.root_domain,
+    source.company_domain ?? "",
+    ...configured,
+  ].filter(Boolean));
 }
 
 export function validateOfficialExtraction(
@@ -313,7 +326,7 @@ export function validateOfficialExtraction(
   const applyUrl = normalizeUrl(extraction.data.applyUrl ?? pageUrl);
   if (!applyUrl) return false;
   const applyRoot = rootDomain(new URL(applyUrl).hostname);
-  if (applyRoot !== source.root_domain && !allowedAtsDomains().has(applyRoot)) return false;
+  if (!configuredSourceDomains(source).has(applyRoot) && !allowedAtsDomains().has(applyRoot)) return false;
   return true;
 }
 

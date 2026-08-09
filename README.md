@@ -66,11 +66,25 @@ npm run ingest:xixicc
 - `GET /api/cron/ingest`：同步 `xixicc2027`
 - `GET /api/cron/discover`：通过 Tavily 搜索最新官方秋招和日常实习页面，自动计算来源信任分
 - `POST /api/cron/official-ingest`：分批抓取信任分不低于 85 的官方来源并幂等入库
+- `GET /api/cron/official-browser-tasks`：向 GitHub Actions 下发需要 Scrapling 渲染的可信来源
+- `POST /api/cron/official-browser-ingest`：接收最多 5 个已渲染页面并在服务端完成证据校验、结构化抽取和入库
 - `POST /api/cron/digest`：可选的 Resend 运营日报入口，当前不设自动调度
 
-所有入口都要求 `Authorization: Bearer $CRON_SECRET`。官方流程每天 09:30 发现、09:50 抓取，10:45 补齐向量（中国标准时间）；邮件日报代码保留但默认不调度。Vercel Cron 与 GitHub Actions 可以重复触发，岗位指纹和来源域名均有幂等约束。GitHub 工作流使用下文的 `CAMPUS_RADAR_INGEST_URL` 与 `CAMPUS_RADAR_CRON_SECRET`。如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
+所有入口都要求 `Authorization: Bearer $CRON_SECRET`。官方流程每天 09:30 发现、09:50 抓取，10:45 补齐向量（中国标准时间）；邮件日报代码保留但默认不调度。Vercel 负责来源发现，GitHub Actions 依次执行静态抓取和 Scrapling 浏览器兜底；岗位指纹和规范化来源 URL 均有幂等约束。GitHub 工作流使用下文的 `CAMPUS_RADAR_INGEST_URL` 与 `CAMPUS_RADAR_CRON_SECRET`。如果使用 Supabase Cron，先把生产域名和任务密钥放入 Vault，再执行 `supabase/cron.example.sql`。
 
-官方页面只允许 HTTPS，并限制 DNS、重定向、响应类型、响应大小和并发数，同时遵守 `robots.txt`。抽取顺序为 JSON-LD、来源 CSS 选择器、DeepSeek；模型结果必须逐字段提供能在原文中找到的证据，申请地址也必须属于官方域名或 `OFFICIAL_ATS_DOMAINS` 配置的 ATS 域名。低信任来源和未通过证据校验的页面进入 `/admin` 审核队列。
+系统内置 30 家跨行业重点公司作为轮换搜索种子，每天额外定向搜索其中 5 家；已验证来源仍然每天抓取，因此种子轮换不会降低岗位更新频率。公司可共享飞书、Moka 等 ATS 根域名，来源唯一性以规范化招聘入口 URL 为准。
+
+官方页面只允许 HTTPS，并限制 DNS、重定向、响应类型、响应大小和并发数，同时遵守 `robots.txt`。抽取顺序为 JSON-LD、来源 CSS 选择器、DeepSeek；模型结果必须逐字段提供能在原文中找到的证据，申请地址也必须属于官方域名或 `OFFICIAL_ATS_DOMAINS` 配置的 ATS 域名。静态页面没有通过校验的岗位时会进入浏览器队列；Scrapling 先尝试普通请求，必要时才启动 JavaScript 渲染，不处理登录、验证码或非公开页面。低信任来源和未通过证据校验的页面进入 `/admin` 审核队列。
+
+浏览器回传接口限制为每次最多 5 页、单页最多 400,000 字符、请求总体不超过 2 MB，并再次校验页面域名和岗位证据。连续失败采用 1、2、4、8、16、24 小时退避；连续 3 次失败会在后台建立审核项，但不会自动删除或停用来源。
+
+首次启用该能力时必须应用以下迁移：
+
+```bash
+npx --yes supabase@latest db push
+```
+
+其中 `202608090001_official_browser_fallback.sql` 会修正共享 ATS 来源唯一性、增加浏览器队列状态，并让向量任务同时处理内容哈希或模型版本发生变化的岗位。随后在 GitHub Actions 手动运行一次 **Ingest official recruiting sites**，在 `/admin` 检查数据源、信任依据、浏览器状态和待审核记录。
 
 ### 港中深专属岗位
 

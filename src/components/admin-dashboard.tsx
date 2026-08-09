@@ -23,6 +23,12 @@ function formatTime(value?: string | null) {
   }).format(new Date(value));
 }
 
+function trustSignals(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string").slice(0, 4)
+    : [];
+}
+
 export function AdminDashboard({ data }: { data: AdminDashboardData }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -94,9 +100,9 @@ export function AdminDashboard({ data }: { data: AdminDashboardData }) {
               <tbody>
                 {data.sources.map((source) => (
                   <tr key={source.id} className="border-t border-border/70 align-top">
-                    <td className="px-5 py-4"><p className="font-semibold">{source.name}</p><p className="mt-1 max-w-[300px] truncate text-xs text-muted">{source.root_domain ?? source.url}</p>{source.last_error ? <p className="mt-2 max-w-[360px] text-xs text-warning">{source.last_error}</p> : null}</td>
-                    <td className="px-5 py-4"><span className={source.health === "healthy" ? "text-accent" : "text-warning"}>{source.health}</span></td>
-                    <td className="px-5 py-4 font-mono">{source.trust_score ?? 0}</td>
+                    <td className="px-5 py-4"><p className="font-semibold">{source.name}</p><p className="mt-1 max-w-[300px] truncate text-xs text-muted">{source.canonical_url ?? source.url}</p>{source.last_error ? <p className="mt-2 max-w-[360px] text-xs text-warning">{source.last_error}</p> : null}</td>
+                    <td className="px-5 py-4"><span className={source.health === "healthy" ? "text-accent" : "text-warning"}>{source.health}</span><p className="mt-1 text-xs text-muted">{source.browser_pending ? "等待浏览器" : `模式 ${source.fetch_mode}`}{source.last_fetch_mode ? ` · 上次 ${source.last_fetch_mode}` : ""}</p>{source.consecutive_failures ? <p className="mt-1 text-xs text-warning">连续失败 {source.consecutive_failures}</p> : null}</td>
+                    <td className="px-5 py-4"><p className="font-mono">{source.trust_score ?? 0}</p>{trustSignals(source.trust_signals).length ? <p className="mt-1 max-w-[220px] text-xs leading-5 text-muted">{trustSignals(source.trust_signals).join(" · ")}</p> : null}</td>
                     <td className="px-5 py-4 text-muted">{formatTime(source.last_success_at)}</td>
                     <td className="px-5 py-4 text-muted">{formatTime(source.next_run_at)}</td>
                     <td className="px-5 py-4"><div className="flex justify-end gap-2">
@@ -134,4 +140,3 @@ export function AdminDashboard({ data }: { data: AdminDashboardData }) {
     </div>
   );
 }
-

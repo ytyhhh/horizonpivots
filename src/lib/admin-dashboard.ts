@@ -9,6 +9,11 @@ export interface AdminSourceRow {
   confidence: string;
   health: string;
   root_domain: string | null;
+  canonical_url: string | null;
+  company_domain: string | null;
+  fetch_mode: "auto" | "http" | "browser";
+  browser_pending: boolean;
+  last_fetch_mode: "http" | "browser" | null;
   trust_score: number;
   trust_signals: unknown;
   next_run_at: string | null;
@@ -68,7 +73,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const [sources, runs, reviews, jobs, digest] = await Promise.all([
     admin
       .from("sources")
-      .select("id,name,kind,url,enabled,confidence,health,root_domain,trust_score,trust_signals,next_run_at,consecutive_failures,last_error,last_run_at,last_success_at")
+      .select("id,name,kind,url,enabled,confidence,health,root_domain,canonical_url,company_domain,fetch_mode,browser_pending,last_fetch_mode,trust_score,trust_signals,next_run_at,consecutive_failures,last_error,last_run_at,last_success_at")
       .order("name"),
     admin
       .from("ingestion_runs")

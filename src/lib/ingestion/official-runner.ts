@@ -14,7 +14,7 @@ const PAGE_CONCURRENCY = 5;
 const MAX_PAGES_PER_SOURCE = 200;
 const MAX_JOBS_PER_SOURCE = 500;
 
-function sourceContentHash(job: ReturnType<typeof officialExtractionToJob>) {
+export function sourceContentHash(job: ReturnType<typeof officialExtractionToJob>) {
   return createHash("sha256").update(JSON.stringify({
     company: job.company,
     title: job.title,
@@ -32,6 +32,8 @@ interface DatabaseSource extends OfficialSourceRecord {
   kind: "rss" | "html" | "sitemap";
   enabled: boolean;
   consecutive_failures: number;
+  fetch_mode: "auto" | "http" | "browser";
+  browser_pending: boolean;
 }
 
 async function mapWithConcurrency<T, R>(values: T[], mapper: (value: T) => Promise<R>) {
@@ -51,7 +53,7 @@ function pageReviewKey(url: string) {
   return `official-page:${createHash("sha256").update(url).digest("hex").slice(0, 32)}`;
 }
 
-async function markMissingJobs(
+export async function markMissingJobs(
   admin: ReturnType<typeof createAdminClient>,
   sourceId: string,
   seenIds: Set<string>,
@@ -93,7 +95,7 @@ async function crawlSource(admin: ReturnType<typeof createAdminClient>, source: 
       try {
         const html = await fetchSafeText(page.url);
         const jobs = await extractOfficialJobsFromPage(html, page.url, source);
-        if (!jobs.length) {
+        if (!jobs.length && source.kind !== "html") {
           const { error } = await admin.from("review_items").upsert(
             {
               source_id: source.id,
@@ -130,6 +132,7 @@ async function crawlSource(admin: ReturnType<typeof createAdminClient>, source: 
     const uniqueJobs = new Map<string, ReturnType<typeof officialExtractionToJob>>();
     pageResults.flat().forEach((job) => uniqueJobs.set(job.fingerprint, job));
     const jobs = [...uniqueJobs.values()].slice(0, MAX_JOBS_PER_SOURCE);
+    const browserFallback = source.kind === "html" && jobs.length === 0 && source.fetch_mode !== "http";
 
     const existing = new Map<string, { id: string; firstSeen: string; contentHash: string | null }>();
     for (let index = 0; index < jobs.length; index += 100) {
@@ -178,6 +181,10 @@ async function crawlSource(admin: ReturnType<typeof createAdminClient>, source: 
         missing_count: 0,
         source_content_hash: sourceContentHash(job),
         content_updated_at: contentUpdatedAt,
+        embedding: null,
+        embedding_source_hash: null,
+        embedding_model: null,
+        embedded_at: null,
       }));
       const { data, error } = await admin
         .from("jobs")
@@ -186,7 +193,7 @@ async function crawlSource(admin: ReturnType<typeof createAdminClient>, source: 
       if (error) throw error;
       (data ?? []).forEach((row) => seenIds.add(String(row.id)));
     }
-    await markMissingJobs(admin, source.id, seenIds);
+    if (!browserFallback) await markMissingJobs(admin, source.id, seenIds);
 
     const created = jobs.filter((job) => !existing.has(job.fingerprint)).length;
     const updated = changedJobs.length - created;
@@ -198,6 +205,8 @@ async function crawlSource(admin: ReturnType<typeof createAdminClient>, source: 
       health: "healthy",
       consecutive_failures: 0,
       last_error: null,
+      browser_pending: browserFallback,
+      last_fetch_mode: "http",
     }).eq("id", source.id);
     await admin.from("ingestion_runs").update({
       status: "succeeded",
@@ -219,12 +228,24 @@ async function crawlSource(admin: ReturnType<typeof createAdminClient>, source: 
       health: "degraded",
       consecutive_failures: failures,
       last_error: message.slice(0, 1000),
+      browser_pending: source.kind === "html" && source.fetch_mode !== "http",
+      last_fetch_mode: "http",
     }).eq("id", source.id);
     await admin.from("ingestion_runs").update({
       status: "failed",
       finished_at: finishedAt.toISOString(),
       error: message.slice(0, 1000),
     }).eq("id", runId);
+    if (failures >= 3) {
+      await admin.from("review_items").upsert({
+        source_id: source.id,
+        review_key: `official-source-failure:${source.id}`,
+        reason: `官方来源连续 ${failures} 次抓取失败：${message.slice(0, 300)}`,
+        confidence: 0.25,
+        payload: { url: source.url, source: source.name, failures },
+        status: "open",
+      }, { onConflict: "review_key", ignoreDuplicates: true });
+    }
     return { sourceId: source.id, source: source.name, runId, error: message };
   }
 }
@@ -234,11 +255,12 @@ export async function runOfficialIngestionBatch(limit = SOURCE_BATCH_SIZE) {
   const now = new Date().toISOString();
   const { data, error } = await admin
     .from("sources")
-    .select("id,name,kind,url,root_domain,trust_score,config,enabled,consecutive_failures")
+    .select("id,name,kind,url,root_domain,canonical_url,company_domain,trust_score,config,enabled,consecutive_failures,fetch_mode,browser_pending")
     .eq("enabled", true)
     .eq("confidence", "官方")
     .gte("trust_score", 85)
     .in("kind", ["rss", "html", "sitemap"])
+    .neq("fetch_mode", "browser")
     .or(`next_run_at.is.null,next_run_at.lte.${now}`)
     .order("next_run_at", { ascending: true, nullsFirst: true })
     .limit(Math.min(Math.max(limit, 1), 10));
@@ -254,6 +276,7 @@ export async function runOfficialIngestionBatch(limit = SOURCE_BATCH_SIZE) {
     .eq("confidence", "官方")
     .gte("trust_score", 85)
     .in("kind", ["rss", "html", "sitemap"])
+    .neq("fetch_mode", "browser")
     .or(`next_run_at.is.null,next_run_at.lte.${new Date().toISOString()}`);
   if (countError) throw countError;
   return { processed: results.length, remaining: count ?? 0, results };

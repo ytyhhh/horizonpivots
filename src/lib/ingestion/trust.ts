@@ -62,15 +62,18 @@ function jsonLdOrganizations(html: string) {
 function homepageLinksToRecruiting(homeHtml: string, candidateUrl: string) {
   const $ = load(homeHtml);
   const candidate = new URL(candidateUrl);
+  const canonicalCandidate = candidate.toString().replace(/\/$/, "");
   let matched = false;
   $("a[href]").each((_, element) => {
     if (matched) return;
     try {
       const target = new URL($(element).attr("href")!, candidate.origin);
       const label = $(element).text();
+      const exactExternalLink = target.toString().replace(/\/$/, "") === canonicalCandidate;
       if (
-        rootDomain(target.hostname) === rootDomain(candidate.hostname) &&
-        (target.toString() === candidate.toString() || RECRUITING_PATTERN.test(`${target.pathname} ${label}`))
+        exactExternalLink ||
+        (rootDomain(target.hostname) === rootDomain(candidate.hostname) &&
+          RECRUITING_PATTERN.test(`${target.pathname} ${label}`))
       ) {
         matched = true;
       }
@@ -92,21 +95,35 @@ export function assessOfficialSource(input: {
   title: string;
   pageHtml: string;
   homepageHtml?: string;
+  expectedCompany?: string;
+  expectedAliases?: string[];
 }): TrustAssessment {
   const url = new URL(input.url);
   if (isBlockedRecruitingDomain(url.hostname)) return { score: 0, signals: ["blocked-domain"], company: "" };
 
   const organizations = jsonLdOrganizations(input.pageHtml);
-  const company = organizations[0] ?? input.title.split(/[｜|—\-]/)[0]?.trim().slice(0, 120) ?? "";
+  const company = input.expectedCompany || organizations[0] || input.title.split(/[｜|—\-]/)[0]?.trim().slice(0, 120) || "";
   const signals: string[] = [];
   let score = 0;
-  if (input.homepageHtml && homepageLinksToRecruiting(input.homepageHtml, input.url)) {
+  const linkedFromHomepage = Boolean(
+    input.homepageHtml && homepageLinksToRecruiting(input.homepageHtml, input.url),
+  );
+  if (linkedFromHomepage) {
     score += 50;
     signals.push("corporate-homepage-link");
   }
   if (organizations.some((name) => input.pageHtml.includes(name) && input.title.includes(name))) {
     score += 25;
     signals.push("jsonld-hiring-organization");
+  }
+  const expectedNames = [input.expectedCompany, ...(input.expectedAliases ?? [])]
+    .filter((value): value is string => Boolean(value));
+  if (
+    linkedFromHomepage &&
+    expectedNames.some((name) => `${input.title}\n${input.pageHtml}`.toLocaleLowerCase().includes(name.toLocaleLowerCase()))
+  ) {
+    score += 25;
+    signals.push("verified-seed-company");
   }
   if (RECRUITING_PATTERN.test(`${url.hostname}${url.pathname}`)) {
     score += 15;
