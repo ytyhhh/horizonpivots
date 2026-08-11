@@ -6,6 +6,8 @@ import { JobCard, JobDetailPanel } from "@/components/job-card";
 import { SectionHeading } from "@/components/ui";
 import { getJob, getJobs } from "@/lib/jobs";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

@@ -3,6 +3,8 @@ import { JobsExplorer } from "@/components/jobs-explorer";
 import { canViewCuhkShenzhenJobs } from "@/lib/auth";
 import { getJobsPage } from "@/lib/jobs";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "岗位库",
   description: "筛选最新秋招与实习岗位。",

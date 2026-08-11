@@ -16,6 +16,8 @@ import { getJobs } from "@/lib/jobs";
 import { daysUntil, formatDate } from "@/lib/utils";
 import type { Job } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 const industries = [
   { name: "互联网", detail: "AI、软件、产品与数据", icon: ChartDonut, count: "01" },
   { name: "半导体 / 硬件", detail: "芯片、嵌入式与机器人", icon: Sparkle, count: "02" },

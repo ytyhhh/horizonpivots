@@ -9,6 +9,8 @@ import { getCurrentUserId } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { CandidateProfile, RecommendationTier } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "为你推荐",
   description: "根据技能、经历和求职偏好生成可解释的岗位推荐。",
