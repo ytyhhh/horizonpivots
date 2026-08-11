@@ -12,7 +12,7 @@
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-jobs 和 PhD 还需要 `SUPABASE_SERVICE_ROLE_KEY`。PhD 在 Vercel 额外需要 `GITHUB_DISPATCH_TOKEN`，以及其搜索服务密钥。
+jobs 和 PhD 还需要 `SUPABASE_SERVICE_ROLE_KEY`。PhD 导师搜索当前关闭，因此暂时不需要 `GITHUB_DISPATCH_TOKEN` 或搜索服务密钥。
 
 在 Clerk Dashboard 中将三个 Origin 加入允许重定向列表，登录页面固定为 `https://jobs.horizonpivots.com/login`。三个同根域入口共享同一 Clerk 会话，不配置 satellite 模式。
 
@@ -39,9 +39,9 @@ npx supabase db push
 
 根目录的 Build Command 使用 `npm run build --workspace=<workspace>`，或让 Vercel 在对应 Root Directory 执行 `npm run build`。jobs 项目的 `vercel.json` 继续负责现有的招聘 cron。
 
-## GitHub Actions 搜索 worker
+## 将来开启时：GitHub Actions 搜索 worker
 
-PhD 搜索通过根目录的 `.github/workflows/phd-search.yml` 运行。创建一个仅限 `ytyhhh/horizonpivots` 仓库、`Contents: Read and write` 的 Fine-grained PAT，并将其作为 `GITHUB_DISPATCH_TOKEN` 配置到 PhD Vercel 项目。
+PhD 搜索通过根目录的 `.github/workflows/phd-search.yml` 运行。功能默认关闭；未来将 `NEXT_PUBLIC_PHD_SEARCH_ENABLED` 设为 `true` 后，再创建一个仅限 `ytyhhh/horizonpivots` 仓库、`Contents: Read and write` 的 Fine-grained PAT，并将其作为 `GITHUB_DISPATCH_TOKEN` 配置到 PhD Vercel 项目。
 
 在 GitHub 仓库的 Actions Secrets 中配置：
 

@@ -10,7 +10,6 @@ if (process.env.VERCEL_ENV === "production") {
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
-    "GITHUB_DISPATCH_TOKEN",
   ];
   const missing = required.filter((name) => !process.env[name]);
   if (missing.length) throw new Error(`Missing production environment variables: ${missing.join(", ")}`);

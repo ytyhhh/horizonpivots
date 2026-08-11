@@ -7,7 +7,8 @@ PhD Scope 是 Horizon Pivots 的博士申请工作区，部署于 `phd.horizonpi
 - 使用与校招雷达相同的 Clerk 账号和会话。
 - 院校浏览公开；发起搜索、保存导师、生成邮件、上传简历均要求登录。
 - 数据写入共享 Supabase 项目的 `phd_*` 表；表级 RLS 用 Clerk JWT 的 `sub` 作为用户 ID。
-- 搜索任务由 GitHub Actions 执行并持久化，不依赖单个 Next.js 实例内存。
+- 导师搜索目前默认关闭；院校浏览、统一账号和研究材料准备可先独立上线。
+- 搜索功能重新开启后，将由 GitHub Actions 执行并持久化，不依赖单个 Next.js 实例内存。
 
 ## 本地运行
 
@@ -17,7 +18,7 @@ PhD Scope 是 Horizon Pivots 的博士申请工作区，部署于 `phd.horizonpi
 npm run dev:phd
 ```
 
-复制 `.env.example` 为 `.env.local`，并填写与其他 Horizon Pivots 应用相同的 Clerk 和 Supabase 环境变量。生产环境还需要 `GITHUB_DISPATCH_TOKEN`，用于安全触发仓库根目录的 `phd-search.yml` 工作流；Action 所需的 Supabase 和搜索服务密钥配置在 GitHub Actions Secrets 中。
+复制 `.env.example` 为 `.env.local`，并填写与其他 Horizon Pivots 应用相同的 Clerk 和 Supabase 环境变量。保持 `NEXT_PUBLIC_PHD_SEARCH_ENABLED=false` 即可不配置搜索 worker。将来开启搜索时，设为 `true`，配置 `GITHUB_DISPATCH_TOKEN`，并在 GitHub Actions Secrets 中填入搜索 worker 所需的 Supabase 和搜索服务密钥。
 
 ## 数据库
 

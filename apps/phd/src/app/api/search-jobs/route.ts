@@ -6,6 +6,13 @@ import { initialSchoolProgress, runPersistentSearch } from "@/lib/persistent-sea
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  if (process.env.NEXT_PUBLIC_PHD_SEARCH_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: "Faculty search is coming soon" },
+      { status: 503 },
+    );
+  }
+
   try {
     const input = searchQuerySchema.parse(await request.json());
     const userId = await getCurrentUserId();

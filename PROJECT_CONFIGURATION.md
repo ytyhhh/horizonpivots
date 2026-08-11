@@ -19,7 +19,7 @@ GitHub Actions 工作流必须位于仓库根目录 `.github/workflows/`。其�
 - 招聘采集工作流保留在根目录，脚本已改为从 `apps/jobs/scripts/` 运行。
 - `phd-search.yml` 接收 PhD 网站发出的 `repository_dispatch` 事件，执行耗时导师搜索并回写 Supabase。
 
-### 创建 PhD 搜索触发令牌
+### 将来开启 PhD 搜索时：创建触发令牌
 
 1. GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens**。
 2. 创建 token，只选择仓库 `ytyhhh/horizonpivots`。
@@ -28,7 +28,7 @@ GitHub Actions 工作流必须位于仓库根目录 `.github/workflows/`。其�
 
 此 token 只用于从 PhD 后端触发 GitHub Action，不能放入浏览器变量或 GitHub 代码。
 
-### 配置 GitHub Actions Secrets
+### 将来开启 PhD 搜索时：配置 GitHub Actions Secrets
 
 仓库 → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**。
 
@@ -179,6 +179,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 GITHUB_DISPATCH_TOKEN=
 GITHUB_DISPATCH_REPOSITORY=ytyhhh/horizonpivots
+NEXT_PUBLIC_PHD_SEARCH_ENABLED=false
 
 SILICONFLOW_API_KEY=
 SILICONFLOW_BASE_URL=https://api.siliconflow.com/v1
@@ -187,7 +188,7 @@ BRAVE_SEARCH_API_KEY=
 SEMANTIC_SCHOLAR_API_KEY=
 ```
 
-不再配置 `TRIGGER_SECRET_KEY` 或任何 `TRIGGER_*` 变量。
+导师搜索当前未上线，保持 `NEXT_PUBLIC_PHD_SEARCH_ENABLED=false`，且不需要配置 `GITHUB_DISPATCH_TOKEN`、GitHub Actions Secrets、Brave 或 Semantic Scholar。未来开启时再将该变量改为 `true` 并完成前述 GitHub 配置。仍然不配置 `TRIGGER_SECRET_KEY` 或任何 `TRIGGER_*` 变量。
 
 ### 平台门户 portal
 
@@ -224,7 +225,7 @@ CLERK_SECRET_KEY=
 
 在 Porkbun 的 **Domain Management** → 域名 → **DNS** 中填写。`Host` 只填写 `@`、`www`、`jobs`、`phd`，不要填写完整域名。删除同名冲突的 A、AAAA 或 CNAME 记录，但不要删除 MX、TXT 等邮件记录。
 
-## 6. PhD 搜索工作流验证
+## 6. 将来开启时：PhD 搜索工作流验证
 
 1. 完成 Supabase 迁移、GitHub Actions Secrets 和 PhD Vercel 变量。
 2. 部署 `horizon-phd`。
@@ -236,8 +237,8 @@ CLERK_SECRET_KEY=
 ## 7. 发布顺序
 
 1. 备份 Supabase 并应用增量迁移。
-2. 配置 Clerk 与 GitHub Actions Secrets。
+2. 配置 Clerk；PhD 搜索相关的 GitHub Actions Secrets 可待功能开启时再配置。
 3. 更新已有 jobs Vercel 项目的 Root Directory 并部署。
-4. 创建并部署 PhD Vercel 项目，验证 GitHub Action 搜索。
+4. 创建并部署 PhD Vercel 项目，先验证院校浏览和统一登录。
 5. 创建并部署 portal Vercel 项目，绑定根域与 `www`。
 6. 完成 Porkbun DNS 后，确认三个 HTTPS 域名和跨子域登录。

@@ -28,6 +28,7 @@ const initialForm: ResearchFormState = {
 };
 
 const splitList = (value: string) => value.split(/[,，;；]/).map((item) => item.trim()).filter(Boolean);
+const searchEnabled = process.env.NEXT_PUBLIC_PHD_SEARCH_ENABLED === "true";
 
 export function DiscoveryApp() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -151,7 +152,7 @@ export function DiscoveryApp() {
   const content = () => {
     if (step === "schools") return <SchoolStep locale={locale} selectedIds={selectedIds} onChange={setSelectedIds} onNext={() => setStep("research")} />;
     if (step === "research") return <ResearchStep locale={locale} value={form} onChange={setForm} onBack={() => setStep("schools")} onNext={() => setStep("review")} />;
-    if (step === "review") return <ReviewStep locale={locale} selectedIds={selectedIds} form={form} loading={starting} onBack={() => setStep("research")} onStart={startSearch} />;
+    if (step === "review") return <ReviewStep locale={locale} selectedIds={selectedIds} form={form} loading={starting} searchEnabled={searchEnabled} onBack={() => setStep("research")} onStart={startSearch} />;
     if (step === "searching") return <SearchProgress locale={locale} job={job} error={error} onBack={() => { setJobId(""); setStep("review"); }} />;
     if (step === "results" && job) return <ResultsView locale={locale} job={job} profile={profile} onNewSearch={resetSearch} />;
     return null;
