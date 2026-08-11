@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import { z } from "zod";
-import { processPdf } from "@firecrawl/pdf-inspector";
 import mammoth from "mammoth";
 import { candidateProfileSchema } from "@/lib/schemas";
 import type { CandidateProfile } from "@/types";
@@ -29,25 +28,25 @@ function client() {
   });
 }
 
-function extractPdfMarkdown(buffer: Buffer) {
-  let result: ReturnType<typeof processPdf>;
+async function extractPdfMarkdown(buffer: Buffer) {
   try {
-    result = processPdf(buffer);
+    const { processPdf } = await import("@firecrawl/pdf-inspector");
+    const result = processPdf(buffer);
+
+    const markdown = result.markdown?.trim();
+    if (
+      !markdown ||
+      result.pdfType === "Scanned" ||
+      result.pdfType === "ImageBased" ||
+      result.hasEncodingIssues
+    ) {
+      throw new Error("unusable PDF text layer");
+    }
+
+    return markdown.slice(0, MAX_RESUME_MARKDOWN_CHARS);
   } catch {
     throw new Error("无法读取该 PDF，请上传未加密的 PDF 或 DOCX 文件");
   }
-
-  const markdown = result.markdown?.trim();
-  if (
-    !markdown ||
-    result.pdfType === "Scanned" ||
-    result.pdfType === "ImageBased" ||
-    result.hasEncodingIssues
-  ) {
-    throw new Error("该 PDF 没有可用文字层，请上传 DOCX 或可复制文字的 PDF");
-  }
-
-  return markdown.slice(0, MAX_RESUME_MARKDOWN_CHARS);
 }
 
 async function extractDocxText(buffer: Buffer) {
@@ -118,7 +117,7 @@ export async function extractResumeProfile(
   const buffer = Buffer.from(await file.arrayBuffer());
   const resumeText =
     file.type === "application/pdf"
-      ? extractPdfMarkdown(buffer)
+      ? await extractPdfMarkdown(buffer)
       : await extractDocxText(buffer);
   const response = await client().chat.completions.create({
     model: process.env.SILICONFLOW_DEEPSEEK_MODEL ?? "deepseek-ai/DeepSeek-V3.2",
