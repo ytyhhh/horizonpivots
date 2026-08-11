@@ -1,0 +1,31 @@
+{
+  "name": "@horizon/portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "7.6.4",
+    "@horizon/platform": "file:../../packages/platform",
+    "@phosphor-icons/react": "2.1.10",
+    "geist": "1.7.2",
+    "next": "16.2.11",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.7",
+    "@types/node": "20.19.19",
+    "@types/react": "19.2.4",
+    "@types/react-dom": "19.2.2",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.2.11",
+    "tailwindcss": "4.1.7",
+    "typescript": "5.9.3"
+  }
+}

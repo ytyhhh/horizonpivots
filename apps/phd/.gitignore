@@ -1,0 +1,10 @@
+node_modules
+.next
+.env
+.env.local
+coverage
+.DS_Store
+*.log
+.scrapling_cache
+crawl_data
+__pycache__
