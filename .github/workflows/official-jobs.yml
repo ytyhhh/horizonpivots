@@ -54,4 +54,4 @@ jobs:
         env:
           CAMPUS_RADAR_INGEST_URL: ${{ secrets.CAMPUS_RADAR_INGEST_URL }}
           CAMPUS_RADAR_CRON_SECRET: ${{ secrets.CAMPUS_RADAR_CRON_SECRET }}
-        run: python scripts/crawl_official_jobs.py
+        run: python apps/jobs/scripts/crawl_official_jobs.py

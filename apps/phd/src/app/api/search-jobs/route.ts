@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { searchQuerySchema } from "@/lib/schema";
 import { getCurrentUserId } from "@/lib/auth";
+import { dispatchPhdSearch } from "@/lib/github-dispatch";
 import { initialSchoolProgress, runPersistentSearch } from "@/lib/persistent-search";
 import { createClient } from "@/lib/supabase/server";
-import { tasks } from "@trigger.dev/sdk/v3";
 
 export async function POST(request: Request) {
   try {
@@ -19,13 +19,29 @@ export async function POST(request: Request) {
     }).select("id, status, stage, progress, query, school_progress, created_at, completed_at, error").single();
     if (error) throw error;
 
-    if (process.env.TRIGGER_SECRET_KEY) {
-      const run = await tasks.trigger("institution-scoped-search", { jobId: job.id, userId, query: input });
-      await supabase.from("phd_search_jobs").update({ trigger_run_id: run.id }).eq("id", job.id);
+    if (process.env.GITHUB_DISPATCH_TOKEN) {
+      await dispatchPhdSearch(job.id);
     } else if (process.env.NODE_ENV !== "production") {
       void runPersistentSearch(job.id);
     } else {
-      await supabase.from("phd_search_jobs").update({ status: "failed", stage: "complete", progress: 100, error: "Search worker is not configured" }).eq("id", job.id);
+      const failedJob = {
+        ...job,
+        status: "failed" as const,
+        stage: "complete" as const,
+        progress: 100,
+        error: "GitHub search worker is not configured",
+      };
+      await supabase.from("phd_search_jobs").update({
+        status: failedJob.status,
+        stage: failedJob.stage,
+        progress: failedJob.progress,
+        error: failedJob.error,
+        completed_at: new Date().toISOString(),
+      }).eq("id", job.id);
+      return NextResponse.json(
+        { data: { ...failedJob, schools: job.school_progress, results: [] } },
+        { status: 503 },
+      );
     }
     return NextResponse.json({ data: { ...job, schools: job.school_progress, results: [] } }, { status: 202 });
   } catch (error) {

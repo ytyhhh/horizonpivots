@@ -2,7 +2,7 @@ import { INSTITUTIONS } from "@/data/institutions";
 import { discoverFaculty } from "@/lib/openalex";
 import { rerank } from "@/lib/scoring";
 import { enhanceRanking } from "@/lib/siliconflow";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { FacultyRecommendation, SchoolProgress, SearchJob, SearchQuery } from "@/lib/types";
 
 type JobRow = {
@@ -57,6 +57,16 @@ async function updateJob(id: string, patch: Record<string, unknown>) {
   if (!admin) throw new Error("Supabase service role is not configured");
   const { error } = await admin.from("phd_search_jobs").update(patch).eq("id", id);
   if (error) throw error;
+}
+
+export async function markPersistentSearchFailed(jobId: string, message: string) {
+  await updateJob(jobId, {
+    status: "failed",
+    stage: "complete",
+    progress: 100,
+    error: message.slice(0, 500),
+    completed_at: new Date().toISOString(),
+  });
 }
 
 export async function runPersistentSearch(jobId: string) {

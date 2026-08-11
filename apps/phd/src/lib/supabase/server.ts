@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+export { createAdminClient } from "@/lib/supabase/admin";
 
 export async function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,11 +10,4 @@ export async function createClient() {
   return createSupabaseClient(url, key, {
     accessToken: () => session.getToken(),
   });
-}
-
-export function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createSupabaseClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

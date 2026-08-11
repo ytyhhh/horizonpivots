@@ -1,0 +1,35 @@
+name: Run PhD faculty search
+
+on:
+  repository_dispatch:
+    types: [phd-search]
+
+concurrency:
+  group: phd-search-${{ github.event.client_payload.jobId }}
+  cancel-in-progress: false
+
+jobs:
+  search:
+    if: github.event.client_payload.jobId != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install workspace dependencies
+        run: npm ci
+      - name: Search and persist faculty recommendations
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PHD_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PHD_SUPABASE_SERVICE_ROLE_KEY }}
+          SILICONFLOW_API_KEY: ${{ secrets.PHD_SILICONFLOW_API_KEY }}
+          SILICONFLOW_BASE_URL: ${{ secrets.PHD_SILICONFLOW_BASE_URL }}
+          SILICONFLOW_MODEL: ${{ secrets.PHD_SILICONFLOW_MODEL }}
+          BRAVE_SEARCH_API_KEY: ${{ secrets.PHD_BRAVE_SEARCH_API_KEY }}
+          SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.PHD_SEMANTIC_SCHOLAR_API_KEY }}
+        run: npm run search:worker --workspace=@horizon/phd -- "${{ github.event.client_payload.jobId }}"

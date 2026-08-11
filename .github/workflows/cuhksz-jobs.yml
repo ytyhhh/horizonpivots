@@ -26,4 +26,4 @@ jobs:
           CUHKSZ_DETAIL_WORKERS: "4"
           CUHKSZ_INGEST_BATCH_SIZE: "40"
           CUHKSZ_INGEST_RETRIES: "4"
-        run: python scripts/crawl_cuhksz_jobs.py
+        run: python apps/jobs/scripts/crawl_cuhksz_jobs.py
