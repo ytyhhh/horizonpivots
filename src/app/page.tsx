@@ -1,233 +1,176 @@
 import Link from "next/link";
 import {
+  ArrowDown,
   ArrowRight,
+  ArrowUpRight,
   Briefcase,
   CalendarCheck,
-  ChartDonut,
   CheckCircle,
+  ChartDonut,
   FileArrowUp,
   MapPin,
   Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
-import { JobCard } from "@/components/job-card";
-import { ArrowLink, SectionHeading } from "@/components/ui";
+import { ArrowLink } from "@/components/ui";
 import { getJobs } from "@/lib/jobs";
 import { daysUntil, formatDate } from "@/lib/utils";
+import type { Job } from "@/types";
 
 const industries = [
   { name: "互联网", detail: "AI、软件、产品与数据", icon: ChartDonut, count: "01" },
-  { name: "半导体/硬件", detail: "芯片、嵌入式与机器人", icon: Sparkle, count: "02" },
-  { name: "央国企", detail: "总部、研究院与技术岗", icon: CheckCircle, count: "03" },
+  { name: "半导体 / 硬件", detail: "芯片、嵌入式与机器人", icon: Sparkle, count: "02" },
+  { name: "央国企", detail: "总部、研究院与技术岗位", icon: CheckCircle, count: "03" },
   { name: "新能源车企", detail: "智驾、电子与研发", icon: MapPin, count: "04" },
 ];
+
+const coverStyles = ["signal-green", "signal-blue", "signal-rust", "signal-sand"];
+
+function EditorialJobTile({ job, index }: { job: Job; index: number }) {
+  return (
+    <Link href={`/jobs/${job.id}`} className="editorial-job group" data-job-tile>
+      <div className={`job-cover ${coverStyles[index % coverStyles.length]}`}>
+        <span className="job-cover-index">0{index + 1}</span>
+        <span className="job-cover-company">{job.company.slice(0, 8)}</span>
+        <span className="job-cover-orbit" aria-hidden="true" />
+        <span className="job-cover-type">{job.type}</span>
+      </div>
+      <div className="job-caption">
+        <div>
+          <p>{job.company}</p>
+          <h3>{job.title}</h3>
+        </div>
+        <div className="job-caption-meta">
+          <span>{job.locations.slice(0, 2).join(" / ") || "地点待确认"}</span>
+          <span>{job.industry}</span>
+          <ArrowUpRight size={17} weight="bold" aria-hidden="true" />
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default async function Home() {
   const jobs = await getJobs({});
   const latest = jobs.slice(0, 4);
   const urgent = jobs
     .filter((job) => {
-      const days = daysUntil(job.deadline, new Date("2026-07-30T12:00:00+08:00"));
+      const days = daysUntil(job.deadline);
       return days !== null && days >= 0 && days <= 30;
     })
-    .slice(0, 3);
+    .slice(0, 4);
 
   return (
     <>
-      <section className="page-shell grid items-center gap-10 pb-16 pt-8 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[1.04fr_.96fr] lg:gap-16 lg:pb-20 lg:pt-6">
-        <div>
-          <p data-hero className="eyebrow">
-            公开渠道持续更新
-          </p>
-          <h1 data-hero className="page-title mt-7 max-w-[12ch]">
-            让每一次投递，
-            <span className="text-accent">更接近机会。</span>
-          </h1>
-          <p data-hero className="text-pretty mt-7 max-w-[34rem] text-base leading-7 text-muted sm:text-lg">
-            聚合 2027 届秋招与全年级实习，把分散的信息、截止日期和匹配依据整理在同一处。
-          </p>
-          <div data-hero className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link href="/jobs" className="button-primary group">
-              浏览最新岗位
-              <span className="button-orb">
-                <ArrowRight size={16} weight="bold" aria-hidden="true" />
-              </span>
-            </Link>
-            <Link href="/profile" className="button-secondary group">
-              上传简历匹配
-              <span className="button-orb">
-                <FileArrowUp size={16} weight="bold" aria-hidden="true" />
-              </span>
-            </Link>
-          </div>
-          <dl data-hero className="mt-11 grid max-w-xl grid-cols-3 border-t border-border/70 pt-5">
-            <div>
-              <dt className="text-[11px] text-subtle">当前可浏览</dt>
-              <dd
-                data-count={jobs.length}
-                className="mt-1 font-mono text-xl font-semibold tabular-nums sm:text-2xl"
-              >
-                {jobs.length.toLocaleString("zh-CN")}
-              </dd>
-            </div>
-            <div className="border-l border-border/70 pl-5">
-              <dt className="text-[11px] text-subtle">覆盖方向</dt>
-              <dd data-count="14" className="mt-1 font-mono text-xl font-semibold tabular-nums sm:text-2xl">
-                14
-              </dd>
-            </div>
-            <div className="border-l border-border/70 pl-5">
-              <dt className="text-[11px] text-subtle">同步频率</dt>
-              <dd className="mt-1 font-mono text-xl font-semibold tabular-nums sm:text-2xl">6h</dd>
-            </div>
-          </dl>
+      <section className="reform-hero">
+        <div className="page-shell hero-meta" data-hero>
+          <span>EST. 2026</span>
+          <span className="hero-meta-center">公开渠道持续更新</span>
+          <span className="hidden sm:inline">秋招 · 春招 · 实习</span>
         </div>
 
-        <div data-hero className="panel-shell soft-shadow lg:translate-y-4">
-          <div className="panel-core overflow-hidden p-4 sm:p-5">
-            <div className="relative min-h-44 overflow-hidden rounded-[1rem] bg-foreground p-5 text-background">
-              <div className="absolute -right-12 -top-20 size-72">
-                {["inset-0", "inset-8", "inset-16"].map((position) => (
-                  <span
-                    key={position}
-                    data-radar-ring
-                    className={`absolute ${position} rounded-full border border-background/20`}
-                  />
-                ))}
-                <span className="absolute inset-[7rem] rounded-full bg-accent shadow-[0_0_36px_var(--accent)]" />
-              </div>
-              <div className="relative z-10 flex h-full min-h-34 flex-col justify-between">
-                <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] opacity-65">
-                  <span className="size-1.5 rounded-full bg-accent" />
-                  RADAR LIVE
-                </div>
-                <div>
-                  <p className="font-mono text-4xl font-semibold tabular-nums">{jobs.length}</p>
-                  <p className="mt-1 text-xs opacity-60">个公开岗位正在追踪</p>
-                </div>
-              </div>
-            </div>
+        <div className="hero-word-stage" aria-label="校招雷达">
+          <p className="hero-word hero-word-left" data-hero-word>校招</p>
+          <div className="hero-radar-tile" data-hero-tile>
+            <span className="radar-cross radar-cross-x" />
+            <span className="radar-cross radar-cross-y" />
+            <span className="radar-sweep" />
+            <span className="radar-core" />
+          </div>
+          <p className="hero-word hero-word-right" data-hero-word>雷达</p>
+        </div>
 
-            <div className="flex items-center justify-between px-1 pb-3 pt-5">
-              <div>
-                <p className="text-sm font-semibold">今日机会流</p>
-                <p className="mt-1 text-xs text-muted">按最近收录整理</p>
-              </div>
-              <CalendarCheck size={22} weight="duotone" className="text-accent" />
-            </div>
-            <div className="divide-y divide-border/65">
-              {latest.slice(0, 3).map((job, index) => (
-                <Link
-                  key={job.id}
-                  href={`/jobs/${job.id}`}
-                  className="group grid grid-cols-[2rem_1fr_auto] items-center gap-3 px-1 py-3.5"
-                >
-                  <span className="font-mono text-[10px] text-subtle">0{index + 1}</span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-xs text-muted">{job.company}</span>
-                    <span className="mt-0.5 block truncate text-sm font-semibold">{job.title}</span>
-                  </span>
-                  <ArrowRight
-                    size={15}
-                    weight="bold"
-                    className="text-subtle transition-transform duration-500 group-hover:translate-x-1 group-hover:text-accent"
-                    aria-hidden="true"
-                  />
-                </Link>
-              ))}
-            </div>
+        <div className="page-shell hero-lower">
+          <div data-hero className="hero-statement">
+            <h1>把分散的招聘信息，<br />变成清晰的下一步。</h1>
+            <p>
+              聚合 2027 届校招与全年级实习，整理截止日期、岗位来源与匹配依据。
+            </p>
+          </div>
+          <div data-hero className="hero-actions">
+            <Link href="/jobs" className="reform-button reform-button-dark">
+              浏览最新岗位 <ArrowUpRight size={18} weight="bold" />
+            </Link>
+            <Link href="/profile" className="reform-text-link">
+              <FileArrowUp size={18} weight="bold" /> 上传简历匹配
+            </Link>
+          </div>
+        </div>
+
+        <div className="hero-data-rail" data-hero>
+          <div className="page-shell hero-data-grid">
+            <div><span>正在追踪</span><strong data-count={jobs.length}>{jobs.length}</strong><small>个岗位</small></div>
+            <div><span>覆盖方向</span><strong data-count="14">14</strong><small>个行业方向</small></div>
+            <div><span>同步频率</span><strong>6H</strong><small>持续核验</small></div>
+            <a href="#latest"><span>向下浏览</span><ArrowDown size={23} weight="bold" /></a>
           </div>
         </div>
       </section>
 
-      <section data-reveal className="bg-surface py-18 sm:py-22">
+      <section id="latest" className="editorial-section page-shell" data-reveal>
+        <div className="editorial-heading">
+          <p className="editorial-kicker">01 / Featured opportunities</p>
+          <h2>最新收录<br /><em>机会</em></h2>
+          <div>
+            <p>岗位按最近收录排序，重复信息已自动合并。</p>
+            <ArrowLink href="/jobs">查看全部岗位</ArrowLink>
+          </div>
+        </div>
+        <div className="editorial-job-grid">
+          {latest.map((job, index) => (
+            <EditorialJobTile key={job.id} job={job} index={index} />
+          ))}
+        </div>
+      </section>
+
+      <section className="index-section" data-reveal>
         <div className="page-shell">
-          <SectionHeading
-            title="刚刚收录"
-            description="新岗位优先展示，重复信息已合并。"
-            action={<ArrowLink href="/jobs">进入岗位库</ArrowLink>}
-          />
-          <div className="grid gap-3 md:grid-cols-2">
-            {latest.map((job) => (
-              <JobCard key={job.id} job={job} />
+          <div className="index-intro">
+            <p>02 / Opportunity index</p>
+            <h2>从方向开始，<br />减少无效浏览。</h2>
+          </div>
+          <div className="industry-index">
+            {industries.map(({ name, detail, icon: Icon, count }) => (
+              <Link key={name} href={`/jobs?industry=${encodeURIComponent(name)}`} className="industry-row group">
+                <span className="industry-number">{count}</span>
+                <Icon size={25} weight="duotone" aria-hidden="true" />
+                <span className="industry-name">{name}</span>
+                <span className="industry-detail">{detail}</span>
+                <span className="industry-arrow"><ArrowRight size={19} weight="bold" /></span>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section data-reveal className="page-shell py-20 sm:py-28">
-        <SectionHeading
-          title="按方向发现机会"
-          description="从关心的行业开始，减少无效浏览。"
-        />
-        <div className="grid gap-px overflow-hidden rounded-[1.4rem] bg-border sm:grid-cols-2 lg:grid-cols-[1.2fr_.8fr_1fr_1fr]">
-          {industries.map(({ name, detail, icon: Icon, count }, index) => (
-            <Link
-              key={name}
-              href={`/jobs?industry=${encodeURIComponent(name)}`}
-              className={`group min-h-48 p-5 sm:p-6 ${
-                index === 0 ? "bg-accent text-white" : "bg-surface"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <Icon
-                  size={24}
-                  weight="duotone"
-                  className={index === 0 ? "text-white" : "text-accent"}
-                  aria-hidden="true"
-                />
-                <span className={`font-mono text-[10px] ${index === 0 ? "text-white/55" : "text-subtle"}`}>
-                  {count}
-                </span>
-              </div>
-              <h3 className="mt-12 text-lg font-semibold tracking-[-0.025em]">{name}</h3>
-              <p className={`mt-2 text-sm ${index === 0 ? "text-white/70" : "text-muted"}`}>
-                {detail}
-              </p>
-              <ArrowRight
-                size={16}
-                weight="bold"
-                className="mt-5 transition-transform duration-500 group-hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </Link>
-          ))}
+      <section className="deadline-section page-shell" data-reveal>
+        <div className="deadline-lead">
+          <div>
+            <CalendarCheck size={28} weight="duotone" />
+            <p>03 / Deadline watch</p>
+          </div>
+          <h2>别让好机会，<br />停在截止日期之后。</h2>
+          <p>这些岗位将在 30 天内截止。投递前请再次核对招聘方页面。</p>
+        </div>
+        <div className="deadline-list">
+          {urgent.length ? urgent.map((job) => {
+            const days = daysUntil(job.deadline);
+            return (
+              <Link key={job.id} href={`/jobs/${job.id}`} className="deadline-row group">
+                <span>{job.company}</span>
+                <strong>{job.title}</strong>
+                <small>{formatDate(job.deadline)}</small>
+                <b>{days} DAYS</b>
+                <ArrowUpRight size={18} weight="bold" />
+              </Link>
+            );
+          }) : (
+            <div className="deadline-empty">
+              <Briefcase size={24} weight="duotone" />
+              <p>目前没有 30 天内截止的岗位，最新机会仍在持续核验。</p>
+            </div>
+          )}
         </div>
       </section>
-
-      {urgent.length ? (
-        <section data-reveal className="page-shell pb-8">
-          <div className="grid overflow-hidden rounded-[1.5rem] bg-accent text-white lg:grid-cols-[.72fr_1.28fr]">
-            <div className="p-6 sm:p-8 lg:p-10">
-              <Briefcase size={27} weight="duotone" />
-              <p className="mt-10 text-[10px] font-semibold tracking-[0.15em] text-white/60">DEADLINE WATCH</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-[-0.045em] sm:text-3xl">
-                别错过截止日期
-              </h2>
-              <p className="mt-3 max-w-sm text-sm leading-6 text-white/70">
-                这些岗位将在 30 天内截止。申请前请再次核对招聘方页面。
-              </p>
-            </div>
-            <div className="divide-y divide-white/12 bg-black/8 px-5 sm:px-7">
-              {urgent.map((job) => (
-                <Link
-                  key={job.id}
-                  href={`/jobs/${job.id}`}
-                  className="group flex min-h-24 items-center justify-between gap-5 py-5"
-                >
-                  <div>
-                    <p className="text-xs text-white/60">{job.company}</p>
-                    <p className="mt-1 text-sm font-semibold sm:text-base">{job.title}</p>
-                    <p className="mt-2 text-[11px] text-white/50">{formatDate(job.deadline)}</p>
-                  </div>
-                  <span className="font-mono text-xs text-white/75">
-                    {daysUntil(job.deadline, new Date("2026-07-30T12:00:00+08:00"))} 天
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
     </>
   );
 }

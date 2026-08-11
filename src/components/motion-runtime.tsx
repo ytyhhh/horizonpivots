@@ -65,6 +65,48 @@ export function MotionRuntime() {
           );
         }
 
+        const heroWords = gsap.utils.toArray<HTMLElement>("[data-hero-word]");
+        if (heroWords.length) {
+          gsap.fromTo(
+            heroWords,
+            { opacity: 0, scaleX: 0.82 },
+            {
+              opacity: 1,
+              scaleX: 1,
+              duration: 1.15,
+              stagger: 0.08,
+              ease: "power4.out",
+              clearProps: "transform,opacity",
+            },
+          );
+        }
+
+        const heroTile = document.querySelector<HTMLElement>("[data-hero-tile]");
+        if (heroTile) {
+          gsap.fromTo(
+            heroTile,
+            { opacity: 0, rotate: -9, scale: 0.72 },
+            {
+              opacity: 1,
+              rotate: -2.5,
+              scale: 1,
+              duration: 1.25,
+              delay: 0.12,
+              ease: "power4.out",
+            },
+          );
+
+          const sweep = heroTile.querySelector<HTMLElement>(".radar-sweep");
+          if (sweep) {
+            gsap.to(sweep, {
+              rotate: 322,
+              duration: 4.8,
+              repeat: -1,
+              ease: "none",
+            });
+          }
+        }
+
         gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
           gsap.fromTo(
             element,
@@ -93,6 +135,26 @@ export function MotionRuntime() {
             yoyo: true,
             ease: "sine.inOut",
           });
+        });
+
+        gsap.utils.toArray<HTMLElement>("[data-job-tile]").forEach((tile, index) => {
+          gsap.fromTo(
+            tile,
+            { opacity: 0, y: 38 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.95,
+              delay: (index % 2) * 0.08,
+              ease: "power3.out",
+              clearProps: "transform,opacity",
+              scrollTrigger: {
+                trigger: tile,
+                start: "top 90%",
+                once: true,
+              },
+            },
+          );
         });
 
         gsap.utils.toArray<HTMLElement>("[data-count]").forEach((element) => {

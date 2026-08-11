@@ -12,8 +12,8 @@ export async function AppHeader() {
   return (
     <>
       <header data-app-header className="app-header">
-        <div className="page-shell">
-          <div className="header-island">
+        <div className="header-island">
+          <div className="page-shell flex items-center justify-between gap-5">
             <Brand compact />
             <PrimaryNav />
             <div className="flex items-center gap-2">
