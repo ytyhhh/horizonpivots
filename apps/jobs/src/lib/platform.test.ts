@@ -15,7 +15,7 @@ describe("Horizon Pivots login return URLs", () => {
 
   it("creates the central login URL for a PhD callback", () => {
     const url = new URL(loginUrl("https://phd.horizonpivots.com"));
-    expect(url.origin).toBe("https://jobs.horizonpivots.com");
+    expect(url.origin).toBe("https://horizonpivots.com");
     expect(url.searchParams.get("redirect_url")).toBe("https://phd.horizonpivots.com");
   });
 });

@@ -14,7 +14,7 @@
 
 jobs 和 PhD 还需要 `SUPABASE_SERVICE_ROLE_KEY`。PhD 导师搜索当前关闭，因此暂时不需要 `GITHUB_DISPATCH_TOKEN` 或搜索服务密钥。
 
-在 Clerk Dashboard 中将三个 Origin 加入允许重定向列表，登录页面固定为 `https://jobs.horizonpivots.com/login`。三个同根域入口共享同一 Clerk 会话，不配置 satellite 模式。
+在 Clerk Dashboard 中将三个 Origin 加入允许重定向列表，登录页面固定为 `https://horizonpivots.com/login`。三个同根域入口共享同一 Clerk 会话，不配置 satellite 模式。
 
 ## Supabase
 

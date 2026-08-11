@@ -37,7 +37,7 @@ export function isAllowedReturnUrl(value: string | null | undefined) {
 }
 
 export function loginUrl(returnUrl?: string) {
-  const url = new URL("/login", platformOrigins.jobs);
+  const url = new URL("/login", platformOrigins.portal);
   if (isAllowedReturnUrl(returnUrl)) url.searchParams.set("redirect_url", returnUrl!);
   return url.toString();
 }

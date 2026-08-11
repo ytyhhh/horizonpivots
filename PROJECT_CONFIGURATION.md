@@ -112,7 +112,7 @@ https://phd.horizonpivots.com
 统一登录入口：
 
 ```text
-https://jobs.horizonpivots.com/login
+https://horizonpivots.com/login
 ```
 
 三个 Vercel 项目使用相同的：
