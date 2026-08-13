@@ -30,7 +30,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ asset: str
 
   try {
     const source = await readFile(sourcePath);
-    return new NextResponse(source, {
+    const body = Uint8Array.from(source).buffer;
+    return new NextResponse(body, {
       headers: {
         "Content-Type": contentTypes[path.extname(asset).toLowerCase()] ?? "application/octet-stream",
         "Cache-Control": asset.startsWith("assets/") ? "public, max-age=86400" : "no-store",
