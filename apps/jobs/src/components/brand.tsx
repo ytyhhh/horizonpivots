@@ -11,14 +11,10 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       <span className="brand-mark" aria-hidden="true">
         <span className="brand-signal" />
       </span>
-      <span
-        className={cn(
-          "brand-wordmark font-semibold",
-          compact ? "hidden sm:inline" : "text-lg",
-        )}
-      >
-        校招雷达
+      <span className={cn("brand-wordmark font-semibold", compact ? "hidden sm:inline" : "text-lg")}>
+        Horizon Pivots
       </span>
+      <span className="hidden text-xs font-medium text-muted lg:inline">校招雷达</span>
     </Link>
   );
 }

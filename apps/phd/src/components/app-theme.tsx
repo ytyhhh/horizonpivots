@@ -44,7 +44,7 @@ export function AppTheme({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={value}>
-      <Theme appearance={mode} accentColor="blue" grayColor="slate" radius="large" scaling="100%">
+      <Theme appearance={mode} accentColor="green" grayColor="sage" radius="large" scaling="100%">
         {children}
       </Theme>
     </ThemeContext.Provider>

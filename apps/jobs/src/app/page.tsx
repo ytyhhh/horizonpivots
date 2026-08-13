@@ -65,9 +65,9 @@ export default async function Home() {
     <>
       <section className="reform-hero">
         <div className="page-shell hero-meta" data-hero>
-          <span>EST. 2026</span>
+          <span>校招雷达</span>
           <span className="hero-meta-center">公开渠道持续更新</span>
-          <span className="hidden sm:inline">秋招 · 春招 · 实习</span>
+          <span className="hidden sm:inline">校招、实习与项目机会</span>
         </div>
 
         <div className="hero-word-stage" aria-label="校招雷达">
@@ -83,35 +83,35 @@ export default async function Home() {
 
         <div className="page-shell hero-lower">
           <div data-hero className="hero-statement">
-            <h1>把分散的招聘信息，<br />变成清晰的下一步。</h1>
+            <h1>把招聘信息，<br />变成可行动的下一步。</h1>
             <p>
-              聚合 2027 届校招与全年级实习，整理截止日期、岗位来源与匹配依据。
+              浏览经核验的岗位、截止日期和信息来源，再决定你的投递顺序。
             </p>
           </div>
           <div data-hero className="hero-actions">
             <Link href="/jobs" className="reform-button reform-button-dark">
-              浏览最新岗位 <ArrowUpRight size={18} weight="bold" />
+              浏览岗位 <ArrowUpRight size={18} weight="bold" />
             </Link>
             <Link href="/profile" className="reform-text-link">
-              <FileArrowUp size={18} weight="bold" /> 上传简历匹配
+              <FileArrowUp size={18} weight="bold" /> 建立求职画像
             </Link>
           </div>
         </div>
 
         <div className="hero-data-rail" data-hero>
           <div className="page-shell hero-data-grid">
-            <div><span>正在追踪</span><strong data-count={jobs.length}>{jobs.length}</strong><small>个岗位</small></div>
+            <div><span>岗位动态</span><strong data-count={jobs.length}>{jobs.length}</strong><small>条可浏览机会</small></div>
             <div><span>覆盖方向</span><strong data-count="14">14</strong><small>个行业方向</small></div>
-            <div><span>同步频率</span><strong>6H</strong><small>持续核验</small></div>
-            <a href="#latest"><span>向下浏览</span><ArrowDown size={23} weight="bold" /></a>
+            <div><span>更新节奏</span><strong>6H</strong><small>持续核验</small></div>
+            <a href="#latest"><span>浏览新近收录</span><ArrowDown size={23} weight="bold" /></a>
           </div>
         </div>
       </section>
 
       <section id="latest" className="editorial-section page-shell" data-reveal>
         <div className="editorial-heading">
-          <p className="editorial-kicker">01 / Featured opportunities</p>
-          <h2>最新收录<br /><em>机会</em></h2>
+          <p className="editorial-kicker">新近收录</p>
+          <h2>值得优先<br />了解的机会</h2>
           <div>
             <p>岗位按最近收录排序，重复信息已自动合并。</p>
             <ArrowLink href="/jobs">查看全部岗位</ArrowLink>
@@ -127,7 +127,7 @@ export default async function Home() {
       <section className="index-section" data-reveal>
         <div className="page-shell">
           <div className="index-intro">
-            <p>02 / Opportunity index</p>
+            <p>按方向浏览</p>
             <h2>从方向开始，<br />减少无效浏览。</h2>
           </div>
           <div className="industry-index">
@@ -148,7 +148,7 @@ export default async function Home() {
         <div className="deadline-lead">
           <div>
             <CalendarCheck size={28} weight="duotone" />
-            <p>03 / Deadline watch</p>
+            <p>截止日期</p>
           </div>
           <h2>别让好机会，<br />停在截止日期之后。</h2>
           <p>这些岗位将在 30 天内截止。投递前请再次核对招聘方页面。</p>

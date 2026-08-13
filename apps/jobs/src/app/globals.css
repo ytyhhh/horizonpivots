@@ -1,94 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f2f0e7;
-  --surface: #fbfaf3;
-  --surface-muted: #e7e6dc;
-  --surface-strong: #d9ddd3;
-  --foreground: #0a0d0b;
-  --muted: #5c625d;
-  --subtle: #81867f;
-  --border: #cfd1c8;
-  --border-strong: #9ca39c;
-  --accent: #126148;
-  --accent-strong: #0a4936;
-  --accent-soft: #d8e7dd;
+  --background: #f2f5f1;
+  --surface: #fbfdf9;
+  --surface-muted: #e6ede6;
+  --surface-strong: #d7e1d8;
+  --foreground: #17201c;
+  --muted: #64706a;
+  --subtle: #7c8981;
+  --border: #d4ded5;
+  --border-strong: #aebcaf;
+  --accent: #166847;
+  --accent-strong: #123f2e;
+  --accent-soft: #ddecdf;
   --warning: #95601e;
   --warning-soft: #f2e7d4;
   --danger: #9c423a;
   --danger-soft: #f3e1dd;
   --shadow: 0 24px 70px rgba(25, 31, 27, 0.1);
   --shadow-soft: 0 14px 40px rgba(25, 31, 27, 0.07);
-  --header: #090b0a;
+  --header: color-mix(in srgb, var(--surface) 92%, transparent);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0d110e;
-    --surface: #141a16;
-    --surface-muted: #1c241e;
-    --surface-strong: #263029;
-    --foreground: #f0f3ed;
-    --muted: #a3aca4;
-    --subtle: #747f77;
-    --border: #2b352e;
-    --border-strong: #465249;
-    --accent: #71bd91;
-    --accent-strong: #95d1ae;
-    --accent-soft: #183828;
+    --background: #132019;
+    --surface: #19291f;
+    --surface-muted: #203327;
+    --surface-strong: #2a4031;
+    --foreground: #e6efe9;
+    --muted: #a8b5ad;
+    --subtle: #819087;
+    --border: #304236;
+    --border-strong: #516554;
+    --accent: #6cb98c;
+    --accent-strong: #91d4ab;
+    --accent-soft: #1d3e2a;
     --warning: #d8a55f;
     --warning-soft: #382a19;
     --danger: #dc8a80;
     --danger-soft: #3b2320;
     --shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
     --shadow-soft: 0 16px 45px rgba(0, 0, 0, 0.22);
-    --header: color-mix(in srgb, #111612 84%, transparent);
+    --header: color-mix(in srgb, var(--surface) 92%, transparent);
   }
 }
 
 html[data-theme="light"] {
-  --background: #f2f0e7;
-  --surface: #fbfaf3;
-  --surface-muted: #e7e6dc;
-  --surface-strong: #d9ddd3;
-  --foreground: #0a0d0b;
-  --muted: #5c625d;
-  --subtle: #81867f;
-  --border: #cfd1c8;
-  --border-strong: #9ca39c;
-  --accent: #126148;
-  --accent-strong: #0a4936;
-  --accent-soft: #d8e7dd;
+  --background: #f2f5f1;
+  --surface: #fbfdf9;
+  --surface-muted: #e6ede6;
+  --surface-strong: #d7e1d8;
+  --foreground: #17201c;
+  --muted: #64706a;
+  --subtle: #7c8981;
+  --border: #d4ded5;
+  --border-strong: #aebcaf;
+  --accent: #166847;
+  --accent-strong: #123f2e;
+  --accent-soft: #ddecdf;
   --warning: #95601e;
   --warning-soft: #f2e7d4;
   --danger: #9c423a;
   --danger-soft: #f3e1dd;
   --shadow: 0 24px 70px rgba(25, 31, 27, 0.1);
   --shadow-soft: 0 14px 40px rgba(25, 31, 27, 0.07);
-  --header: #090b0a;
+  --header: color-mix(in srgb, var(--surface) 92%, transparent);
 }
 
 html[data-theme="dark"] {
-  --background: #0d110e;
-  --surface: #141a16;
-  --surface-muted: #1c241e;
-  --surface-strong: #263029;
-  --foreground: #f0f3ed;
-  --muted: #a3aca4;
-  --subtle: #747f77;
-  --border: #2b352e;
-  --border-strong: #465249;
-  --accent: #71bd91;
-  --accent-strong: #95d1ae;
-  --accent-soft: #183828;
+  --background: #132019;
+  --surface: #19291f;
+  --surface-muted: #203327;
+  --surface-strong: #2a4031;
+  --foreground: #e6efe9;
+  --muted: #a8b5ad;
+  --subtle: #819087;
+  --border: #304236;
+  --border-strong: #516554;
+  --accent: #6cb98c;
+  --accent-strong: #91d4ab;
+  --accent-soft: #1d3e2a;
   --warning: #d8a55f;
   --warning-soft: #382a19;
   --danger: #dc8a80;
   --danger-soft: #3b2320;
   --shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
   --shadow-soft: 0 16px 45px rgba(0, 0, 0, 0.22);
-  --header: color-mix(in srgb, #111612 84%, transparent);
+  --header: color-mix(in srgb, var(--surface) 92%, transparent);
 }
 
 @theme inline {
@@ -245,9 +245,9 @@ html[data-theme="dark"] .theme-icon-moon {
 .header-island {
   min-height: 4.5rem;
   padding-block: 0.65rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--border);
   background: var(--header);
-  color: #f3f0e7;
+  color: var(--foreground);
   pointer-events: auto;
   transition:
     min-height 500ms var(--ease-out),
@@ -258,7 +258,7 @@ html[data-theme="dark"] .theme-icon-moon {
 .app-header[data-scrolled="true"] .header-island {
   min-height: 3.8rem;
   padding-block: 0.35rem;
-  background: color-mix(in srgb, #090b0a 92%, transparent);
+  background: var(--header);
   backdrop-filter: blur(16px);
 }
 
@@ -290,22 +290,22 @@ html[data-theme="dark"] .theme-icon-moon {
 
 .app-header .brand-wordmark,
 .app-header .brand-mark {
-  color: #f3f0e7;
+  color: var(--foreground);
 }
 
 .nav-link {
   position: relative;
   border-radius: 0.75rem;
   padding: 0.55rem 0.8rem;
-  color: rgba(243, 240, 231, 0.58);
+  color: var(--muted);
   font-size: 0.8125rem;
   font-weight: 550;
 }
 
 .nav-link:hover,
 .nav-link.is-active {
-  color: #f3f0e7;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--foreground);
+  background: var(--surface-muted);
 }
 
 .nav-link.is-active::after {
@@ -315,7 +315,33 @@ html[data-theme="dark"] .theme-icon-moon {
   left: 0.75rem;
   height: 1px;
   content: "";
-  background: #77d6ad;
+  background: var(--accent);
+}
+
+.header-product-switcher {
+  gap: 0.15rem;
+}
+
+.header-product-switcher > a,
+.header-product-switcher nav a {
+  border-radius: 999px;
+  padding: 0.48rem 0.68rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.header-product-switcher > a:hover,
+.header-product-switcher nav a:hover,
+.header-product-switcher nav a[aria-current="page"] {
+  color: var(--foreground);
+  background: var(--accent-soft);
+}
+
+.header-product-switcher nav {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
 }
 
 .icon-button,
@@ -354,8 +380,8 @@ html[data-theme="dark"] .theme-icon-moon {
   gap: 0.5rem;
   border-radius: 0.85rem;
   padding-inline: 0.9rem;
-  color: #07110d;
-  background: #77d6ad;
+  color: #f8fcf8;
+  background: var(--accent);
   font-size: 0.8125rem;
   font-weight: 650;
 }
@@ -371,7 +397,7 @@ html[data-theme="dark"] .theme-icon-moon {
   padding: 0.35rem;
   border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   border-radius: 1.2rem;
-  background: var(--header);
+  background: var(--surface);
   box-shadow: 0 18px 55px color-mix(in srgb, var(--foreground) 14%, transparent);
   backdrop-filter: blur(18px);
 }
@@ -543,7 +569,7 @@ html[data-theme="dark"] .theme-icon-moon {
 /* Reform-inspired editorial home */
 .reform-hero {
   overflow: hidden;
-  border-bottom: 1px solid var(--foreground);
+  border-bottom: 1px solid var(--border);
 }
 
 .hero-meta {
@@ -552,25 +578,14 @@ html[data-theme="dark"] .theme-icon-moon {
   align-items: center;
   padding-block: 1.15rem;
   color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .hero-meta-center {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-}
-
-.hero-meta-center::before {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 50%;
-  content: "";
-  background: var(--accent);
-  box-shadow: 0 0 0 0.28rem color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .hero-meta > :last-child {
@@ -727,14 +742,14 @@ html[data-theme="dark"] .theme-icon-moon {
 }
 
 .reform-button-dark {
-  color: #f3f0e7;
-  background: var(--foreground);
+  color: #f8fcf8;
+  background: var(--accent);
 }
 
 .reform-button-dark:hover {
   gap: 2.5rem;
-  color: #07110d;
-  background: #77d6ad;
+  color: #f8fcf8;
+  background: var(--accent-strong);
 }
 
 .reform-text-link {
@@ -753,9 +768,9 @@ html[data-theme="dark"] .theme-icon-moon {
 }
 
 .hero-data-rail {
-  border-top: 1px solid var(--foreground);
-  color: #f3f0e7;
-  background: var(--foreground);
+  border-top: 1px solid var(--accent-strong);
+  color: #eff8f1;
+  background: var(--accent-strong);
 }
 
 .hero-data-grid {
@@ -818,10 +833,8 @@ html[data-theme="dark"] .theme-icon-moon {
 .index-intro > p,
 .deadline-lead > div p {
   color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 650;
 }
 
 .editorial-heading h2,
@@ -831,11 +844,6 @@ html[data-theme="dark"] .theme-icon-moon {
   font-weight: 540;
   line-height: 0.84;
   letter-spacing: -0.08em;
-}
-
-.editorial-heading h2 em {
-  font-family: Georgia, "Songti SC", serif;
-  font-weight: 400;
 }
 
 .editorial-heading > div:last-child {

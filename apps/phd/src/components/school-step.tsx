@@ -41,10 +41,10 @@ export function SchoolStep({
     <section className="grid gap-7">
       <div className="max-w-2xl">
         <h1 className="m-0 text-3xl font-semibold tracking-[-0.035em] md:text-[42px] md:leading-[1.08]">
-          {locale === "zh" ? "先确定学校，再寻找真正相关的导师" : "Choose schools first, then find the right supervisors"}
+          {locale === "zh" ? "从目标院校开始，厘清研究申请的下一步" : "Start with target schools, then clarify your research application path"}
         </h1>
         <p className="mt-4 max-w-[62ch] text-base leading-7 text-[var(--muted)]">
-          {locale === "zh" ? "选择 1-10 所目标学校。系统只在这些学校的学术记录和官方网站内搜索。" : "Select 1-10 target schools. Search stays inside their academic records and official websites."}
+          {locale === "zh" ? "选择 1-10 所目标学校。你的研究方向与资料会保存在这个独立工作区。" : "Select 1-10 target schools. Your research direction and materials stay in this separate workspace."}
         </p>
       </div>
 

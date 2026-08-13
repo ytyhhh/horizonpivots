@@ -11,15 +11,15 @@ export default function LoginPage() {
       <Link href="/" className="auth-wordmark">Horizon Pivots</Link>
       <section className="auth-layout">
         <div className="auth-intro">
-          <p className="kicker">One account, two workspaces</p>
+          <p className="kicker">一个账号，两个工作区</p>
           <span className="auth-icon"><ShieldCheck size={27} weight="duotone" aria-hidden="true" /></span>
-          <h1>一个账号，<br />继续你的下一步。</h1>
-          <p>登录后可回到校招雷达或 PhD Scope。两类个人资料始终独立保存。</p>
+          <h1>回到你正在<br />推进的下一步。</h1>
+          <p>登录后可继续使用校招雷达或 PhD Scope，两类资料始终独立保存。</p>
         </div>
         <div className="auth-card">
           <span className="auth-icon"><LockKey size={23} weight="duotone" aria-hidden="true" /></span>
           <h2>登录 Horizon Pivots</h2>
-          <p>使用你在账号中心选择的登录方式。</p>
+          <p>使用你的账号登录，随后回到原来的工作区。</p>
           <Suspense fallback={<div className="auth-loading">正在加载登录方式…</div>}>
             <PortalAuth mode="sign-in" />
           </Suspense>

@@ -1,41 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --page: #f5f7fa;
-  --surface: #fbfcfe;
-  --surface-raised: #eef2f7;
-  --ink: #172033;
-  --muted: #59677d;
-  --faint: #7b8798;
-  --line: #d9e0e9;
-  --line-strong: #c5cfdb;
-  --accent: #2458a6;
-  --accent-hover: #1e4a8b;
-  --accent-soft: #e6eef9;
+  --page: #f2f5f1;
+  --surface: #fbfdf9;
+  --surface-raised: #e6ede6;
+  --ink: #17201c;
+  --muted: #64706a;
+  --faint: #7c8981;
+  --line: #d4ded5;
+  --line-strong: #aebcaf;
+  --accent: #166847;
+  --accent-hover: #123f2e;
+  --accent-soft: #ddecdf;
   --danger: #a63b48;
   --danger-soft: #f9e9ec;
   --warning: #8a6428;
   --warning-soft: #f5eddf;
-  --shadow: 0 18px 50px rgba(44, 66, 98, 0.09);
+  --shadow: 0 18px 50px rgba(23, 51, 37, 0.09);
 }
 
 [data-theme="dark"] {
-  --page: #10151e;
-  --surface: #151c27;
-  --surface-raised: #1d2633;
-  --ink: #e8edf5;
-  --muted: #aeb9c9;
-  --faint: #8c99aa;
-  --line: #2a3544;
-  --line-strong: #3a485a;
-  --accent: #7ea7e7;
-  --accent-hover: #9ab9ea;
-  --accent-soft: #1b3151;
+  --page: #132019;
+  --surface: #19291f;
+  --surface-raised: #203327;
+  --ink: #e6efe9;
+  --muted: #a8b5ad;
+  --faint: #819087;
+  --line: #304236;
+  --line-strong: #516554;
+  --accent: #6cb98c;
+  --accent-hover: #91d4ab;
+  --accent-soft: #1d3e2a;
   --danger: #ef9aa5;
   --danger-soft: #3e2229;
   --warning: #d8b77e;
   --warning-soft: #392f21;
-  --shadow: 0 18px 50px rgba(2, 8, 18, 0.3);
+  --shadow: 0 18px 50px rgba(2, 12, 7, 0.3);
 }
 
 * {
@@ -52,7 +52,7 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-geist-sans), "Geist", "PingFang SC", "Microsoft YaHei", sans-serif;
   text-rendering: optimizeLegibility;
 }
 
@@ -80,8 +80,27 @@ button {
 .app-shell {
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 82% 6%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 29rem),
+    radial-gradient(circle at 82% 6%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 29rem),
     var(--page);
+}
+
+.platform-switcher {
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.platform-switcher a {
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.platform-switcher a:hover,
+.platform-switcher a[aria-current="page"] {
+  color: var(--ink);
+  background: var(--accent-soft);
 }
 
 .surface {

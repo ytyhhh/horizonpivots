@@ -3,6 +3,7 @@
 import { Moon, SignIn, Sun, Translate } from "@phosphor-icons/react";
 import { UserButton, useAuth } from "@clerk/nextjs";
 import { loginUrl, platformOrigins } from "@horizon/platform";
+import { ProductSwitcher } from "@horizon/platform/product-switcher";
 import { useAppTheme } from "@/components/app-theme";
 
 export function AppHeader({ locale, onLocaleChange }: { locale: "zh" | "en"; onLocaleChange: () => void }) {
@@ -17,13 +18,13 @@ export function AppHeader({ locale, onLocaleChange }: { locale: "zh" | "en"; onL
             PS
           </div>
           <div>
-            <div className="text-[15px] font-bold tracking-[-0.02em]">PhD Scope</div>
-            <div className="text-xs text-[var(--faint)]">{locale === "zh" ? "院校范围导师搜索" : "School-scoped supervisor search"}</div>
+            <div className="text-[15px] font-bold tracking-[-0.02em]">Horizon Pivots</div>
+            <div className="text-xs text-[var(--faint)]">PhD Scope {locale === "zh" ? "研究申请工作区" : "Research application workspace"}</div>
           </div>
         </div>
-        <nav className="flex items-center gap-1" aria-label={locale === "zh" ? "实用工具" : "Utilities"}>
-          <a className="button-quiet !min-h-9 !px-3 text-sm" href={platformOrigins.portal}>Horizon</a>
-          <a className="button-quiet !min-h-9 !px-3 text-sm" href={platformOrigins.jobs}>{locale === "zh" ? "校招" : "Jobs"}</a>
+        <div className="flex items-center gap-1">
+          <a className="button-quiet hidden !min-h-9 !px-3 text-sm md:inline-flex" href={platformOrigins.portal}>平台首页</a>
+          <ProductSwitcher active="phd" className="platform-switcher hidden md:flex" />
           <button className="button-quiet !min-h-9 !px-3" onClick={onLocaleChange} aria-label="Switch language">
             <Translate size={18} weight="regular" />
             <span className="hidden sm:inline">{locale === "zh" ? "EN" : "中文"}</span>
@@ -34,7 +35,7 @@ export function AppHeader({ locale, onLocaleChange }: { locale: "zh" | "en"; onL
           {isSignedIn
             ? <UserButton appearance={{ elements: { avatarBox: "size-8" } }} />
             : <a className="button-secondary !min-h-9 !px-4" href={loginUrl(platformOrigins.phd)}><SignIn size={18} />{locale === "zh" ? "登录" : "Sign in"}</a>}
-        </nav>
+        </div>
       </div>
     </header>
   );

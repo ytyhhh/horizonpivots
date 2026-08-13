@@ -5,7 +5,8 @@ import { Brand } from "@/components/brand";
 import { PrimaryNav } from "@/components/primary-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getCurrentUserId } from "@/lib/auth";
-import { platformOrigins } from "@horizon/platform";
+import { loginUrl, platformOrigins } from "@horizon/platform";
+import { ProductSwitcher } from "@horizon/platform/product-switcher";
 
 export async function AppHeader() {
   const userId = await getCurrentUserId();
@@ -16,15 +17,15 @@ export async function AppHeader() {
         <div className="header-island">
           <div className="page-shell flex items-center justify-between gap-5">
             <Brand compact />
-            <nav className="hidden items-center gap-3 text-sm text-muted lg:flex" aria-label="Horizon Pivots 产品">
-              <a href={platformOrigins.portal} className="transition-colors hover:text-foreground">Horizon</a>
-              <a href={platformOrigins.phd} className="transition-colors hover:text-foreground">PhD Scope</a>
-            </nav>
+            <div className="header-product-switcher hidden items-center lg:flex">
+              <a href={platformOrigins.portal}>平台首页</a>
+              <ProductSwitcher active="jobs" />
+            </div>
             <PrimaryNav />
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link
-                href={userId ? "/profile" : "/login"}
+                href={userId ? "/profile" : loginUrl(platformOrigins.jobs)}
                 className="account-button group"
               >
                 <UserCircle size={18} weight="bold" aria-hidden="true" />

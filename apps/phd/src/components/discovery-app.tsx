@@ -167,8 +167,8 @@ export function DiscoveryApp() {
         {content()}
       </main>
       <footer className="mx-auto mt-10 flex max-w-[1400px] flex-col justify-between gap-2 border-t border-[var(--line)] px-4 py-7 text-xs leading-5 text-[var(--faint)] md:flex-row md:px-8">
-        <span>{locale === "zh" ? "结果仅用于申请研究，请在联系前核验导师职位与招生信息。" : "For application research only. Verify role and recruiting status before contact."}</span>
-        <span>{locale === "zh" ? "数据来源：OpenAlex、学校官网" : "Sources: OpenAlex and official university pages"}</span>
+        <span>{locale === "zh" ? "结果用于辅助研究申请。联系前请核验导师职位与招生信息。" : "Use results for application research. Verify role and recruiting status before contact."}</span>
+        <span>{locale === "zh" ? "数据来源：学术记录与学校官网" : "Sources: academic records and official university pages"}</span>
       </footer>
     </div>
   );

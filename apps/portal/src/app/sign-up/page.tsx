@@ -12,8 +12,8 @@ export default function SignUpPage() {
       <section className="auth-layout auth-layout-single">
         <div className="auth-card">
           <span className="auth-icon"><UserPlus size={23} weight="duotone" aria-hidden="true" /></span>
-          <h1>建立你的工作区</h1>
-          <p>一个账号可在求职与博士申请之间自由切换。</p>
+          <h1>开始整理下一步</h1>
+          <p>一个账号，可进入求职与研究申请两个独立工作区。</p>
           <Suspense fallback={<div className="auth-loading">正在加载注册方式…</div>}>
             <PortalAuth mode="sign-up" />
           </Suspense>
