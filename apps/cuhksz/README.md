@@ -29,6 +29,16 @@ npm run dev --workspace=@horizon/cuhksz
 
 首次写入示例公开目录时，可在应用迁移后执行 [`supabase/seed.sql`](supabase/seed.sql)。生产数据导入应使用服务端受控脚本或 Supabase SQL Editor，不能向浏览器暴露 Service Role key。
 
+如需导入仓库内已有的课程和开课教师目录，在本地终端运行：
+
+```bash
+SUPABASE_URL=https://<project-ref>.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=<secret-key> \
+npm run import:catalog --workspace=@horizon/cuhksz
+```
+
+该脚本只写入公开课程与开课目录，不导入旧评价内容，也不会把 Service Role key 上传到 Vercel。
+
 ## Clerk
 
 本应用没有独立注册或 Supabase OTP。未登录用户会前往：
