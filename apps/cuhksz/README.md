@@ -1,6 +1,6 @@
 # 港中深课饭评
 
-Horizon Pivots 的课程与食堂评价产品。它是一个轻量 Vercel 静态站点，公开目录可直接浏览；登录、收藏和匿名评价使用平台共用的 Clerk 账号与现有 Supabase 项目。
+Horizon Pivots 的课程与食堂评价产品。它是一个 Next.js 应用：页面和 API 都由 Vercel 的 Next.js 运行时处理；登录、收藏和匿名评价使用平台共用的 Clerk 账号与现有 Supabase 项目。
 
 ## 本地运行
 
@@ -8,7 +8,7 @@ Horizon Pivots 的课程与食堂评价产品。它是一个轻量 Vercel 静态
 npm run dev --workspace=@horizon/cuhksz
 ```
 
-打开 `http://127.0.0.1:4173`。本地未配置环境变量时仅展示随附的公开示例目录，不会模拟登录或写入数据。
+打开 `http://127.0.0.1:3000`。本地未配置环境变量时仅展示随附的公开示例目录，不会模拟登录或写入数据。
 
 ## Supabase
 
@@ -61,7 +61,7 @@ https://horizonpivots.com/login?redirect_url=<原始页面>
 
 ```text
 Root Directory: apps/cuhksz
-Framework Preset: Other
+Framework Preset: Next.js
 Build Command: npm run build
 ```
 

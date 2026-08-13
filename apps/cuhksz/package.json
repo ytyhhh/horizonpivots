@@ -3,10 +3,26 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
-    "build": "npm run check && node scripts/build-static.mjs",
+    "dev": "next dev -p 3000",
+    "start": "next start",
+    "build": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build",
     "import:catalog": "node scripts/import-supabase.mjs",
-    "check": "node --check app.js && node --check clerk-adapter.js && node --check data.js && node --check server.js && node --check supabase-adapter.js && node --check scripts/build-static.mjs && node --check scripts/import-supabase.mjs && node --check api/config.js && node --check api/health.js && node validate.js"
+    "check": "node --check app.js && node --check clerk-adapter.js && node --check data.js && node --check supabase-adapter.js && node --check scripts/import-supabase.mjs && node validate.js",
+    "lint": "eslint src next.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "7.6.4",
+    "next": "16.2.11",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.19",
+    "@types/react": "19.2.4",
+    "@types/react-dom": "19.2.2",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.2.11",
+    "typescript": "5.9.3"
   }
 }

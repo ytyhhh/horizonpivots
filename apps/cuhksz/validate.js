@@ -4,7 +4,7 @@ const assert = require('assert')
 const vm = require('vm')
 
 const root = __dirname
-for (const file of ['index.html', 'styles.css', 'app.js', 'clerk-adapter.js', 'data.js', 'config.js', 'supabase-adapter.js', 'server.js', 'api/config.js', 'api/health.js', 'vercel.json', '.env.example', 'supabase/schema.sql', 'supabase/seed.sql']) {
+for (const file of ['index.html', 'styles.css', 'app.js', 'clerk-adapter.js', 'data.js', 'config.js', 'supabase-adapter.js', 'src/app/layout.tsx', 'src/app/page.tsx', 'src/app/[...asset]/route.ts', 'src/app/api/config/route.ts', 'src/app/api/health/route.ts', 'next.config.ts', 'vercel.json', '.env.example', 'supabase/schema.sql', 'supabase/seed.sql']) {
   assert(fs.existsSync(path.join(root, file)), `缺少网页文件：${file}`)
 }
 
@@ -31,4 +31,4 @@ for (const asset of ['assets/campus-dining-hero.jpg', 'assets/course-study.jpg']
 console.log('✓ 网页四个主页面和核心对话框完整')
 console.log('✓ 移动端与减少动效样式完整')
 console.log('✓ 课程、食堂、菜品演示数据及图片资产完整')
-console.log('✓ Clerk、Supabase RLS、Vercel Functions 与部署配置完整')
+console.log('✓ Clerk、Supabase RLS、Next.js Route Handlers 与部署配置完整')
