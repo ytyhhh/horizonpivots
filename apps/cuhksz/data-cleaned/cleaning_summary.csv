@@ -1,0 +1,12 @@
+﻿metric,value,description
+source_rows,344,源工作表总行数
+recognized_source_rows,319,成功识别课程代码的源行数
+normalized_courses,190,去重并拆分后的课程数
+normalized_offerings,316,按课程、教师、占位学期去重后的开课记录数
+source_comment_cells_in_recognized_rows,717,可关联课程的非空评价单元格数
+pending_review_rows,584,清洗后保留并标记为 pending 的历史文字评价数
+filtered_non_review_cells,140,广告、求评价、纯提问等被过滤单元格数
+rejected_unmapped_source_rows,23,因缺少或无法识别课程代码而未映射的源行数
+official_metadata_matches,154,从港中深官方当前课程目录补全名称与学院的课程数
+placeholder_course_names,36,当前官方目录未匹配、需后续补名的课程数
+issue_log_rows,263,清洗问题与修正日志总行数

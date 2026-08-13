@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#166847">
+  <meta name="description" content="港中深学生的匿名课程与食堂评价社区。">
+  <title>港中深课饭评</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="site-header">
+    <a class="brand" href="#home" data-route="home" aria-label="港中深课饭评首页">
+      <span class="brand-mark">深</span>
+      <span><b>港中深课饭评</b><small>CUHK–SHENZHEN STUDENT VOICE</small></span>
+    </a>
+    <nav class="desktop-nav" aria-label="主导航">
+      <button data-route="home" class="active">首页</button>
+      <button data-route="courses">课程</button>
+      <button data-route="dining">食堂</button>
+      <button data-route="profile">我的</button>
+    </nav>
+    <div class="header-actions">
+      <button class="search-trigger" id="global-search-trigger" aria-label="打开搜索"><span>⌕</span> 搜索</button>
+      <button class="auth-button" id="header-auth">校园邮箱认证</button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="page active" id="page-home" aria-labelledby="home-title"></section>
+    <section class="page" id="page-courses" aria-labelledby="courses-title"></section>
+    <section class="page" id="page-dining" aria-labelledby="dining-title"></section>
+    <section class="page" id="page-profile" aria-labelledby="profile-title"></section>
+  </main>
+
+  <nav class="mobile-nav" aria-label="移动端主导航">
+    <button data-route="home" class="active"><span>⌂</span>首页</button>
+    <button data-route="courses"><span>课</span>课程</button>
+    <button data-route="dining"><span>食</span>食堂</button>
+    <button data-route="profile"><span>我</span>我的</button>
+  </nav>
+
+  <div class="overlay" id="detail-overlay" hidden>
+    <button class="overlay-backdrop" data-close-overlay aria-label="关闭详情"></button>
+    <aside class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <button class="close-button" data-close-overlay aria-label="关闭">×</button>
+      <div id="detail-content"></div>
+    </aside>
+  </div>
+
+  <div class="modal-wrap" id="review-modal" hidden>
+    <button class="modal-backdrop" data-close-modal aria-label="关闭评价窗口"></button>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+      <button class="close-button" data-close-modal aria-label="关闭">×</button>
+      <div class="modal-kicker">匿名评价</div>
+      <h2 id="review-modal-title">写下真实感受</h2>
+      <p id="review-target-label" class="modal-subtitle"></p>
+      <form id="review-form">
+        <fieldset class="rating-field"><legend>总体评分</legend><div class="rating-picker" id="rating-picker"></div><p class="field-error" id="rating-error"></p></fieldset>
+        <label class="field"><span>评价内容</span><textarea id="review-content" maxlength="800" placeholder="哪些地方值得推荐？有什么需要提前知道？"></textarea><small><span id="review-count">0</span> / 800</small><em class="field-error" id="content-error"></em></label>
+        <p class="privacy-note">评价会匿名展示。请勿包含隐私、攻击性内容或未经证实的指控。</p>
+        <button class="primary-action" type="submit">匿名发布</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-wrap" id="auth-modal" hidden>
+    <button class="modal-backdrop" data-close-auth aria-label="关闭认证窗口"></button>
+    <section class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <button class="close-button" data-close-auth aria-label="关闭">×</button>
+      <div class="auth-seal">深</div>
+      <div class="modal-kicker">HORIZON PIVOTS ACCOUNT</div>
+      <h2 id="auth-title">登录后继续</h2>
+      <p class="modal-subtitle">登录用于保护你的收藏和待审核评价。公开页面不会展示你的账号信息。</p>
+      <button class="primary-action" type="button" data-start-sign-in>前往登录</button>
+      <p class="demo-note" id="auth-runtime-note">课程与食堂可直接浏览，收藏和匿名评价需要登录。</p>
+    </section>
+  </div>
+
+  <div class="search-dialog" id="search-dialog" hidden>
+    <button class="modal-backdrop" data-close-search aria-label="关闭搜索"></button>
+    <section class="search-sheet" role="dialog" aria-modal="true" aria-label="全站搜索">
+      <label><span>⌕</span><input id="global-search" type="search" autocomplete="off" placeholder="搜索课程代码、老师、食堂或菜品"><kbd>ESC</kbd></label>
+      <div id="search-results"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="clerk-adapter.js"></script>
+  <script src="supabase-adapter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

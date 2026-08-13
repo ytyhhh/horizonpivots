@@ -1,0 +1,11 @@
+{
+  "name": "@horizon/cuhksz",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "npm run check",
+    "check": "node --check app.js && node --check clerk-adapter.js && node --check data.js && node --check server.js && node --check supabase-adapter.js && node --check api/config.js && node --check api/health.js && node validate.js"
+  }
+}

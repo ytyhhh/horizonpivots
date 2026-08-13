@@ -5,6 +5,7 @@ describe("Horizon Pivots login return URLs", () => {
   it("accepts known product and local origins", () => {
     expect(isAllowedReturnUrl("https://phd.horizonpivots.com/research")).toBe(true);
     expect(isAllowedReturnUrl("https://jobs.horizonpivots.com/profile")).toBe(true);
+    expect(isAllowedReturnUrl("https://cuhksz.horizonpivots.com/#courses")).toBe(true);
     expect(isAllowedReturnUrl("http://localhost:3002")).toBe(true);
   });
 

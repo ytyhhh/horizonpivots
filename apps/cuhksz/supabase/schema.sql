@@ -1,0 +1,9 @@
+-- This file is intentionally not executable.
+--
+-- CUHK-Shenzhen course and dining reviews now use the shared Horizon Pivots
+-- Supabase project with Clerk Third-Party Auth. Apply this additive migration:
+--
+-- apps/jobs/supabase/migrations/202608130002_cuhksz_clerk_reviews.sql
+--
+-- Do not recreate the legacy Supabase Auth schema. The migration above creates
+-- only cuhksz_* tables and uses auth.jwt()->>'sub' as the Clerk user identifier.

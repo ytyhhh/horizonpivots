@@ -1,0 +1,67 @@
+# 港中深课饭评
+
+Horizon Pivots 的课程与食堂评价产品。它是一个轻量 Vercel 静态站点，公开目录可直接浏览；登录、收藏和匿名评价使用平台共用的 Clerk 账号与现有 Supabase 项目。
+
+## 本地运行
+
+```bash
+npm run dev --workspace=@horizon/cuhksz
+```
+
+打开 `http://127.0.0.1:4173`。本地未配置环境变量时仅展示随附的公开示例目录，不会模拟登录或写入数据。
+
+## Supabase
+
+生产数据库迁移位于：
+
+[`apps/jobs/supabase/migrations/202608130002_cuhksz_clerk_reviews.sql`](../jobs/supabase/migrations/202608130002_cuhksz_clerk_reviews.sql)
+
+在当前 Horizon Pivots Supabase 项目中执行这一个增量迁移。它会创建以下独立数据表：
+
+- `cuhksz_courses`
+- `cuhksz_course_offerings`
+- `cuhksz_dining_halls`
+- `cuhksz_dishes`
+- `cuhksz_reviews`
+- `cuhksz_favorites`
+
+个人数据列使用 Clerk `user_…` ID 的 `text` 类型。RLS 通过 `auth.jwt()->>'sub'` 隔离收藏、草稿评价和待审核评价，不使用 Supabase Auth 或 `auth.users`。
+
+首次写入示例公开目录时，可在应用迁移后执行 [`supabase/seed.sql`](supabase/seed.sql)。生产数据导入应使用服务端受控脚本或 Supabase SQL Editor，不能向浏览器暴露 Service Role key。
+
+## Clerk
+
+本应用没有独立注册或 Supabase OTP。未登录用户会前往：
+
+```text
+https://horizonpivots.com/login?redirect_url=<原始页面>
+```
+
+登录完成后会返回本产品。前端将 Clerk session token 交给 Supabase JS 客户端的 `accessToken()`，以便由现有 Third-Party Auth 集成验证 RLS。
+
+在 Clerk Production 实例中：
+
+1. 使用与 portal、jobs、phd 相同的 `pk_live` / `sk_live` 实例。
+2. 将 `cuhksz.horizonpivots.com` 加入 Allowed Subdomains。
+3. 若要仅限校园成员，请在 Clerk 的注册策略或组织成员流程中限制 `link.cuhk.edu.cn`。不能仅靠浏览器端邮箱校验实现权限限制。
+
+## Vercel
+
+新建一个 Vercel 项目并连接 `ytyhhh/horizonpivots`：
+
+```text
+Root Directory: apps/cuhksz
+Framework Preset: Other
+Build Command: npm run build
+```
+
+添加以下环境变量到 Production 和 Preview：
+
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+NEXT_PUBLIC_PLATFORM_URL=https://horizonpivots.com
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+绑定建议域名 `cuhksz.horizonpivots.com`。部署后先打开 `/api/health`，确认返回 `ok: true`，再测试登录、收藏和评价提交。

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowUpRight, Compass, GraduationCap } from "@phosphor-icons/react/dist/ssr";
+import { ArrowUpRight, BookOpenText, Compass, GraduationCap } from "@phosphor-icons/react/dist/ssr";
 import { platformOrigins } from "@horizon/platform";
 import { PortalHeader } from "@/components/portal-header";
 
@@ -12,7 +12,7 @@ export default function PortalHome() {
         <div className="hero-copy">
           <p className="kicker">Horizon Pivots</p>
           <h1>为每一个重要决定，<br />整理好下一步。</h1>
-          <p className="hero-summary">把求职与研究申请放进清晰的工作区，再从容推进。</p>
+          <p className="hero-summary">把求职、研究申请与校园生活放进清晰的工作区，再从容推进。</p>
           <div className="hero-actions">
             <a className="button-primary" href={platformOrigins.jobs}>进入校招雷达 <ArrowUpRight size={18} weight="bold" aria-hidden="true" /></a>
             <a className="button-secondary" href={platformOrigins.phd}>进入 PhD Scope</a>
@@ -25,7 +25,7 @@ export default function PortalHome() {
 
       <section className="product-section" aria-labelledby="products-title">
         <div className="section-intro">
-          <p className="kicker">同一个账号</p>
+          <p className="kicker">同一个账号，三个工作区</p>
           <h2 id="products-title">选择一条正在推进的路径。</h2>
           <p>身份验证共享，求职与研究申请资料则分别保存在对应工作区。</p>
         </div>
@@ -40,12 +40,17 @@ export default function PortalHome() {
             <div><span>PhD Scope</span><strong>从目标院校开始梳理研究方向</strong></div>
             <ArrowUpRight size={22} weight="bold" aria-hidden="true" />
           </a>
+          <a className="product-tile cuhksz-tile" href={platformOrigins.cuhksz}>
+            <BookOpenText size={31} weight="duotone" aria-hidden="true" />
+            <div><span>港中深课饭评</span><strong>从真实评价开始选课和吃饭</strong></div>
+            <ArrowUpRight size={22} weight="bold" aria-hidden="true" />
+          </a>
         </div>
       </section>
 
       <footer className="portal-footer">
         <span>Horizon Pivots</span>
-        <div><a href={platformOrigins.jobs}>校招雷达</a><a href={platformOrigins.phd}>PhD Scope</a></div>
+        <div><a href={platformOrigins.jobs}>校招雷达</a><a href={platformOrigins.phd}>PhD Scope</a><a href={platformOrigins.cuhksz}>港中深课饭评</a></div>
       </footer>
     </main>
   );

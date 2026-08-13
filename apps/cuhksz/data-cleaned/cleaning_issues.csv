@@ -1,0 +1,264 @@
+﻿sourceRow,sourceColumn,level,reason,rawCourseCode,rawInstructor,rawValue,normalizedValue
+1,,rejected,缺少课程代码，无法可靠关联到课程,,,浅浅广告一下！欢迎关注公众号“龙大硕果捞”,
+2,,rejected,缺少课程代码，无法可靠关联到课程,,Wen Chen,Wen Chen | 作证，宏经课a率也低 | luk给分不好，但是讲的好，不适合摆烂人，同学们根据自身情况考虑吧，慎选 | 同上，宏经也教的很好！！！ | 在cuhsz没有上过陆教授的课绝对会后悔（讲的真的很好，可以把难的东西讲的简单明白，真的能学到很多。,
+3,,info,同一单元格包含多位教师，已拆分为独立开课记录,ACT2111,"Vivian Mao,荣雪峰","Vivian Mao,荣雪峰",Vivian Mao|荣雪峰
+9,,warning,教师缺失，使用占位值以保留课程与评价,ACT4262,,,未注明教师
+10,,warning,源表课程前缀疑似录入错误，按同号官方课程修正,AVT4253,Weijia ZHI,AVT4253,ACT4253
+11,,info,一个单元格包含多个课程代码，已拆分为独立课程,BIO1001/1002,,BIO1001/1002,BIO1001|BIO1002
+11,,warning,教师缺失，使用占位值以保留课程与评价,BIO1001/1002,,,未注明教师
+12,,warning,教师缺失，使用占位值以保留课程与评价,BIO1008,,,未注明教师
+20,,warning,教师缺失，使用占位值以保留课程与评价,CHI1000,,,未注明教师
+21,,warning,教师缺失，使用占位值以保留课程与评价,CHI2010,,,未注明教师
+22,,warning,教师缺失，使用占位值以保留课程与评价,CHI2012,,,未注明教师
+26,,warning,教师缺失，使用占位值以保留课程与评价,CHM1001,,,未注明教师
+35,,warning,教师缺失，使用占位值以保留课程与评价,CSC1002,,,未注明教师
+41,,warning,教师缺失，使用占位值以保留课程与评价,CSC3050,,,未注明教师
+45,,warning,教师缺失，使用占位值以保留课程与评价,CSC3150,,,未注明教师
+46,,warning,教师缺失，使用占位值以保留课程与评价,CSC3170,,,未注明教师
+47,,warning,教师缺失，使用占位值以保留课程与评价,CSC4008,,,未注明教师
+50,,warning,教师缺失，使用占位值以保留课程与评价,DDA2001,,,未注明教师
+51,,warning,教师缺失，使用占位值以保留课程与评价,DDA2020,,,未注明教师
+54,,warning,教师缺失，使用占位值以保留课程与评价,DDA3010,,,未注明教师
+55,,warning,教师缺失，使用占位值以保留课程与评价,DDA3020,,,未注明教师
+60,,warning,教师缺失，使用占位值以保留课程与评价,DMS2051,,,未注明教师
+64,,warning,教师缺失，使用占位值以保留课程与评价,ECE3200,,,未注明教师
+72,,warning,教师缺失，使用占位值以保留课程与评价,ECO2121,,,未注明教师
+75,,warning,课程代码缺少前缀，依据上下相邻课程块补全,3110,Lin Wei,3110,ECO3110
+76,,warning,课程代码缺少前缀，依据上下相邻课程块补全,3121,Lin Wei,3121,ECO3121
+77,,warning,课程代码缺少前缀，依据上下相邻课程块补全,3121,Li Ming,3121,ECO3121
+87,,warning,教师缺失，使用占位值以保留课程与评价,EIE4005,,,未注明教师
+88,,warning,教师缺失，使用占位值以保留课程与评价,EIE4006,,,未注明教师
+89,,warning,教师缺失，使用占位值以保留课程与评价,EIE4007,,,未注明教师
+92,,warning,教师缺失，使用占位值以保留课程与评价,ENE4001,,,未注明教师
+116,,warning,教师缺失，使用占位值以保留课程与评价,ENG1002,,,未注明教师
+132,,warning,教师缺失，使用占位值以保留课程与评价,ENG2001,,,未注明教师
+133,,warning,教师缺失，使用占位值以保留课程与评价,ENG2001,,,未注明教师
+134,,warning,教师缺失，使用占位值以保留课程与评价,ENG2002B,,,未注明教师
+135,,rejected,无法识别为有效课程代码,ERG 系列,Chang Tsung Hui,Chang Tsung Hui,
+139,,warning,教师缺失，使用占位值以保留课程与评价,FIN2020,,,未注明教师
+143,,warning,教师缺失，使用占位值以保留课程与评价,FIN3210,,,未注明教师
+156,,info,一个单元格包含多个课程代码，已拆分为独立课程,FRN1001 /1002,TAN Xiaoying,FRN1001 /1002,FRN1001|FRN1002
+163,,warning,教师缺失，使用占位值以保留课程与评价,GEB2001,,,未注明教师
+171,,warning,教师缺失，使用占位值以保留课程与评价,GEB2406,,,未注明教师
+172,,warning,教师缺失，使用占位值以保留课程与评价,GEB2501,,,未注明教师
+174,,warning,教师缺失，使用占位值以保留课程与评价,GEB3101,,,未注明教师
+187,,warning,教师缺失，使用占位值以保留课程与评价,GEC3102,,,未注明教师
+200,,warning,教师缺失，使用占位值以保留课程与评价,GED2118,,,未注明教师
+205,,warning,教师缺失，使用占位值以保留课程与评价,GED2402,,,未注明教师
+214,,warning,教师缺失，使用占位值以保留课程与评价,GFH1000,,,未注明教师
+224,,warning,教师缺失，使用占位值以保留课程与评价,GFN1000,,,未注明教师
+225,,warning,教师缺失，使用占位值以保留课程与评价,GFN1000,,,未注明教师
+249,,warning,教师缺失，使用占位值以保留课程与评价,MAT1011,,,未注明教师
+258,,warning,教师缺失，使用占位值以保留课程与评价,MAT2042,,,未注明教师
+259,,warning,教师缺失，使用占位值以保留课程与评价,MAT2050,,,未注明教师
+265,,warning,教师缺失，使用占位值以保留课程与评价,MAT4001,,,未注明教师
+266,,warning,教师缺失，使用占位值以保留课程与评价,MAT4004,,,未注明教师
+267,,warning,教师缺失，使用占位值以保留课程与评价,MGT2020,,,未注明教师
+268,,warning,教师缺失，使用占位值以保留课程与评价,MGT3010,,,未注明教师
+269,,warning,教师缺失，使用占位值以保留课程与评价,MGT3070,,,未注明教师
+285,,warning,教师缺失，使用占位值以保留课程与评价,MKT4040,,,未注明教师
+295,,warning,教师缺失，使用占位值以保留课程与评价,PHY2001,,,未注明教师
+313,,warning,教师缺失，使用占位值以保留课程与评价,STA2003,,,未注明教师
+314,,warning,教师缺失，使用占位值以保留课程与评价,STA2004,,,未注明教师
+315,,warning,教师缺失，使用占位值以保留课程与评价,STA3002,,,未注明教师
+322,,warning,教师缺失，使用占位值以保留课程与评价,STA4020,,,未注明教师
+323,,warning,教师缺失，使用占位值以保留课程与评价,TRA3240,,,未注明教师
+324,,rejected,无法识别为有效课程代码,课程名,老师,老师 | 蹲蹲评价和wl,
+325,,rejected,缺少课程代码，无法可靠关联到课程,,排球,排球 | 老师很好的，期中考砸了可以申请把权重移到期末 | 不算难 | 交表能过 | 其实不是很难抢,
+326,,rejected,缺少课程代码，无法可靠关联到课程,,啦啦操,啦啦操 | 给分怎么样呀 | 好像是新老师 | 很无聊，巨无聊，当水课没问题但是真的好无聊//,
+327,,rejected,缺少课程代码，无法可靠关联到课程,,飞盘,飞盘 | 蹲老师推荐！,
+328,,rejected,缺少课程代码，无法可靠关联到课程,,地壶,地壶 | 蹲蹲老师评价，感谢 | 超好 人真的蛮好的 | 人挺好 | 老师人很好，课偏水，稳定地下课前签到,
+329,,rejected,缺少课程代码，无法可靠关联到课程,,"ZHANG, Miusi","ZHANG, Miusi",
+330,,rejected,缺少课程代码，无法可靠关联到课程,,Yi Cao,Yi Cao | 蹲蹲课程内容和wl | 这是新课，别蹲了 | 还不错，一些内容跟线代重合，如果2040学的可以的话就问题不大。个人感觉Andre讲的还可以，网课1.5倍速食用更佳 | wl有点大,
+331,,rejected,缺少课程代码，无法可靠关联到课程,,XU Tianyu,XU Tianyu | 讲的一般，ppt reader，但是课本身很简单，wl小，考试背ppt就完事，推荐想刷绩点的同学,
+332,,rejected,缺少课程代码，无法可靠关联到课程,,Wenye LI,Wenye LI | 蹲蹲老师和A率,
+333,,rejected,缺少课程代码，无法可靠关联到课程,,Vivian Mao,Vivian Mao | 老师讲得很好 可以学到很多东西 给分我觉得还不错吧 | 人很好，很温柔，但是对待学术严格，给分可能会比较低 | 特别好,
+334,,rejected,缺少课程代码，无法可靠关联到课程,,Rong Xuefeng,Rong Xuefeng | 听了后面几条好评选了，然后发现很抽象，个人不推荐！跑！ | 各方面无懈可击美女老师 | 非常非常推荐，教的很细致，很温柔，很善解人意，给分也好 | 求你们选 真的很好,
+335,,rejected,缺少课程代码，无法可靠关联到课程,,Hongyuan Zha,Hongyuan Zha | 求求 | 她的评价不知道为什么在上头啊啊啊啊 在表格里搜索一下（）,
+336,,rejected,缺少课程代码，无法可靠关联到课程,,Gautam Ghosh,Gautam Ghosh | 求评价！,
+337,,rejected,缺少课程代码，无法可靠关联到课程,,"CHEN, Shanquan","CHEN, Shanquan | zhanglinyi英语很好听 蹲wl | 很卷 老师的要求也比较严格 | 比较传统的老师",
+338,,rejected,缺少课程代码，无法可靠关联到课程,,"Cai, Yifan","Cai, Yifan | 蹲A率 蹲评价 | 蹲蹲课程具体内容",
+340,,rejected,缺少课程代码，无法可靠关联到课程,,匹克球,匹克球 | 给分怎么样？老师怎么样？求推荐老师,
+341,,rejected,缺少课程代码，无法可靠关联到课程,,手球,手球 | 给分怎么样？老师怎么样？,
+342,,rejected,缺少课程代码，无法可靠关联到课程,,蛙泳,蛙泳 | 给分如何，老师如何，女生生理期怎么上课,
+343,,rejected,缺少课程代码，无法可靠关联到课程,,跆拳道,跆拳道 | 给分如何 老师如何,
+344,,rejected,缺少课程代码，无法可靠关联到课程,,飞盘,飞盘 | 室内还是室外上课?累不累?老师严不严? | 室内上课，管得蛮松的，基本就玩二十分钟休息十分钟,
+4,D,rejected,无实质评价信息,ACT2111,Na Liu,新老师，不知道,
+5,C,rejected,求评价/占位内容,ACT2111,Na Liu,蹲个A率,
+5,E,rejected,求评价/占位内容,ACT2111,Na Liu,蹲个课程内容，是不是主要是用python的pandas做量化的复现？,
+6,D,rejected,求评价/占位内容,ACT2111,"Cao, yi",蹲蹲老师评价和workload,
+7,C,rejected,求评价/占位内容,ACT3121,"Park, Zhonghan",求评价,
+9,C,rejected,求评价/占位内容,ACT4262,,跪求,
+10,C,rejected,求评价/占位内容,AVT4253,Weijia ZHI,蹲蹲老师和A率！！,
+12,D,rejected,求评价/占位内容,BIO1008,,求求评价！非MKT经管学生学起来困难吗,
+16,C,rejected,求评价/占位内容,CEC3000,yang jie,蹲蹲老师评价,
+17,D,rejected,求评价/占位内容,CHI1000,Yue CHEN,蹲 蹲蹲蹲求问wl如何,
+24,C,rejected,求评价/占位内容,CHI4001,"Jin, Jia",蹲蹲评价+给分+难度,
+26,C,rejected,求评价/占位内容,CHM1001,,蹲A率,
+27,C,rejected,仅为提问，未包含评价结论,CHM1011,Jun ZHU,给分怎么样呢,
+29,C,rejected,求评价/占位内容,CSC1001,Yu Tianshu,蹲A率,
+30,C,rejected,求评价/占位内容,CSC1001,Li Tongxin,求课程评价！！！,
+35,C,rejected,求评价/占位内容,CSC1002,,蹲蹲评价！老师要求严吗？给分宽吗？,
+36,C,rejected,求评价/占位内容,CSC1003,Wenye LI,蹲蹲老师和A率,
+37,C,rejected,求评价/占位内容,CSC1005,"赵俊华 (ZHAO, Junhua)",蹲蹲老师推荐,
+39,C,rejected,求评价/占位内容,CSC3001,Wang Baoxiang,求介绍和评价,
+40,C,rejected,求评价/占位内容,CSC3002,huangrui,蹲评价，/同蹲，球球,
+44,C,rejected,求评价/占位内容,CSC3100,Fang Yixiang,求评价,
+45,D,rejected,求评价/占位内容,CSC3150,,蹲评价,
+47,C,rejected,求评价/占位内容,CSC4008,,蹲蹲评价！适合刚升大二的同学上吗？,
+48,C,rejected,求评价/占位内容,CSC4140,Qilin Sun,求求评价,
+53,C,rejected,求评价/占位内容,DDA3005,andre,蹲wl,
+53,D,rejected,求评价/占位内容,DDA3005,andre,蹲，想问下这门是偏mkt的data analysis吗？难度如何,
+58,C,rejected,求评价/占位内容,DDA4230,Wang Baoxiang,求评价，给分如何,
+61,C,rejected,求评价/占位内容,DMS3003,Liu Ming,求评价和wl,
+62,C,rejected,求评价/占位内容,DMS3210,林至颖,蹲蹲评价和wl,
+65,C,rejected,求评价/占位内容,ECO2011,Zheng Yiying,蹲评价和wl！,
+69,C,rejected,疑似教师姓名而非评价,ECO2011,Barick,"Zou, lili",
+71,C,rejected,求评价/占位内容,ECO2021,"KHOO,Lawrence",蹲评价和wl,
+72,C,rejected,仅为提问，未包含评价结论,ECO2121,,老师怎么样呢,
+75,C,rejected,求评价/占位内容,3110,Lin Wei,蹲！！！,
+78,C,rejected,求评价/占位内容,ECO3121,Huaiping YUAN,蹲评价,
+82,C,rejected,求评价/占位内容,ECO3470,Tony Fang,求评价~(￣▽￣)~*请问给分怎么样,
+84,C,rejected,求评价/占位内容,ECO3650,SHU Martin,求评价！！,
+85,C,rejected,仅含数字或符号，缺少可解释评价,ECO3710,"LUK, YF",30~35,
+93,C,rejected,求评价/占位内容,ENG1001,"Yang,Rong",极限蹲蹲,
+95,C,rejected,求评价/占位内容,ENG1001,"Wang,Qian",蹲蹲！！,
+96,C,rejected,求评价/占位内容,ENG1001,Shengjie ZHAI,（求a率,
+97,C,rejected,仅含数字或符号，缺少可解释评价,ENG1001,Liu Yingxin,38.5,
+97,K,rejected,求评价/占位内容,ENG1001,Liu Yingxin,求问是讲excel吗,
+101,C,rejected,求评价/占位内容,ENG1002,"Ying,Jia",蹲,
+103,C,rejected,求评价/占位内容,ENG1002,"Yang,Wenhao",蹲蹲老师评价和给分 proj卷度和难度 谢谢!,
+104,C,rejected,求评价/占位内容,ENG1002,"Yang,Rong",蹲蹲课程内容和wl，蹲一下四选一里和mkt的对比,
+104,E,rejected,求评价/占位内容,ENG1002,"Yang,Rong",蹲一下和mis2051的对比！🥹,
+106,C,rejected,求评价/占位内容,ENG1002,"Wang,Kaixi",蹲蹲评价和wl,
+109,C,rejected,求评价/占位内容,ENG1002,"Liu,Yingxin",蹲蹲,
+110,C,rejected,求评价/占位内容,ENG1002,"LIU,Liming",蹲蹲,
+111,C,rejected,求评价/占位内容,ENG1002,"James,Kalanipua Armitage",蹲蹲给分 课程有意思嘛,
+115,D,rejected,求评价/占位内容,ENG1002,"CHEN,Pin-H",请问这是个水课吗？求评价！,
+117,C,rejected,求评价/占位内容,ENG2001,xiaoyangyu,蹲蹲,
+118,C,rejected,求评价/占位内容,ENG2001,xiaosichen,蹲蹲！！,
+120,C,rejected,求评价/占位内容,ENG2001,Shirley,求评价,
+121,C,rejected,求评价/占位内容,ENG2001,Prerna Bakshi,求介绍和评价,
+122,C,rejected,求评价/占位内容,ENG2001,Matthew Book,蹲蹲评价和A率,
+124,C,rejected,求评价/占位内容,ENG2001,Liuying,求a率,
+127,D,rejected,求评价/占位内容,ENG2001,hyun jung Joo,蹲这门课的评价！！,
+133,D,rejected,求评价/占位内容,ENG2001,,蹲,
+134,C,rejected,求评价/占位内容,ENG2002B,,蹲老师推荐！,
+137,C,rejected,求评价/占位内容,FIN2010,Sung Kwan Lee,蹲蹲蹲！,
+138,C,rejected,求评价/占位内容,FIN2010,LIU Hongqi,蹲,
+139,C,rejected,求评价/占位内容,FIN2020,,蹲蹲课程内容和wl,
+140,C,rejected,求评价/占位内容,FIN2210,Ye，shuai,蹲蹲课程内容和wl,
+142,C,rejected,求评价/占位内容,FIN3080,Jinfan Zhang,蹲蹲,
+143,C,rejected,求评价/占位内容,FIN3210,,蹲蹲课程内容和wl,
+143,D,rejected,求评价/占位内容,FIN3210,,蹲wl和a率！！！！！！,
+144,C,rejected,求评价/占位内容,FIN3380,Lu Guangli,求a率,
+148,C,rejected,求评价/占位内容,FIN4060,Xia Sichen,蹲蹲,
+149,C,rejected,求评价/占位内容,FIN4060,Wang Jian,求问,
+150,C,rejected,求评价/占位内容,FIN4080,Yang Wenhao,蹲蹲a率,
+152,C,rejected,仅含数字或符号，缺少可解释评价,FIN4110,"Xiao,Song",40,
+153,C,rejected,求评价/占位内容,FIN4120,"Chen,Si",求a率,
+154,C,rejected,求评价/占位内容,FIN4210,"Li,Xiyue",蹲评价和wl,
+158,C,rejected,求评价/占位内容,GEA2000,Qin Chen,求A-率！！蹲难度（非SME会学的很难吗）,
+161,C,rejected,求评价/占位内容,GEA2000,"Chen, Bin",蹲wl和a率,
+163,C,rejected,求评价/占位内容,GEB2001,,蹲蹲wl和a率,
+166,C,rejected,求评价/占位内容,GEB2203,Li Mo,求课程评价！！！,
+175,C,rejected,求评价/占位内容,GEC2002,蹲韩雨晨教授 不知道是哪门课,蹲蹲评价,
+179,D,rejected,求评价/转述内容，缺少本人评价,GEC2110,Corinne Doria,求这个老师的评价，怎么都没人说这个老师的😭 同求，听学长学姐说很好，或许有uu评价一下咩,
+180,C,rejected,仅含数字或符号，缺少可解释评价,GEC2112,Yang Yanni,0.39,
+183,C,rejected,求评价/占位内容,GEC2115,Hanna,求求,
+183,D,rejected,求评价/占位内容,GEC2115,Hanna,求这个老师的给分🥺🥺🥺,
+194,C,rejected,求评价/占位内容,GEC3403,"Ghosh,Gautam",求问！这是新老师吗,
+195,C,rejected,求评价/占位内容,GEC3407,"Li, Xue Shi",蹲蹲A率和wl,
+196,C,rejected,求评价/占位内容,GED2003,"Han, Yuchen",蹲蹲,
+197,C,rejected,求评价/占位内容,GED2104,"Scripter,Lucas",蹲蹲A率/事多吗？,
+198,C,rejected,仅含数字或符号，缺少可解释评价,GED2110,"Wang, Qin",27.3,
+199,D,rejected,求评价/占位内容,GED2116,BAI Zongrang,蹲wl和老师推荐！,
+200,D,rejected,求评价/占位内容,GED2118,,蹲蹲wl 拜托！！！,
+205,C,rejected,求评价/占位内容,GED2402,,蹲A率！！！,
+208,C,rejected,求评价/占位内容,GFH1000,Qin，Wang,蹲老师推荐！,
+210,C,rejected,求评价/占位内容,GFH1000,John Robert William,蹲蹲评价,
+214,C,rejected,求评价/占位内容,GFH1000,,蹲蹲评价和wl,
+215,C,rejected,求评价/占位内容,GFN1000,邹婧,蹲蹲老师评价,
+221,C,rejected,求评价/占位内容,GFN1000,Lifang Peng,蹲！！！,
+222,C,rejected,求评价/占位内容,GFN1000,Honghui Zhang,求求,
+223,C,rejected,求评价/占位内容,GFN1000,Cao Bei,蹲课程内容和wl，适合sds学生上吗,
+223,E,info,相同课程开课记录下的重复评价已去重,GFN1000,Cao Bei,供应链基础课，感兴趣的话任何人都适合，Gordon是CIDE主任有丰富的商业和创新创业方面的经验，非常nice推荐,
+226,C,rejected,求评价/占位内容,GFN1000,Miaosi ZHANG,蹲！！！,
+227,C,rejected,求评价/占位内容,GFN1000,Lili JIANG,蹲！！！,
+228,C,rejected,求评价/占位内容,GFN1000,Hanyu MA,蹲！！！,
+234,C,rejected,求评价/占位内容,ITE1000,"Wilson, Woon",蹲蹲！！,
+235,C,rejected,求评价/占位内容,ITE1000,Lin Yongqian,蹲评价和wl!,
+236,D,rejected,求评价/占位内容,ITE1000,"LIAO,Ruizhi",求,
+237,C,rejected,求评价/占位内容,MAT1001,"唐晓莹 Tang, Xiao Ying",蹲蹲老师评价，感谢,
+239,C,rejected,求评价/占位内容,MAT1001,Xuefeng，Wang,蹲蹲老师和A率,
+241,C,rejected,求评价/占位内容,MAT1001,Liu Yang,求！！,
+248,C,rejected,求评价/占位内容,MAT1002,Liu，Xiaokai,求A率，谢谢啦 要卷发言吗？,
+250,C,rejected,求评价/占位内容,MAT2002,"Hu, Shengqing",球球老师评价,
+253,D,rejected,求评价/占位内容,MAT2040,LEI Shunbo,求评价！,
+255,C,rejected,求评价/占位内容,MAT2040,He dongdong,蹲蹲,
+257,C,rejected,求评价/占位内容,MAT2041,Li Tongxin,求评价><,
+258,C,rejected,求评价/占位内容,MAT2042,,求A率,
+260,C,rejected,求评价/占位内容,MAT3007,Wang Zizhuo,蹲蹲A率和wl,
+262,C,rejected,求评价/占位内容,MAT3010,"LIU,Bin",求A率&wl 跪谢！,
+264,C,rejected,求评价/占位内容,MAT3280,Kenneth Shum,蹲评价和wl,
+270,C,rejected,求评价/占位内容,MGT3250,Wutao,蹲蹲老师和A率,
+277,C,rejected,求评价/占位内容,MIS2051,c,跪求 蹲A率,
+278,C,rejected,仅为提问，未包含评价结论,MKT2010,"Zou, lili",老师给分怎么样？,
+279,C,rejected,求评价/占位内容,MKT2010,Shim Yoonji,蹲A率/蹲wl,
+280,C,rejected,求评价/占位内容,MKT2010,Pan Qi,求求评价,
+281,C,rejected,求评价/占位内容,MKT3020,Zhanlingjing,求介绍和评价,
+284,C,rejected,求评价/占位内容,MKT3310,Zhang Qiang,求求评价,
+286,C,rejected,仅为提问，未包含评价结论,MKT4080,"Ren,Qi Tian",给分怎么样，wl大吗,
+288,C,rejected,求评价/占位内容,MKT4120,Sam,求评价！！,
+290,C,rejected,求评价/占位内容,MKT4220,"yang,li",蹲蹲,
+292,D,info,相同课程开课记录下的重复评价已去重,PED1002,fitness equipment,讲得还是挺清晰的，就是会略过简单的着重讲难点，适合数学本来就强的同学,
+298,C,rejected,求评价/占位内容,PSY2040,LinZhicheng,蹲蹲这门课wl A率^_^,
+299,D,info,相同课程开课记录下的重复评价已去重,PSY3020,Forward Fung Chin,给分如何,
+304,C,rejected,求评价/占位内容,STA2001,"GALLEGO,Guillermo",给分如何 蹲评价！,
+308,C,rejected,求评价/占位内容,STA2002,Moshe,蹲蹲课程评价和A率,
+310,C,rejected,求评价/占位内容,STA2002,Haviv,求一个老师大概打分授课情况！,
+312,C,rejected,求评价/占位内容,STA2003,yao jianfeng,蹲蹲课程内容和wl,
+312,D,rejected,求评价/占位内容,STA2003,yao jianfeng,蹲,
+314,C,rejected,求评价/占位内容,STA2004,,给分怎么样？老师怎么样？求推荐老师？,
+315,C,rejected,求评价/占位内容,STA3002,,给分怎么样？老师怎么样？求推荐老师？,
+316,C,rejected,求评价/占位内容,STA3010,Yin Feng,蹲,
+317,C,rejected,仅含数字或符号，缺少可解释评价,STA3020,"Shi, jiasheng",36,
+318,C,rejected,求评价/占位内容,STA4001,"Zhang,Hailun",蹲蹲老师评价,
+322,C,rejected,求评价/占位内容,STA4020,,给分怎么样？老师怎么样？求推荐老师,
+323,C,rejected,仅为提问，未包含评价结论,TRA3240,,老师给分怎么样？期末考试要找搭档对打之类的吗？,
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,BIO1002,,,BIO1002（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CEC1000,,,CEC1000（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CEC2000,,,CEC2000（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CEC3000,,,CEC3000（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CHI1000,,,CHI1000（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CHI2010,,,CHI2010（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CHI2012,,,CHI2012（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CHI3001,,,CHI3001（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,CHI4001,,,CHI4001（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,DDA2020,,,DDA2020（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,DDA3010,,,DDA3010（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,DMS2051,,,DMS2051（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,DOW1001,,,DOW1001（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,EIE4005,,,EIE4005（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,EIE4006,,,EIE4006（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,ENE4001,,,ENE4001（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEB2401,,,GEB2401（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEB2406,,,GEB2406（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEC2102,,,GEC2102（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEC2110,,,GEC2110（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEC2201,,,GEC2201（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEC3102,,,GEC3102（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEC3402,,,GEC3402（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GEC3403,,,GEC3403（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GED2121,,,GED2121（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GED2122,,,GED2122（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,GED2401,,,GED2401（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,MAT4004,,,MAT4004（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,MKT4170,,,MKT4170（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,PHY1001,,,PHY1001（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,PHY2001,,,PHY2001（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,PHY3002,,,PHY3002（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,STA2003,,,STA2003（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,STA2004,,,STA2004（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,STA3002,,,STA3002（课程名称待补充）
+,,warning,官方当前课程目录未匹配到课程名，已使用占位名称,STA3010,,,STA3010（课程名称待补充）

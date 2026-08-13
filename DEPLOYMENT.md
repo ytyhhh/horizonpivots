@@ -9,12 +9,13 @@
 - `NEXT_PUBLIC_PLATFORM_URL=https://horizonpivots.com`
 - `NEXT_PUBLIC_JOBS_URL=https://jobs.horizonpivots.com`
 - `NEXT_PUBLIC_PHD_URL=https://phd.horizonpivots.com`
+- `NEXT_PUBLIC_CUHK_SZ_URL=https://cuhksz.horizonpivots.com`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
 jobs 和 PhD 还需要 `SUPABASE_SERVICE_ROLE_KEY`。PhD 导师搜索当前关闭，因此暂时不需要 `GITHUB_DISPATCH_TOKEN` 或搜索服务密钥。
 
-在 Clerk Dashboard 中将三个 Origin 加入允许重定向列表，登录页面固定为 `https://horizonpivots.com/login`。三个同根域入口共享同一 Clerk 会话，不配置 satellite 模式。
+在 Clerk Dashboard 中将四个 Origin 加入允许重定向列表，登录页面固定为 `https://horizonpivots.com/login`。四个同根域入口共享同一 Clerk 会话，不配置 satellite 模式。
 
 ## Supabase
 
@@ -28,6 +29,7 @@ npx supabase db push
 ```
 
 4. 确认 `202608110001_horizon_platform_phd.sql` 已创建 `phd_*` 表和 `phd-resumes` 私有 bucket。
+5. 确认 `202608130002_cuhksz_clerk_reviews.sql` 已创建 `cuhksz_*` 课程、食堂、评价与收藏表。
 
 ## Vercel
 
@@ -36,6 +38,7 @@ npx supabase db push
 | Portal | `apps/portal` | `horizonpivots.com`、`www.horizonpivots.com` |
 | Jobs | `apps/jobs` | `jobs.horizonpivots.com` |
 | PhD | `apps/phd` | `phd.horizonpivots.com` |
+| 港中深课饭评 | `apps/cuhksz` | `cuhksz.horizonpivots.com` |
 
 根目录的 Build Command 使用 `npm run build --workspace=<workspace>`，或让 Vercel 在对应 Root Directory 执行 `npm run build`。jobs 项目的 `vercel.json` 继续负责现有的招聘 cron。
 
@@ -58,7 +61,9 @@ PhD 搜索通过根目录的 `.github/workflows/phd-search.yml` 运行。功能�
 ## 发布后检查
 
 - 在 jobs 登录后打开 PhD，确认同一账号自动可用。
+- 在 portal 登录后打开港中深课饭评，确认同一账号可提交收藏与评价。
 - 在 PhD 退出后确认 jobs 会话同步失效。
 - 使用两个测试账号验证 `phd_search_jobs`、收藏、草稿和 `phd-resumes` 互相隔离。
 - 发起一项 PhD 搜索，确认任务状态从 queued 更新到 complete、partial 或 failed。
 - 检查 jobs 的画像、收藏、推荐、管理员页面和 cron 仍正常。
+- 使用两个 Clerk 测试账号验证 `cuhksz_reviews` 和 `cuhksz_favorites` 互相隔离。

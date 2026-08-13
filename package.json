@@ -10,10 +10,11 @@
     "dev:portal": "npm run dev --workspace=@horizon/portal",
     "dev:jobs": "npm run dev --workspace=@horizon/jobs",
     "dev:phd": "npm run dev --workspace=@horizon/phd",
+    "dev:cuhksz": "npm run dev --workspace=@horizon/cuhksz",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspace=@horizon/portal && npm run build --workspace=@horizon/jobs && npm run build --workspace=@horizon/phd",
+    "build": "npm run build --workspace=@horizon/portal && npm run build --workspace=@horizon/jobs && npm run build --workspace=@horizon/phd && npm run build --workspace=@horizon/cuhksz",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "engines": {

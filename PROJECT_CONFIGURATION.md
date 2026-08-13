@@ -7,6 +7,7 @@
 | 平台门户 | `apps/portal` | `horizonpivots.com` | `horizon-portal` |
 | 校招雷达 | `apps/jobs` | `jobs.horizonpivots.com` | 保留现有 jobs 项目 |
 | PhD Scope | `apps/phd` | `phd.horizonpivots.com` | `horizon-phd` |
+| 港中深课饭评 | `apps/cuhksz` | `cuhksz.horizonpivots.com` | `horizon-cuhksz` |
 
 > 不要将任何实际密钥提交到 GitHub。`.env.local` 已被忽略；生产密钥只配置在 Vercel 和 GitHub Actions Secrets。
 
@@ -58,7 +59,7 @@ GitHub Action 只接收搜索任务 ID，再从 Supabase 读取用户查询内�
 
 ## 2. Supabase
 
-三个应用共用现有 hiring Supabase 项目。
+四个应用共用现有 hiring Supabase 项目。
 
 ### 获取项目值
 
@@ -91,6 +92,15 @@ npx supabase db push
 - `phd_email_drafts`
 - 私有 Storage bucket：`phd-resumes`
 
+还需要确认 `202608130002_cuhksz_clerk_reviews.sql` 已创建：
+
+- `cuhksz_courses`
+- `cuhksz_course_offerings`
+- `cuhksz_dining_halls`
+- `cuhksz_dishes`
+- `cuhksz_reviews`
+- `cuhksz_favorites`
+
 不要运行 `apps/phd/supabase/migrations/0001_initial.sql`，它仅作为原型历史留存。
 
 ### Clerk Third-Party Auth
@@ -99,7 +109,7 @@ Supabase Dashboard → **Authentication** → **Third-party Auth** → 启用 Cl
 
 ## 3. Clerk
 
-三个应用必须使用同一个 Clerk Production instance。
+四个应用必须使用同一个 Clerk Production instance。
 
 在 Clerk Dashboard 的允许来源、重定向地址或域名配置中加入：
 
@@ -107,6 +117,7 @@ Supabase Dashboard → **Authentication** → **Third-party Auth** → 启用 Cl
 https://horizonpivots.com
 https://jobs.horizonpivots.com
 https://phd.horizonpivots.com
+https://cuhksz.horizonpivots.com
 ```
 
 统一登录入口：
@@ -115,7 +126,7 @@ https://phd.horizonpivots.com
 https://horizonpivots.com/login
 ```
 
-三个 Vercel 项目使用相同的：
+四个 Vercel 项目使用相同的：
 
 ```text
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -212,6 +223,29 @@ CLERK_SECRET_KEY=
 
 将 `horizonpivots.com` 设为主域名，`www.horizonpivots.com` 将由门户跳转到根域。
 
+### 港中深课饭评 cuhksz
+
+导入同一仓库并创建第四个 Vercel 项目：
+
+```text
+Project Name: horizon-cuhksz
+Root Directory: apps/cuhksz
+Framework Preset: Other
+Build Command: npm run build
+Domain: cuhksz.horizonpivots.com
+```
+
+生产变量：
+
+```text
+NEXT_PUBLIC_PLATFORM_URL=https://horizonpivots.com
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+不要配置 `CLERK_SECRET_KEY` 或 `SUPABASE_SERVICE_ROLE_KEY`。该应用只接收公开 Clerk key 和 Supabase publishable key，用户数据由 Clerk token 加 Supabase RLS 保护。
+
 ## 5. Porkbun DNS
 
 先在 Vercel 对应项目添加域名，再复制 Vercel 展示的精确 DNS 值到 Porkbun。通常为：
@@ -222,8 +256,9 @@ CLERK_SECRET_KEY=
 | CNAME | `www` | portal 项目给出的 Vercel CNAME |
 | CNAME | `jobs` | jobs 项目给出的 Vercel CNAME |
 | CNAME | `phd` | PhD 项目给出的 Vercel CNAME |
+| CNAME | `cuhksz` | 港中深课饭评项目给出的 Vercel CNAME |
 
-在 Porkbun 的 **Domain Management** → 域名 → **DNS** 中填写。`Host` 只填写 `@`、`www`、`jobs`、`phd`，不要填写完整域名。删除同名冲突的 A、AAAA 或 CNAME 记录，但不要删除 MX、TXT 等邮件记录。
+在 Porkbun 的 **Domain Management** → 域名 → **DNS** 中填写。`Host` 只填写 `@`、`www`、`jobs`、`phd`、`cuhksz`，不要填写完整域名。删除同名冲突的 A、AAAA 或 CNAME 记录，但不要删除 MX、TXT 等邮件记录。
 
 ## 6. 将来开启时：PhD 搜索工作流验证
 
@@ -241,4 +276,5 @@ CLERK_SECRET_KEY=
 3. 更新已有 jobs Vercel 项目的 Root Directory 并部署。
 4. 创建并部署 PhD Vercel 项目，先验证院校浏览和统一登录。
 5. 创建并部署 portal Vercel 项目，绑定根域与 `www`。
-6. 完成 Porkbun DNS 后，确认三个 HTTPS 域名和跨子域登录。
+6. 创建并部署 `horizon-cuhksz`，绑定 `cuhksz` 子域并验证收藏和评价 RLS。
+7. 完成 Porkbun DNS 后，确认四个 HTTPS 域名和跨子域登录。
