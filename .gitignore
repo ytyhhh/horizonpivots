@@ -14,3 +14,4 @@ apps/*/playwright-report/
 apps/*/test-results/
 apps/*/coverage/
 apps/*/.env.local
+apps/cuhksz/dist/
