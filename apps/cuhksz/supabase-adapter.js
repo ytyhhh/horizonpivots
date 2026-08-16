@@ -108,7 +108,7 @@
         readTable('cuhksz_courses', '*'),
         readTable('cuhksz_dining_halls', '*'),
         readTable('cuhksz_dishes', '*'),
-        client.from('cuhksz_reviews').select('*').eq('status', 'published').order('created_at', { ascending: false }).limit(200).then((result) => {
+        client.from('cuhksz_reviews').select('*').eq('status', 'published').order('created_at', { ascending: false }).limit(1000).then((result) => {
           if (result.error) throw result.error
           return result.data || []
         }),
