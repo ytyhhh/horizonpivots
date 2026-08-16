@@ -42,6 +42,7 @@
   const $ = (selector, root = document) => root.querySelector(selector)
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
   const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]))
+  const ratingLabel = (rating) => rating == null ? '未评分' : rating
   const stars = (rating) => rating == null
     ? '<span class="stars" aria-label="未评分">未评分</span>'
     : `<span class="stars" aria-label="${rating} 星">${'★'.repeat(Math.round(rating))}${'☆'.repeat(5 - Math.round(rating))}</span>`
@@ -81,7 +82,7 @@
       </div>
       <div class="section-heading"><div><h2>这周，同学们在看</h2><p>评价不是结论，而是选课前多一个可靠视角。</p></div><button class="text-action" data-route="courses">浏览全部课程 →</button></div>
       <div class="home-grid">
-        <article class="course-feature"><div class="course-feature-copy"><div class="course-code">${featured.code}</div><h3>${featured.name}</h3><div class="english-name">${featured.nameEn}</div><div class="meta-line"><span>${featured.school}</span><span>${featured.instructor}</span><span>${featured.term}</span></div><div class="tag-row">${featured.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div><button class="text-action" data-open-type="course" data-id="${featured.id}">查看老师与学期评价 →</button></div><div class="feature-score"><strong>${featured.rating}</strong><span>★ ${featured.reviews} 条评价</span></div></article>
+        <article class="course-feature"><div class="course-feature-copy"><div class="course-code">${featured.code}</div><h3>${featured.name}</h3><div class="english-name">${featured.nameEn}</div><div class="meta-line"><span>${featured.school}</span><span>${featured.instructor}</span><span>${featured.term}</span></div><div class="tag-row">${featured.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div><button class="text-action" data-open-type="course" data-id="${featured.id}">查看老师与学期评价 →</button></div><div class="feature-score"><strong>${ratingLabel(featured.rating)}</strong><span>${featured.rating == null ? '暂无评分' : '★'} ${featured.reviews} 条评价</span></div></article>
         <div class="review-rail">${allReviews().slice(0, 2).map(reviewCard).join('')}</div>
       </div>
       <div class="section-heading"><div><h2>今天吃什么</h2><p>从食堂逛到档口，找到一道值得排队的菜。</p></div><button class="text-action" data-route="dining">查看食堂地图 →</button></div>
@@ -94,7 +95,7 @@
       .filter((course) => !query || `${course.code}${course.name}${course.nameEn}${course.instructor}`.toLowerCase().includes(query))
       .filter((course) => state.school === '全部学院' || course.school === state.school)
       .filter((course) => state.term === '全部学期' || course.term === state.term)
-      .sort((a, b) => state.courseSort === 'reviews' ? b.reviews - a.reviews : b.rating - a.rating)
+      .sort((a, b) => state.courseSort === 'reviews' ? b.reviews - a.reviews : (b.rating ?? -1) - (a.rating ?? -1))
   }
 
   function renderCourses() {
@@ -105,7 +106,7 @@
       <header class="page-heading"><div><h1 id="courses-title">课程评价</h1><p>每条评价都归档到具体老师和学期。先理解差异，再决定哪一门课适合你。</p></div><div class="heading-image"><img src="assets/course-study.jpg" alt="学生在图书馆共同复习课程"></div></header>
       <div class="filter-bar"><label class="search-input"><span>⌕</span><input id="course-search" type="search" value="${escapeHTML(state.courseQuery)}" placeholder="课程代码、名称或老师" aria-label="搜索课程"></label><label class="select-wrap"><select id="school-filter" aria-label="按学院筛选">${schools.map((value) => `<option ${value === state.school ? 'selected' : ''}>${value}</option>`).join('')}</select></label><label class="select-wrap"><select id="term-filter" aria-label="按学期筛选">${terms.map((value) => `<option ${value === state.term ? 'selected' : ''}>${value}</option>`).join('')}</select></label></div>
       <div class="results-meta"><span>找到 ${courses.length} 门课程</span><div class="sort-buttons"><button data-course-sort="rating" class="${state.courseSort === 'rating' ? 'active' : ''}">评分</button><button data-course-sort="reviews" class="${state.courseSort === 'reviews' ? 'active' : ''}">热度</button></div></div>
-      <div class="course-list">${courses.length ? courses.map((course) => `<article class="course-row" data-open-type="course" data-id="${course.id}" tabindex="0" role="button"><div class="course-code">${course.code}</div><div><h3>${escapeHTML(course.name)}</h3><div class="english-name">${escapeHTML(course.nameEn)}</div></div><div class="instructor"><b>${escapeHTML(course.instructor)}</b>${escapeHTML(course.term)}</div><div class="row-tags">${course.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div><div class="row-rating"><strong>${course.rating}</strong><span>${course.reviews} 条评价</span></div></article>`).join('') : `<div class="empty-state"><div><b>没有找到相符课程</b><p>试试课程代码、中文名称或老师姓名。</p><button class="text-action" data-clear-courses>清除筛选</button></div></div>`}</div>`
+      <div class="course-list">${courses.length ? courses.map((course) => `<article class="course-row" data-open-type="course" data-id="${course.id}" tabindex="0" role="button"><div class="course-code">${course.code}</div><div><h3>${escapeHTML(course.name)}</h3><div class="english-name">${escapeHTML(course.nameEn)}</div></div><div class="instructor"><b>${escapeHTML(course.instructor)}</b>${escapeHTML(course.term)}</div><div class="row-tags">${course.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div><div class="row-rating"><strong>${ratingLabel(course.rating)}</strong><span>${course.reviews} 条评价</span></div></article>`).join('') : `<div class="empty-state"><div><b>没有找到相符课程</b><p>试试课程代码、中文名称或老师姓名。</p><button class="text-action" data-clear-courses>清除筛选</button></div></div>`}</div>`
   }
 
   function filteredDishes() {
@@ -180,7 +181,7 @@
     const itemReviews = allReviews().filter((review) => review.targetId === id)
     const subtitle = type === 'course' ? `${item.code} · ${item.instructor} · ${item.term}` : type === 'dish' ? `${item.hall} · ${item.stall} · ¥${item.price}` : `${item.location} · ${item.hours}`
     const scores = item.scores || { 口味: item.rating, 价格: 4.2, 分量: 4.4, 环境: 4.3 }
-    $('#detail-content').innerHTML = `${type === 'dish' ? `<div class="detail-visual"><img src="${item.image}" style="object-position:${item.position}" alt="${escapeHTML(item.name)}"></div>` : ''}<div class="detail-kicker">${type === 'course' ? 'COURSE REVIEW' : type === 'dish' ? 'DISH REVIEW' : 'DINING HALL'}</div><h2 id="detail-title">${escapeHTML(item.name)}</h2><p class="detail-subtitle">${escapeHTML(subtitle)}</p><div class="detail-rating"><strong>${item.rating}</strong><div>${stars(item.rating)}<br><span>${item.reviews} 条认证评价</span></div></div><div class="score-grid">${Object.entries(scores).map(([label, score]) => `<div class="score-cell"><b>${score}</b><span>${label}</span></div>`).join('')}</div><div class="detail-actions"><button class="primary-action" data-write-review data-type="${type}" data-id="${id}">写匿名评价</button><button class="favorite-button" data-favorite data-type="${type}" data-id="${id}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">${isFavorite ? '♥' : '♡'}</button></div><div class="detail-reviews"><h3>同学评价</h3>${itemReviews.length ? itemReviews.map(reviewCard).join('') : '<div class="empty-state"><div><b>还没有评价</b><p>来写第一条吧。</p></div></div>'}</div>`
+    $('#detail-content').innerHTML = `${type === 'dish' ? `<div class="detail-visual"><img src="${item.image}" style="object-position:${item.position}" alt="${escapeHTML(item.name)}"></div>` : ''}<div class="detail-kicker">${type === 'course' ? 'COURSE REVIEW' : type === 'dish' ? 'DISH REVIEW' : 'DINING HALL'}</div><h2 id="detail-title">${escapeHTML(item.name)}</h2><p class="detail-subtitle">${escapeHTML(subtitle)}</p><div class="detail-rating"><strong>${ratingLabel(item.rating)}</strong><div>${stars(item.rating)}<br><span>${item.reviews} 条认证评价</span></div></div><div class="score-grid">${Object.entries(scores).map(([label, score]) => `<div class="score-cell"><b>${score}</b><span>${label}</span></div>`).join('')}</div><div class="detail-actions"><button class="primary-action" data-write-review data-type="${type}" data-id="${id}">写匿名评价</button><button class="favorite-button" data-favorite data-type="${type}" data-id="${id}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">${isFavorite ? '♥' : '♡'}</button></div><div class="detail-reviews"><h3>同学评价</h3>${itemReviews.length ? itemReviews.map(reviewCard).join('') : '<div class="empty-state"><div><b>还没有评价</b><p>来写第一条吧。</p></div></div>'}</div>`
     $('#detail-overlay').hidden = false
     document.body.style.overflow = 'hidden'
     $('.close-button', $('#detail-overlay')).focus()
@@ -263,7 +264,7 @@
     const key = query.trim().toLowerCase()
     const courses = data.courses.filter((item) => !key || `${item.code}${item.name}${item.instructor}`.toLowerCase().includes(key)).slice(0, 5)
     const dishes = data.dishes.filter((item) => !key || `${item.name}${item.stall}${item.hall}`.toLowerCase().includes(key)).slice(0, 5)
-    $('#search-results').innerHTML = `<div class="search-group"><h3>课程</h3>${courses.map((item) => `<button class="search-result" data-open-type="course" data-id="${item.id}"><span><b>${item.code} · ${item.name}</b><span>${item.instructor} · ${item.term}</span></span><em>${item.rating} ★</em></button>`).join('') || '<div class="review-context">没有匹配课程</div>'}</div><div class="search-group"><h3>菜品</h3>${dishes.map((item) => `<button class="search-result" data-open-type="dish" data-id="${item.id}"><span><b>${item.name}</b><span>${item.hall} · ${item.stall}</span></span><em>${item.rating} ★</em></button>`).join('') || '<div class="review-context">没有匹配菜品</div>'}</div>`
+    $('#search-results').innerHTML = `<div class="search-group"><h3>课程</h3>${courses.map((item) => `<button class="search-result" data-open-type="course" data-id="${item.id}"><span><b>${item.code} · ${item.name}</b><span>${item.instructor} · ${item.term}</span></span><em>${item.rating == null ? '未评分' : `${item.rating} ★`}</em></button>`).join('') || '<div class="review-context">没有匹配课程</div>'}</div><div class="search-group"><h3>菜品</h3>${dishes.map((item) => `<button class="search-result" data-open-type="dish" data-id="${item.id}"><span><b>${item.name}</b><span>${item.hall} · ${item.stall}</span></span><em>${item.rating} ★</em></button>`).join('') || '<div class="review-context">没有匹配菜品</div>'}</div>`
   }
 
   document.addEventListener('click', (event) => {

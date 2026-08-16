@@ -22,7 +22,7 @@
       school: row.school || '学院待确认',
       instructor: row.instructor || instructors[0] || '教师待补充',
       term: row.term || terms[0] || '学期待补充',
-      rating: asNumber(row.rating),
+      rating: nullableNumber(row.rating),
       reviews: asNumber(row.review_count ?? row.reviews),
       tags: arrayValue(row.tags),
       scores: row.scores || {},
