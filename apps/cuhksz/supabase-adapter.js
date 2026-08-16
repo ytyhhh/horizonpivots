@@ -7,6 +7,7 @@
   const hasSupabaseSdk = () => Boolean(window.supabase && typeof window.supabase.createClient === 'function')
   const isLive = () => Boolean(client)
   const asNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback
+  const nullableNumber = (value) => value === null || value === undefined || value === '' ? null : asNumber(value)
   const arrayValue = (value) => Array.isArray(value) ? value : []
   const currentUser = () => window.CUHK_CLERK?.getUser() || null
 
@@ -65,7 +66,7 @@
       targetId: row.target_id || row.targetId,
       target: row.target || row.target_name || '',
       context: row.context || row.target_context || '',
-      rating: asNumber(row.rating || row.overall),
+      rating: nullableNumber(row.rating ?? row.overall),
       content: row.content || '',
       date: row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '刚刚',
       status: row.status || 'published',

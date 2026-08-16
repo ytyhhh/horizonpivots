@@ -42,7 +42,9 @@
   const $ = (selector, root = document) => root.querySelector(selector)
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
   const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]))
-  const stars = (rating) => `<span class="stars" aria-label="${rating} 星">${'★'.repeat(Math.round(rating))}${'☆'.repeat(5 - Math.round(rating))}</span>`
+  const stars = (rating) => rating == null
+    ? '<span class="stars" aria-label="未评分">未评分</span>'
+    : `<span class="stars" aria-label="${rating} 星">${'★'.repeat(Math.round(rating))}${'☆'.repeat(5 - Math.round(rating))}</span>`
   const save = () => localStorage.setItem(storageKey, JSON.stringify({ favorites: [...state.favorites], userReviews: state.userReviews }))
   const keyFor = (type, id) => `${type}:${id}`
   const maskedEmail = () => state.email ? `${state.email.slice(0, 2)}••••@${state.email.split('@')[1]}` : ''
