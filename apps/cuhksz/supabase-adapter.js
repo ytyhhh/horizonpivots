@@ -76,6 +76,15 @@
     }
   }
 
+  function pointView(row) {
+    return {
+      id: row.id,
+      points: asNumber(row.points),
+      reason: row.reason || '有效评价奖励',
+      createdAt: row.created_at || '',
+    }
+  }
+
   async function loadRemoteConfig() {
     try {
       const response = await fetch(`${config.apiBase || '/api'}/config`, { cache: 'no-store' })
@@ -107,7 +116,7 @@
     return user ? { user: { id: user.id, email: user.primaryEmailAddress?.emailAddress || '' } } : null
   }
 
-  async function readTable(table, query, { orderBy = 'id', ascending = true, pageSize = 1000, filter } = {}) {
+  async function readTable(table, query, { orderBy = 'id', ascending = true, pageSize = 1000, filter, source = client } = {}) {
     const rows = []
     let from = 0
 
@@ -115,7 +124,7 @@
     // Use a stable order with inclusive ranges so the public catalog remains
     // complete as more official courses and reviews are imported.
     while (true) {
-      let request = client
+      let request = source
         .from(table)
         .select(query || '*')
         .order(orderBy, { ascending })
@@ -132,7 +141,7 @@
   }
 
   async function loadData(fallback) {
-    if (!client) return { data: fallback, live: false, session: null, mine: [], favorites: [] }
+    if (!client) return { data: fallback, live: false, session: null, mine: [], favorites: [], points: [] }
     try {
       const [courseRows, hallRows, dishRows, reviewRows, session] = await Promise.all([
         readTable('cuhksz_courses', '*'),
@@ -147,18 +156,26 @@
       ])
       let mine = []
       let favorites = []
+      let points = []
       if (session?.user && authenticatedClient) {
         try {
-          const [mineResult, favoriteResult] = await Promise.all([
+          const [mineResult, favoriteResult, pointRows] = await Promise.all([
             authenticatedClient.from('cuhksz_reviews').select('*').eq('author_id', session.user.id).order('created_at', { ascending: false }).limit(100),
             authenticatedClient.from('cuhksz_favorites').select('target_type,target_id').eq('user_id', session.user.id),
+            readTable('cuhksz_point_ledger', 'id,points,reason,created_at', {
+              orderBy: 'created_at',
+              ascending: false,
+              source: authenticatedClient,
+              filter: (request) => request.eq('user_id', session.user.id),
+            }),
           ])
           if (mineResult.error) throw mineResult.error
           if (favoriteResult.error) throw favoriteResult.error
           mine = (mineResult.data || []).map(reviewView)
           favorites = (favoriteResult.data || []).map((row) => `${row.target_type}:${row.target_id}`)
+          points = pointRows.map(pointView)
         } catch (error) {
-          console.warn('[Supabase] 个人评价或收藏暂不可用；公开目录不受影响', error)
+          console.warn('[Supabase] 个人评价、收藏或积分暂不可用；公开目录不受影响', error)
         }
       }
       return {
@@ -166,6 +183,7 @@
         session,
         mine,
         favorites,
+        points,
         data: {
           courses: courseRows.map(courseView),
           halls: hallRows.map(hallView),
@@ -175,7 +193,7 @@
       }
     } catch (error) {
       console.warn('[Supabase] 数据读取失败，使用随附的公开目录', error)
-      return { data: fallback, live: false, session: null, mine: [], favorites: [], error }
+      return { data: fallback, live: false, session: null, mine: [], favorites: [], points: [], error }
     }
   }
 

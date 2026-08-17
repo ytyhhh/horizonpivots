@@ -10,6 +10,7 @@
     email: '',
     favorites: new Set(persisted.favorites || []),
     userReviews: persisted.userReviews || [],
+    points: [],
     courseQuery: '',
     school: '全部学院',
     term: '全部学期',
@@ -34,6 +35,7 @@
       state.email = snapshot.session?.user?.email || ''
       state.userReviews = snapshot.mine || []
       state.favorites = new Set(snapshot.favorites || [])
+      state.points = snapshot.points || []
     }
   }
   const runtimeNote = document.querySelector('#auth-runtime-note')
@@ -52,6 +54,7 @@
   const keyFor = (type, id) => `${type}:${id}`
   const maskedEmail = () => state.email ? `${state.email.slice(0, 2)}••••@${state.email.split('@')[1]}` : ''
   const allReviews = () => [...state.userReviews, ...data.reviews]
+  const totalPoints = () => state.points.reduce((total, entry) => total + Number(entry.points || 0), 0)
   const subjectCode = (course) => (course.code.match(/^[A-Za-z]+/)?.[0] || course.code.charAt(0)).toUpperCase()
   const courseInitial = (course) => subjectCode(course).charAt(0)
 
@@ -164,7 +167,10 @@
   function renderProfileContent() {
     const content = $('#profile-tab-content')
     if (!content) return
-    if (state.profileTab === 'favorites') {
+    if (state.profileTab === 'points') {
+      const entries = state.points
+      content.innerHTML = `<section class="points-panel"><div class="points-balance"><span>可用积分</span><strong>${totalPoints()}</strong><p>每条通过审核的有效评价，自动增加 5 积分。</p></div><div class="points-history"><h3>积分明细</h3>${entries.length ? entries.map((entry) => `<article class="point-entry"><div><b>${escapeHTML(entry.reason)}</b><p>有效评价审核通过后自动入账</p></div><div><strong>+${entry.points}</strong><span>${entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('zh-CN') : ''}</span></div></article>`).join('') : `<div class="empty-state"><div><b>还没有积分</b><p>提交一条具体、有帮助的评价；审核通过后即可获得 5 积分。</p><button class="text-action" data-route="courses">去写评价 →</button></div></div>`}</div></section>`
+    } else if (state.profileTab === 'favorites') {
       const items = savedItems()
       content.innerHTML = items.length ? `<div class="saved-list">${items.map(({ type, item }) => `<article class="saved-item"><div><h3>${escapeHTML(item.name)}</h3><p>${type === 'course' ? `${item.code} · ${item.instructor}` : item.location || `${item.hall} · ${item.stall}`}</p></div><button class="text-action" data-open-type="${type}" data-id="${item.id}">查看 →</button></article>`).join('')}</div>` : `<div class="empty-state"><div><b>还没有收藏</b><p>遇到感兴趣的课程或菜品，点一下收藏就能在这里找到。</p><button class="text-action" data-route="courses">浏览课程 →</button></div></div>`
     } else {
@@ -173,7 +179,7 @@
   }
 
   function renderProfile() {
-    $('#page-profile').innerHTML = `<header class="page-heading"><div><h1 id="profile-title">我的</h1><p>管理自己的匿名评价与收藏。公开页面不会展示账号信息。</p></div></header><div class="profile-layout"><aside class="profile-card"><div class="profile-avatar">${state.verified ? '深' : '访'}</div><h2>${state.verified ? '已登录 Horizon Pivots' : '游客模式'}</h2><p>${state.verified ? `${maskedEmail()}<br>账号与其他 Horizon Pivots 产品共用` : '浏览无需登录，发布评价与收藏需要登录。'}</p>${state.verified ? '<button class="auth-button verify-inline" data-sign-out>退出登录</button>' : '<button class="auth-button verify-inline" data-open-auth>登录后管理收藏</button>'}<div class="profile-stats"><div><strong>${state.userReviews.length}</strong><span>我的评价</span></div><div><strong>${state.favorites.size}</strong><span>收藏</span></div><div><strong>${state.verified ? 1 : 0}</strong><span>登录状态</span></div></div></aside><section class="profile-content"><nav class="profile-tabs"><button data-profile-tab="reviews" class="${state.profileTab === 'reviews' ? 'active' : ''}">我的评价</button><button data-profile-tab="favorites" class="${state.profileTab === 'favorites' ? 'active' : ''}">我的收藏</button></nav><div id="profile-tab-content"></div></section></div>`
+    $('#page-profile').innerHTML = `<header class="page-heading"><div><h1 id="profile-title">我的</h1><p>管理自己的匿名评价、收藏与积分。公开页面不会展示账号信息。</p></div></header><div class="profile-layout"><aside class="profile-card"><div class="profile-avatar">${state.verified ? '深' : '访'}</div><h2>${state.verified ? '已登录 Horizon Pivots' : '游客模式'}</h2><p>${state.verified ? `${maskedEmail()}<br>账号与其他 Horizon Pivots 产品共用` : '浏览无需登录，发布评价与收藏需要登录。'}</p>${state.verified ? '<button class="auth-button verify-inline" data-sign-out>退出登录</button>' : '<button class="auth-button verify-inline" data-open-auth>登录后管理收藏</button>'}<div class="profile-stats"><div><strong>${state.userReviews.length}</strong><span>我的评价</span></div><div><strong>${state.favorites.size}</strong><span>收藏</span></div><div><strong>${totalPoints()}</strong><span>积分</span></div></div></aside><section class="profile-content"><nav class="profile-tabs"><button data-profile-tab="reviews" class="${state.profileTab === 'reviews' ? 'active' : ''}">我的评价</button><button data-profile-tab="favorites" class="${state.profileTab === 'favorites' ? 'active' : ''}">我的收藏</button><button data-profile-tab="points" class="${state.profileTab === 'points' ? 'active' : ''}">我的积分</button></nav><div id="profile-tab-content"></div></section></div>`
     renderProfileContent()
   }
 
@@ -313,6 +319,7 @@
         state.email = ''
         state.favorites = new Set()
         state.userReviews = []
+        state.points = []
         updateAuthUI()
         renderRoute()
         toast('已退出登录')
@@ -379,7 +386,7 @@
     try {
       const result = await runtime.createReview({ type, id, rating: state.reviewRating, content, item })
       if (result.review) state.userReviews.unshift(result.review)
-      save(); closeReview(); closeDetail(); renderRoute(); toast(result.status === 'pending' ? '评价已提交，等待审核' : '评价已匿名发布')
+      save(); closeReview(); closeDetail(); renderRoute(); toast(result.status === 'pending' ? '评价已提交；审核通过后可获得 5 积分' : '评价已匿名发布')
     } catch (error) {
       $('#content-error').textContent = error.message || '评价提交失败'
     }

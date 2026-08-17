@@ -196,6 +196,20 @@ main { min-height: calc(100dvh - 72px); }
 .saved-item h3 { margin: 0; font-size: 16px; }
 .saved-item p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 .saved-item .text-action { font-size: 12px; }
+.points-panel { padding-top: 24px; }
+.points-balance { padding: 26px; border-radius: 16px; background: linear-gradient(135deg, var(--purple), #95168a); color: white; }
+.points-balance span, .points-balance strong { display: block; }
+.points-balance span { color: rgba(255,255,255,.65); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.points-balance strong { margin-top: 8px; color: var(--gold); font-size: 58px; line-height: 1; font-variant-numeric: tabular-nums; }
+.points-balance p { margin: 12px 0 0; color: rgba(255,255,255,.78); font-size: 12px; line-height: 1.6; }
+.points-history { margin-top: 26px; }
+.points-history h3 { margin: 0 0 8px; font-size: 16px; }
+.point-entry { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; min-height: 76px; border-bottom: 1px solid var(--line); }
+.point-entry b, .point-entry span { display: block; }
+.point-entry b { font-size: 14px; }
+.point-entry p, .point-entry span { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+.point-entry > div:last-child { text-align: right; }
+.point-entry strong { display: block; color: var(--purple); font-size: 20px; font-variant-numeric: tabular-nums; }
 .empty-state { display: grid; place-items: center; min-height: 260px; padding: 40px; text-align: center; }
 .empty-state b { display: block; font-size: 19px; }
 .empty-state p { max-width: 420px; margin: 10px auto 0; color: var(--muted); line-height: 1.65; }
