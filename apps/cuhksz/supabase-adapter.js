@@ -81,12 +81,18 @@
       // Local file previews can still show the bundled public data.
     }
 
-    if (!hasSupabaseSdk() || !config.supabaseUrl || !config.supabasePublishableKey || !config.clerkPublishableKey) return config
-    await window.CUHK_CLERK.initialize(config)
+    if (!hasSupabaseSdk() || !config.supabaseUrl || !config.supabasePublishableKey) return config
     client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       accessToken: () => window.CUHK_CLERK.getToken(),
     })
+    if (config.clerkPublishableKey) {
+      try {
+        await window.CUHK_CLERK.initialize(config)
+      } catch (error) {
+        console.warn('[Clerk] 登录组件暂不可用；公开课程与评价仍可浏览', error)
+      }
+    }
     return config
   }
 
