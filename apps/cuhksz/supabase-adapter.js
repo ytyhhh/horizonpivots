@@ -69,7 +69,7 @@
       context: row.context || row.target_context || '',
       rating: nullableNumber(row.rating ?? row.overall),
       content: row.content || '',
-      date: row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '刚刚',
+      date: row.is_historical ? '历史评价' : row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '刚刚',
       status: row.status || 'published',
     }
   }

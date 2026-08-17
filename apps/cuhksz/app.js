@@ -79,6 +79,10 @@
 
   function renderHome() {
     const featured = data.courses[0]
+    if (!featured) {
+      $('#page-home').innerHTML = `<div class="empty-state"><div><b>课程目录正在加载</b><p>这里不再展示演示数据。请稍后刷新页面，或确认已配置正式数据源。</p><button class="text-action" data-route="courses">浏览课程目录 →</button></div></div>`
+      return
+    }
     $('#page-home').innerHTML = `
       <div class="hero">
         <div class="hero-copy"><div class="hero-kicker">CUHK–SHENZHEN · STUDENT VOICE</div><h1 id="home-title">选好课，<br><em>吃好饭。</em></h1><p>港中深同学匿名分享的课程与食堂体验。具体、克制，也真正有用。</p><form class="hero-search" data-home-search><input type="search" aria-label="搜索课程或菜品" placeholder="课程代码、老师或菜品"><button type="submit">搜索</button></form></div>
@@ -143,7 +147,7 @@
     $('#page-dining').innerHTML = `
       <div class="dining-lead"><div class="dining-lead-copy"><h1 id="dining-title">今天，<br>吃点好的。</h1><p>按食堂、档口和菜品查看真实评价，少踩一次雷，多吃一顿好饭。</p><form class="hero-search" data-dining-search><input type="search" value="${escapeHTML(state.diningQuery)}" placeholder="食堂、档口或菜品" aria-label="搜索食堂"><button type="submit">搜索</button></form></div><div class="dining-lead-image"><img src="assets/campus-dining-hero.jpg" alt="校园食堂餐盘和饭菜"></div></div>
       <div class="section-heading"><div><h2>按食堂浏览</h2><p>营业时间与档口数量仅作参考，以现场信息为准。</p></div></div>
-      <div class="hall-grid">${data.halls.map((hall, index) => `<article class="hall-card ${hall.tone}" data-open-type="hall" data-id="${hall.id}" tabindex="0" role="button"><div class="hall-number">0${index + 1} / DINING HALL</div><h3>${hall.name}</h3><p>${hall.location}</p><footer><span>${hall.hours}</span><span>★ ${hall.rating} · ${hall.stalls} 个档口</span></footer></article>`).join('')}</div>
+      ${data.halls.length ? `<div class="hall-grid">${data.halls.map((hall, index) => `<article class="hall-card ${hall.tone}" data-open-type="hall" data-id="${hall.id}" tabindex="0" role="button"><div class="hall-number">0${index + 1} / DINING HALL</div><h3>${hall.name}</h3><p>${hall.location}</p><footer><span>${hall.hours}</span><span>★ ${hall.rating} · ${hall.stalls} 个档口</span></footer></article>`).join('')}</div>` : `<div class="empty-state"><div><b>食堂资料正在整理</b><p>暂未录入可展示的食堂和菜品数据。</p></div></div>`}
       <div class="section-heading"><div><h2>${state.diningQuery ? '搜索到的菜品' : '本周高分菜品'}</h2><p>${dishes.length} 道菜品，价格和供应情况可能随档口调整。</p></div></div>
       ${dishes.length ? `<div class="dish-strip">${dishes.map(dishCard).join('')}</div>` : `<div class="empty-state"><div><b>没有找到相符菜品</b><p>换个菜名、食堂或档口试试。</p><button class="text-action" data-clear-dining>清除搜索</button></div></div>`}`
   }
