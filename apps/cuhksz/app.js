@@ -14,6 +14,8 @@
     school: '全部学院',
     term: '全部学期',
     courseSort: 'rating',
+    courseInitial: '全部',
+    expandedSubjects: new Set(),
     diningQuery: '',
     profileTab: 'reviews',
     detail: null,
@@ -50,6 +52,8 @@
   const keyFor = (type, id) => `${type}:${id}`
   const maskedEmail = () => state.email ? `${state.email.slice(0, 2)}••••@${state.email.split('@')[1]}` : ''
   const allReviews = () => [...state.userReviews, ...data.reviews]
+  const subjectCode = (course) => (course.code.match(/^[A-Za-z]+/)?.[0] || course.code.charAt(0)).toUpperCase()
+  const courseInitial = (course) => subjectCode(course).charAt(0)
 
   function toast(message) {
     const node = $('#toast')
@@ -95,18 +99,38 @@
       .filter((course) => !query || `${course.code}${course.name}${course.nameEn}${course.instructor}`.toLowerCase().includes(query))
       .filter((course) => state.school === '全部学院' || course.school === state.school)
       .filter((course) => state.term === '全部学期' || course.term === state.term)
+      .filter((course) => state.courseInitial === '全部' || courseInitial(course) === state.courseInitial)
       .sort((a, b) => state.courseSort === 'reviews' ? b.reviews - a.reviews : (b.rating ?? -1) - (a.rating ?? -1))
+  }
+
+  function courseRow(course) {
+    return `<article class="course-row" data-open-type="course" data-id="${course.id}" tabindex="0" role="button"><div class="course-code">${course.code}</div><div><h3>${escapeHTML(course.name)}</h3><div class="english-name">${escapeHTML(course.nameEn)}</div></div><div class="instructor"><b>${escapeHTML(course.instructor)}</b>${escapeHTML(course.term)}</div><div class="row-tags">${course.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div><div class="row-rating"><strong>${ratingLabel(course.rating)}</strong><span>${course.reviews} 条评价</span></div></article>`
+  }
+
+  function groupedCourses(courses) {
+    const groups = new Map()
+    courses.forEach((course) => {
+      const code = subjectCode(course)
+      groups.set(code, [...(groups.get(code) || []), course])
+    })
+    return [...groups.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([code, items]) => ({ code, items }))
   }
 
   function renderCourses() {
     const courses = filteredCourses()
     const schools = ['全部学院', ...new Set(data.courses.map((course) => course.school))]
     const terms = ['全部学期', ...new Set(data.courses.map((course) => course.term))]
+    const groups = groupedCourses(courses)
+    const availableInitials = new Set(data.courses.map(courseInitial))
+    const courseIndex = ['全部', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', ...'0123456789']
     $('#page-courses').innerHTML = `
       <header class="page-heading"><div><h1 id="courses-title">课程评价</h1><p>每条评价都归档到具体老师和学期。先理解差异，再决定哪一门课适合你。</p></div><div class="heading-image"><img src="assets/course-study.jpg" alt="学生在图书馆共同复习课程"></div></header>
       <div class="filter-bar"><label class="search-input"><span>⌕</span><input id="course-search" type="search" value="${escapeHTML(state.courseQuery)}" placeholder="课程代码、名称或老师" aria-label="搜索课程"></label><label class="select-wrap"><select id="school-filter" aria-label="按学院筛选">${schools.map((value) => `<option ${value === state.school ? 'selected' : ''}>${value}</option>`).join('')}</select></label><label class="select-wrap"><select id="term-filter" aria-label="按学期筛选">${terms.map((value) => `<option ${value === state.term ? 'selected' : ''}>${value}</option>`).join('')}</select></label></div>
+      <section class="course-index" aria-label="按课程编号首字母筛选"><div class="course-index-heading"><div><b>课程编号索引</b><span>按首字母快速定位学科</span></div><span>${state.courseInitial === '全部' ? '全部代码' : `已选 ${state.courseInitial}`}</span></div><div class="course-index-grid">${courseIndex.map((value) => { const unavailable = value !== '全部' && !availableInitials.has(value); return `<button type="button" class="course-index-button ${state.courseInitial === value ? 'active' : ''}" data-course-initial="${value}" ${unavailable ? 'disabled aria-disabled="true"' : ''}>${value}</button>` }).join('')}</div></section>
       <div class="results-meta"><span>找到 ${courses.length} 门课程</span><div class="sort-buttons"><button data-course-sort="rating" class="${state.courseSort === 'rating' ? 'active' : ''}">评分</button><button data-course-sort="reviews" class="${state.courseSort === 'reviews' ? 'active' : ''}">热度</button></div></div>
-      <div class="course-list">${courses.length ? courses.map((course) => `<article class="course-row" data-open-type="course" data-id="${course.id}" tabindex="0" role="button"><div class="course-code">${course.code}</div><div><h3>${escapeHTML(course.name)}</h3><div class="english-name">${escapeHTML(course.nameEn)}</div></div><div class="instructor"><b>${escapeHTML(course.instructor)}</b>${escapeHTML(course.term)}</div><div class="row-tags">${course.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div><div class="row-rating"><strong>${ratingLabel(course.rating)}</strong><span>${course.reviews} 条评价</span></div></article>`).join('') : `<div class="empty-state"><div><b>没有找到相符课程</b><p>试试课程代码、中文名称或老师姓名。</p><button class="text-action" data-clear-courses>清除筛选</button></div></div>`}</div>`
+      ${courses.length ? `<div class="course-catalog-actions"><span>点击学科代码展开课程</span><div><button type="button" data-collapse-subjects>全部收起</button><button type="button" data-expand-subjects>全部展开</button></div></div><div class="subject-list">${groups.map(({ code, items }) => { const expanded = state.expandedSubjects.has(code); return `<section class="subject-group"><button type="button" class="subject-group-trigger" data-subject-toggle="${code}" aria-expanded="${expanded}"><span class="subject-group-chevron" aria-hidden="true">${expanded ? '−' : '+'}</span><span><b>${code}</b><small>以 ${code} 开头的课程</small></span><em>${items.length} 门</em></button>${expanded ? `<div class="subject-course-list">${items.map(courseRow).join('')}</div>` : ''}</section>` }).join('')}</div>` : `<div class="empty-state"><div><b>没有找到相符课程</b><p>试试课程代码、名称或老师姓名。</p><button class="text-action" data-clear-courses>清除筛选</button></div></div>`}`
   }
 
   function filteredDishes() {
@@ -298,9 +322,21 @@
     if (rating) { state.reviewRating = Number(rating.dataset.rating); renderRatingPicker(); $('#rating-error').textContent = '' }
     const sort = event.target.closest('[data-course-sort]')
     if (sort) { state.courseSort = sort.dataset.courseSort; renderCourses() }
+    const initial = event.target.closest('[data-course-initial]')
+    if (initial) { state.courseInitial = initial.dataset.courseInitial; state.expandedSubjects = new Set(); renderCourses() }
+    const subject = event.target.closest('[data-subject-toggle]')
+    if (subject) {
+      const code = subject.dataset.subjectToggle
+      const expanded = new Set(state.expandedSubjects)
+      expanded.has(code) ? expanded.delete(code) : expanded.add(code)
+      state.expandedSubjects = expanded
+      renderCourses()
+    }
+    if (event.target.closest('[data-expand-subjects]')) { state.expandedSubjects = new Set(groupedCourses(filteredCourses()).map(({ code }) => code)); renderCourses() }
+    if (event.target.closest('[data-collapse-subjects]')) { state.expandedSubjects = new Set(); renderCourses() }
     const profileTab = event.target.closest('[data-profile-tab]')
     if (profileTab) { state.profileTab = profileTab.dataset.profileTab; renderProfile() }
-    if (event.target.closest('[data-clear-courses]')) { state.courseQuery = ''; state.school = '全部学院'; state.term = '全部学期'; renderCourses() }
+    if (event.target.closest('[data-clear-courses]')) { state.courseQuery = ''; state.school = '全部学院'; state.term = '全部学期'; state.courseInitial = '全部'; state.expandedSubjects = new Set(); renderCourses() }
     if (event.target.closest('[data-clear-dining]')) { state.diningQuery = ''; renderDining() }
   })
 
