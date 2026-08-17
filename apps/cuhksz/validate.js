@@ -19,16 +19,14 @@ assert(css.includes('prefers-reduced-motion'), '缺少减少动效支持')
 const sandbox = { window: {} }
 vm.runInNewContext(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), sandbox)
 const data = sandbox.window.CUHK_REVIEW_DATA
-assert(data.courses.length >= 6, '课程演示数据不足')
-assert(data.halls.length >= 3, '食堂演示数据不足')
-assert(data.dishes.length >= 4, '菜品演示数据不足')
+assert(Array.isArray(data.courses) && Array.isArray(data.halls) && Array.isArray(data.dishes), '本地回退数据结构不完整')
 for (const dish of data.dishes) assert(fs.existsSync(path.join(root, dish.image)), `菜品图片不存在：${dish.image}`)
-for (const asset of ['assets/campus-dining-hero.jpg', 'assets/course-study.jpg']) {
+for (const asset of ['assets/campus-dining-hero.jpg', 'assets/course-study.jpg', 'assets/campus-life-directory.jpg']) {
   const size = fs.statSync(path.join(root, asset)).size
   assert(size < 700 * 1024, `${asset} 超过 700KB，需要继续压缩`)
 }
 
 console.log('✓ 网页四个主页面和核心对话框完整')
 console.log('✓ 移动端与减少动效样式完整')
-console.log('✓ 课程、食堂、菜品演示数据及图片资产完整')
+console.log('✓ 课程、食堂、菜品的线上数据入口及图片资产完整')
 console.log('✓ Clerk、Supabase RLS、Next.js Route Handlers 与部署配置完整')

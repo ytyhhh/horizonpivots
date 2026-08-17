@@ -18,12 +18,27 @@
     courseInitial: '全部',
     expandedSubjects: new Set(),
     diningQuery: '',
+    facilityCategory: '全部服务',
     profileTab: 'reviews',
     detail: null,
     reviewTarget: null,
     reviewRating: 0,
     pendingReviewTarget: null
   }
+
+  const campusFacilities = [
+    { id: 'symposium-coffee', category: '咖啡与茶饮', name: '会饮咖啡', nameEn: 'Symposium Coffee', location: '志仁楼一楼', hours: '周一至周五 08:30-17:00；周六 08:30-15:30；周日暂停营业', description: '提供咖啡、茶饮、果汁、面包和甜品。二楼及店外设有休闲区。' },
+    { id: 'a-cup-of-tea', category: '咖啡与茶饮', name: '一瓯茶', nameEn: 'A Cup of Tea', location: '下园张灵斌楼一楼楼梯旁', hours: '周一至周五 09:00-21:00；周末 10:00-18:00', description: '提供奶茶、奶盖茶和果茶，并支持预订与外卖服务。' },
+    { id: 'starbucks', category: '咖啡与茶饮', name: '星巴克', nameEn: 'Starbucks', location: '下园科研楼 A 栋首层', hours: '周一至周五 07:00-21:30；周末 07:30-21:30', description: '咖啡、蛋糕和小吃。可通过星巴克 App、微信小程序或饿了么选择校内门店配送。' },
+    { id: 'taits', category: '餐饮与甜品', name: '太清凉茶糖水铺', nameEn: 'TAITSING Chinese Herbal Tea & Hand-made Tong Shui', location: '上园学勤书院来恩 C 栋一楼', hours: '每日 11:00-22:00', description: '提供龟苓膏、凉茶、糖水、主食和小吃，店内外设有休闲座椅。' },
+    { id: 'tmall-campus-store', category: '便利零售', name: '天猫校园超市', nameEn: 'Tmall Campus Store', location: '上园厚含书院与永平书院中庭广场 B1，Q 发屋旁', hours: '每日 00:00-24:00', description: '提供零食饮品、生活日杂、学习用品和蔬菜水果等平价生鲜。' },
+    { id: 'three-chairs', category: '生活服务', name: '三把椅子理发店', nameEn: 'Three Chairs Hair Salon', location: '下园张灵斌楼与学生中心之间的下首层', hours: '每日 10:30-21:10', description: '提供洗剪、染烫和美甲等服务。' },
+    { id: 'qc-house', category: '生活服务', name: 'Q 发屋', nameEn: 'QC House', location: '上园厚含书院与永平书院中庭广场 B1，天猫校园超市旁', hours: '每日 09:00-22:00', description: '提供洗头、剪发、烫发和染发服务。' },
+    { id: 'zero-focus', category: '生活服务', name: '中兴眼镜', nameEn: 'Zero Focus', location: '下园张灵斌楼下首层', hours: '每日 09:00-22:00', description: '提供验光、配镜、隐形眼镜销售及镜框镜片清洗调校。' },
+    { id: 'meijiajie', category: '生活服务', name: '美家洁洗衣', nameEn: 'Meijiajie Laundry', location: '上园厚含书院与永平书院中庭广场 B1', hours: '每日 10:00-20:30', description: '提供衣物、鞋子、箱包和家纺清洗服务。' },
+    { id: 'uchiyama', category: '学习与文创', name: '内山书店', nameEn: 'Uchiyama Shoten', location: '下园张灵斌楼下首层', hours: '每日 08:00-20:00', description: '经营书籍、咖啡、蛋糕和文创用品。' },
+    { id: 'bgc-print', category: '学习与文创', name: '通条文印', nameEn: 'BGC PRINT', location: '下园张灵斌楼下首层', hours: '每日 09:00-21:00', description: '提供打印装订、扫描复印、证件照和设计印刷等服务，店内设有证件照自助拍摄设备。' },
+  ]
 
   let snapshot = null
   if (runtime) {
@@ -88,7 +103,7 @@
     }
     $('#page-home').innerHTML = `
       <div class="hero">
-        <div class="hero-copy"><div class="hero-kicker">CUHK–SHENZHEN · STUDENT VOICE</div><h1 id="home-title">选好课，<br><em>吃好饭。</em></h1><p>港中深同学匿名分享的课程与食堂体验。具体、克制，也真正有用。</p><form class="hero-search" data-home-search><input type="search" aria-label="搜索课程或菜品" placeholder="课程代码、老师或菜品"><button type="submit">搜索</button></form></div>
+        <div class="hero-copy"><div class="hero-kicker">CUHK-SHENZHEN · STUDENT VOICE</div><h1 id="home-title">选好课，<br><em>吃好饭。</em></h1><p>港中深同学匿名分享的课程与食堂体验。具体、克制，也真正有用。</p><form class="hero-search" data-home-search><input type="search" aria-label="搜索课程或菜品" placeholder="课程代码、老师或菜品"><button type="submit">搜索</button></form></div>
         <div class="hero-image"><img src="assets/campus-dining-hero.jpg" alt="紫金色餐盘上的三份校园餐饮"><div class="hero-badge"><b>4.6</b><span>本周菜品<br>平均推荐度</span></div></div>
       </div>
       <div class="section-heading"><div><h2>这周，同学们在看</h2><p>评价不是结论，而是选课前多一个可靠视角。</p></div><button class="text-action" data-route="courses">浏览全部课程 →</button></div>
@@ -145,14 +160,25 @@
     return data.dishes.filter((dish) => !query || `${dish.name}${dish.stall}${dish.hall}`.toLowerCase().includes(query))
   }
 
+  function filteredFacilities() {
+    const query = state.diningQuery.trim().toLowerCase()
+    return campusFacilities
+      .filter((facility) => state.facilityCategory === '全部服务' || facility.category === state.facilityCategory)
+      .filter((facility) => !query || `${facility.name}${facility.nameEn}${facility.category}${facility.location}${facility.description}`.toLowerCase().includes(query))
+  }
+
+  function facilityCard(facility, index) {
+    return `<article class="facility-card ${index === 0 ? 'featured' : ''}"><div class="facility-card-top"><span>${escapeHTML(facility.category)}</span><small>${escapeHTML(facility.nameEn)}</small></div><h3>${escapeHTML(facility.name)}</h3><p>${escapeHTML(facility.description)}</p><dl><div><dt>位置</dt><dd>${escapeHTML(facility.location)}</dd></div><div><dt>营业</dt><dd>${escapeHTML(facility.hours)}</dd></div></dl></article>`
+  }
+
   function renderDining() {
     const dishes = filteredDishes()
+    const facilities = filteredFacilities()
+    const categories = ['全部服务', ...new Set(campusFacilities.map((facility) => facility.category))]
     $('#page-dining').innerHTML = `
-      <div class="dining-lead"><div class="dining-lead-copy"><h1 id="dining-title">今天，<br>吃点好的。</h1><p>按食堂、档口和菜品查看真实评价，少踩一次雷，多吃一顿好饭。</p><form class="hero-search" data-dining-search><input type="search" value="${escapeHTML(state.diningQuery)}" placeholder="食堂、档口或菜品" aria-label="搜索食堂"><button type="submit">搜索</button></form></div><div class="dining-lead-image"><img src="assets/campus-dining-hero.jpg" alt="校园食堂餐盘和饭菜"></div></div>
-      <div class="section-heading"><div><h2>按食堂浏览</h2><p>营业时间与档口数量仅作参考，以现场信息为准。</p></div></div>
-      ${data.halls.length ? `<div class="hall-grid">${data.halls.map((hall, index) => `<article class="hall-card ${hall.tone}" data-open-type="hall" data-id="${hall.id}" tabindex="0" role="button"><div class="hall-number">0${index + 1} / DINING HALL</div><h3>${hall.name}</h3><p>${hall.location}</p><footer><span>${hall.hours}</span><span>★ ${hall.rating} · ${hall.stalls} 个档口</span></footer></article>`).join('')}</div>` : `<div class="empty-state"><div><b>食堂资料正在整理</b><p>暂未录入可展示的食堂和菜品数据。</p></div></div>`}
-      <div class="section-heading"><div><h2>${state.diningQuery ? '搜索到的菜品' : '本周高分菜品'}</h2><p>${dishes.length} 道菜品，价格和供应情况可能随档口调整。</p></div></div>
-      ${dishes.length ? `<div class="dish-strip">${dishes.map(dishCard).join('')}</div>` : `<div class="empty-state"><div><b>没有找到相符菜品</b><p>换个菜名、食堂或档口试试。</p><button class="text-action" data-clear-dining>清除搜索</button></div></div>`}`
+      <section class="campus-life-hero"><div class="campus-life-copy"><span>校园生活目录</span><h1 id="dining-title">吃饭之外，<br>也把日常过顺。</h1><p>食堂、咖啡、洗衣和文印都在这里查。营业时间以学期内安排为准。</p><form class="hero-search" data-dining-search><input type="search" value="${escapeHTML(state.diningQuery)}" placeholder="搜索食堂、菜品或校内服务" aria-label="搜索校园生活服务"><button type="submit">搜索</button></form></div><div class="campus-life-image"><img src="assets/campus-life-directory.jpg" alt="学生在校园商业空间内交谈和购买饮品"></div></section>
+      <section class="facility-directory"><div class="section-heading"><div><h2>校内商业设施</h2><p>收录 ${campusFacilities.length} 家公开列示的服务点。假期营业安排请留意学校邮件和门店通知。</p></div><a class="text-action" href="https://mp.weixin.qq.com/s/H4a4k2X_WKMh0k03RReObA" target="_blank" rel="noreferrer">查看官方来源 ↗</a></div><div class="facility-filter" role="group" aria-label="筛选商业设施">${categories.map((category) => `<button type="button" data-facility-category="${category}" aria-pressed="${state.facilityCategory === category}" class="${state.facilityCategory === category ? 'active' : ''}">${category}</button>`).join('')}</div>${facilities.length ? `<div class="facility-grid">${facilities.map(facilityCard).join('')}</div>` : `<div class="empty-state"><div><b>没有找到相符服务</b><p>换个服务名称或清除筛选再试试。</p><button class="text-action" data-clear-dining>清除筛选</button></div></div>`}</section>
+      <section class="dining-directory"><div class="section-heading"><div><h2>食堂与菜品</h2><p>保留原有真实评价入口。食堂营业和档口信息以现场为准。</p></div></div>${data.halls.length ? `<div class="hall-grid">${data.halls.map((hall, index) => `<article class="hall-card ${hall.tone}" data-open-type="hall" data-id="${hall.id}" tabindex="0" role="button"><div class="hall-number">食堂 ${index + 1}</div><h3>${hall.name}</h3><p>${hall.location}</p><footer><span>${hall.hours}</span><span>★ ${hall.rating} · ${hall.stalls} 个档口</span></footer></article>`).join('')}</div>` : `<div class="empty-state"><div><b>食堂资料正在整理</b><p>暂未录入可展示的食堂和菜品数据。</p></div></div>`}<div class="section-heading dining-dishes-heading"><div><h2>${state.diningQuery ? '匹配的菜品' : '看看大家在吃什么'}</h2><p>${dishes.length} 道菜品，价格和供应情况可能随档口调整。</p></div></div>${dishes.length ? `<div class="dish-strip">${dishes.map(dishCard).join('')}</div>` : `<div class="empty-state"><div><b>没有找到相符菜品</b><p>当前搜索已优先展示校内服务。</p><button class="text-action" data-clear-dining>清除筛选</button></div></div>`}</section>`
   }
 
   function savedItems() {
@@ -335,6 +361,8 @@
     if (sort) { state.courseSort = sort.dataset.courseSort; renderCourses() }
     const initial = event.target.closest('[data-course-initial]')
     if (initial) { state.courseInitial = initial.dataset.courseInitial; state.expandedSubjects = new Set(); renderCourses() }
+    const facilityCategory = event.target.closest('[data-facility-category]')
+    if (facilityCategory) { state.facilityCategory = facilityCategory.dataset.facilityCategory; renderDining() }
     const subject = event.target.closest('[data-subject-toggle]')
     if (subject) {
       const code = subject.dataset.subjectToggle
@@ -348,7 +376,7 @@
     const profileTab = event.target.closest('[data-profile-tab]')
     if (profileTab) { state.profileTab = profileTab.dataset.profileTab; renderProfile() }
     if (event.target.closest('[data-clear-courses]')) { state.courseQuery = ''; state.school = '全部学院'; state.term = '全部学期'; state.courseInitial = '全部'; state.expandedSubjects = new Set(); renderCourses() }
-    if (event.target.closest('[data-clear-dining]')) { state.diningQuery = ''; renderDining() }
+    if (event.target.closest('[data-clear-dining]')) { state.diningQuery = ''; state.facilityCategory = '全部服务'; renderDining() }
   })
 
   document.addEventListener('keydown', (event) => {
