@@ -23,6 +23,8 @@
       school: row.school || '学院待确认',
       instructor: row.instructor || instructors[0] || '教师待补充',
       term: row.term || terms[0] || '学期待补充',
+      description: row.description || '',
+      officialUrl: row.official_url || '',
       rating: nullableNumber(row.rating),
       reviews: asNumber(row.review_count ?? row.reviews),
       tags: arrayValue(row.tags),

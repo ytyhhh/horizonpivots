@@ -211,6 +211,10 @@ main { min-height: calc(100dvh - 72px); }
 .detail-kicker, .modal-kicker { color: var(--gold-deep); font-size: 10px; font-weight: 800; letter-spacing: .16em; }
 .detail-panel h2, .modal h2 { margin: 11px 0 6px; font-size: 34px; letter-spacing: -.035em; }
 .detail-subtitle, .modal-subtitle { margin: 0; color: var(--muted); line-height: 1.6; }
+.course-description { margin-top: 22px; padding: 18px 0; border-top: 1px solid var(--line); }
+.course-description h3 { margin: 0 0 8px; font-size: 15px; }
+.course-description p { margin: 0; color: var(--ink); line-height: 1.8; white-space: pre-line; }
+.course-description a { display: inline-block; margin-top: 10px; color: var(--purple); font-size: 13px; font-weight: 700; }
 .detail-rating { display: flex; align-items: end; justify-content: space-between; margin-top: 30px; padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .detail-rating strong { color: var(--purple); font-size: 54px; line-height: 1; font-variant-numeric: tabular-nums; }
 .detail-rating span { color: var(--muted); font-size: 12px; }
