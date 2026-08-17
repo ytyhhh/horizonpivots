@@ -107,10 +107,28 @@
     return user ? { user: { id: user.id, email: user.primaryEmailAddress?.emailAddress || '' } } : null
   }
 
-  async function readTable(table, query) {
-    const { data, error } = await client.from(table).select(query || '*')
-    if (error) throw error
-    return data || []
+  async function readTable(table, query, { orderBy = 'id', ascending = true, pageSize = 1000, filter } = {}) {
+    const rows = []
+    let from = 0
+
+    // Supabase Data API intentionally caps a single response at 1,000 rows.
+    // Use a stable order with inclusive ranges so the public catalog remains
+    // complete as more official courses and reviews are imported.
+    while (true) {
+      let request = client
+        .from(table)
+        .select(query || '*')
+        .order(orderBy, { ascending })
+        .range(from, from + pageSize - 1)
+      if (filter) request = filter(request)
+      const { data, error } = await request
+      if (error) throw error
+
+      const page = data || []
+      rows.push(...page)
+      if (page.length < pageSize) return rows
+      from += pageSize
+    }
   }
 
   async function loadData(fallback) {
@@ -120,9 +138,10 @@
         readTable('cuhksz_courses', '*'),
         readTable('cuhksz_dining_halls', '*'),
         readTable('cuhksz_dishes', '*'),
-        client.from('cuhksz_reviews').select('*').eq('status', 'published').order('created_at', { ascending: false }).limit(1000).then((result) => {
-          if (result.error) throw result.error
-          return result.data || []
+        readTable('cuhksz_reviews', '*', {
+          orderBy: 'created_at',
+          ascending: false,
+          filter: (request) => request.eq('status', 'published'),
         }),
         getSession(),
       ])
