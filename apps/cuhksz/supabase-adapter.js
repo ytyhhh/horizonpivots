@@ -2,6 +2,7 @@
   const fallbackConfig = window.CUHK_WEB_CONFIG || {}
   let config = { ...fallbackConfig }
   let client = null
+  let authenticatedClient = null
   let authUnsubscribe = null
 
   const hasSupabaseSdk = () => Boolean(window.supabase && typeof window.supabase.createClient === 'function')
@@ -84,6 +85,9 @@
     if (!hasSupabaseSdk() || !config.supabaseUrl || !config.supabasePublishableKey) return config
     client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
+    authenticatedClient = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       accessToken: () => window.CUHK_CLERK.getToken(),
     })
     if (config.clerkPublishableKey) {
@@ -122,15 +126,19 @@
       ])
       let mine = []
       let favorites = []
-      if (session?.user) {
-        const [mineResult, favoriteResult] = await Promise.all([
-          client.from('cuhksz_reviews').select('*').eq('author_id', session.user.id).order('created_at', { ascending: false }).limit(100),
-          client.from('cuhksz_favorites').select('target_type,target_id').eq('user_id', session.user.id),
-        ])
-        if (mineResult.error) throw mineResult.error
-        if (favoriteResult.error) throw favoriteResult.error
-        mine = (mineResult.data || []).map(reviewView)
-        favorites = (favoriteResult.data || []).map((row) => `${row.target_type}:${row.target_id}`)
+      if (session?.user && authenticatedClient) {
+        try {
+          const [mineResult, favoriteResult] = await Promise.all([
+            authenticatedClient.from('cuhksz_reviews').select('*').eq('author_id', session.user.id).order('created_at', { ascending: false }).limit(100),
+            authenticatedClient.from('cuhksz_favorites').select('target_type,target_id').eq('user_id', session.user.id),
+          ])
+          if (mineResult.error) throw mineResult.error
+          if (favoriteResult.error) throw favoriteResult.error
+          mine = (mineResult.data || []).map(reviewView)
+          favorites = (favoriteResult.data || []).map((row) => `${row.target_type}:${row.target_id}`)
+        } catch (error) {
+          console.warn('[Supabase] 个人评价或收藏暂不可用；公开目录不受影响', error)
+        }
       }
       return {
         live: true,
@@ -176,23 +184,23 @@
   }
 
   async function toggleFavorite(type, id) {
-    if (!client) throw new Error('服务配置尚未完成')
+    if (!authenticatedClient) throw new Error('服务配置尚未完成')
     const user = await requireUser()
     const targetType = type === 'course' ? 'course' : type
-    const existing = await client.from('cuhksz_favorites').select('user_id').eq('user_id', user.id).eq('target_type', targetType).eq('target_id', id).maybeSingle()
+    const existing = await authenticatedClient.from('cuhksz_favorites').select('user_id').eq('user_id', user.id).eq('target_type', targetType).eq('target_id', id).maybeSingle()
     if (existing.error) throw existing.error
     if (existing.data) {
-      const result = await client.from('cuhksz_favorites').delete().eq('user_id', user.id).eq('target_type', targetType).eq('target_id', id)
+      const result = await authenticatedClient.from('cuhksz_favorites').delete().eq('user_id', user.id).eq('target_type', targetType).eq('target_id', id)
       if (result.error) throw result.error
       return { favorite: false }
     }
-    const result = await client.from('cuhksz_favorites').insert({ user_id: user.id, target_type: targetType, target_id: id })
+    const result = await authenticatedClient.from('cuhksz_favorites').insert({ user_id: user.id, target_type: targetType, target_id: id })
     if (result.error) throw result.error
     return { favorite: true }
   }
 
   async function createReview({ type, id, rating, content, item }) {
-    if (!client) throw new Error('服务配置尚未完成')
+    if (!authenticatedClient) throw new Error('服务配置尚未完成')
     const user = await requireUser()
     const targetType = type === 'course' ? 'course' : type
     const row = {
@@ -205,7 +213,7 @@
       content,
       status: 'pending',
     }
-    const result = await client.from('cuhksz_reviews').upsert(row, { onConflict: 'author_id,target_type,target_id' }).select().single()
+    const result = await authenticatedClient.from('cuhksz_reviews').upsert(row, { onConflict: 'author_id,target_type,target_id' }).select().single()
     if (result.error) throw result.error
     return { status: result.data.status, review: reviewView(result.data) }
   }
