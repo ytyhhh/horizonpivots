@@ -8,7 +8,7 @@ Horizon Pivots 的课程与食堂评价产品。它是一个 Next.js 应用：�
 npm run dev --workspace=@horizon/cuhksz
 ```
 
-打开 `http://127.0.0.1:3000`。本地未配置环境变量时仅展示随附的公开示例目录，不会模拟登录或写入数据。
+打开 `http://127.0.0.1:3000`。本地未配置环境变量时不会加载线上课程目录，也不会模拟登录或写入数据。
 
 ## Supabase
 
@@ -27,7 +27,7 @@ npm run dev --workspace=@horizon/cuhksz
 
 个人数据列使用 Clerk `user_…` ID 的 `text` 类型。RLS 通过 `auth.jwt()->>'sub'` 隔离收藏、草稿评价和待审核评价，不使用 Supabase Auth 或 `auth.users`。
 
-首次写入示例公开目录时，可在应用迁移后执行 [`supabase/seed.sql`](supabase/seed.sql)。生产数据导入应使用服务端受控脚本或 Supabase SQL Editor，不能向浏览器暴露 Service Role key。
+[`supabase/seed.sql`](supabase/seed.sql) 不会写入演示数据。生产数据导入应使用服务端受控脚本或 Supabase SQL Editor，不能向浏览器暴露 Service Role key。
 
 如需导入仓库内已有的课程和开课教师目录，在本地终端运行：
 
@@ -38,6 +38,10 @@ npm run import:catalog --workspace=@horizon/cuhksz
 ```
 
 该脚本只写入公开课程与开课目录，不导入旧评价内容，也不会把 Service Role key 上传到 Vercel。
+
+### 官方课程目录
+
+官网默认课程页不是全量结果。[`scripts/crawl_official_courses.py`](scripts/crawl_official_courses.py) 使用 Scrapling 遍历官网全部 `major` 筛选项、去重课程详情页，并带请求延时抓取课程描述。运行它前请安装 `scrapling[all]`；抓取结果必须经过服务端受控导入流程写入数据库。
 
 ## Clerk
 
