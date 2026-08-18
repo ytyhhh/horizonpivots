@@ -21,6 +21,7 @@
     facilityCategory: '全部服务',
     profileTab: 'reviews',
     detail: null,
+    detailReviewPages: new Map(),
     reviewTarget: null,
     reviewRating: 0,
     pendingReviewTarget: null
@@ -243,15 +244,56 @@
     return data.halls.find((item) => item.id === id)
   }
 
+  function reviewPageKey(type, id) {
+    return `${type}:${id}`
+  }
+
+  function detailReviews(type, id, page) {
+    const own = state.userReviews.filter((review) => review.type === type && review.targetId === id)
+    if (page) return [...own, ...page.reviews]
+    return allReviews().filter((review) => review.targetId === id)
+  }
+
+  async function loadDetailReviews(type, id, offset = 0) {
+    if (!runtime?.isLive()) return
+    const key = reviewPageKey(type, id)
+    const current = state.detailReviewPages.get(key) || { reviews: [], hasMore: false, loading: false, error: '' }
+    if (current.loading || (offset > 0 && !current.hasMore)) return
+    state.detailReviewPages.set(key, { ...current, loading: true, error: '' })
+    if (state.detail?.type === type && state.detail?.id === id) openDetail(type, id)
+    try {
+      const result = await runtime.readPublicReviews({ targetType: type, targetId: id, offset, limit: 25 })
+      const merged = offset ? [...current.reviews, ...result.reviews] : result.reviews
+      state.detailReviewPages.set(key, { reviews: merged, hasMore: result.hasMore, loading: false, error: '' })
+    } catch (_) {
+      state.detailReviewPages.set(key, { ...current, loading: false, error: '评价暂时无法加载，请稍后重试。' })
+    }
+    if (state.detail?.type === type && state.detail?.id === id) openDetail(type, id)
+  }
+
   function openDetail(type, id) {
     const item = findItem(type, id)
     if (!item) return
     state.detail = { type, id }
     const isFavorite = state.favorites.has(keyFor(type, id))
-    const itemReviews = allReviews().filter((review) => review.targetId === id)
+    const pageKey = reviewPageKey(type, id)
+    let page = state.detailReviewPages.get(pageKey)
+    if (runtime?.isLive() && !page) {
+      page = { reviews: [], hasMore: false, loading: true, error: '' }
+      state.detailReviewPages.set(pageKey, page)
+      void loadDetailReviews(type, id)
+    }
+    const itemReviews = detailReviews(type, id, page)
+    const reviewsMarkup = page?.loading
+      ? '<div class="empty-state"><div><b>正在加载评价</b><p>每次仅加载当前课程的一小页内容。</p></div></div>'
+      : page?.error
+        ? `<div class="empty-state"><div><b>${escapeHTML(page.error)}</b><button class="text-action" data-load-reviews data-type="${type}" data-id="${id}" data-offset="0">重试</button></div></div>`
+        : itemReviews.length
+          ? `${itemReviews.map(reviewCard).join('')}${page?.hasMore ? `<button class="text-action" data-load-reviews data-type="${type}" data-id="${id}" data-offset="${page.reviews.length}">显示更多评价</button>` : ''}`
+          : '<div class="empty-state"><div><b>还没有评价</b><p>来写第一条吧。</p></div></div>'
     const subtitle = type === 'course' ? `${item.code} · ${item.instructor} · ${item.term}` : type === 'dish' ? `${item.hall} · ${item.stall} · ¥${item.price}` : `${item.location} · ${item.hours}`
     const scores = type === 'hall' ? {} : item.scores || { 口味: item.rating, 价格: 4.2, 分量: 4.4, 环境: 4.3 }
-    $('#detail-content').innerHTML = `${type === 'dish' ? `<div class="detail-visual"><img src="${item.image}" style="object-position:${item.position}" alt="${escapeHTML(item.name)}"></div>` : ''}<div class="detail-kicker">${type === 'course' ? 'COURSE REVIEW' : type === 'dish' ? 'DISH REVIEW' : 'DINING HALL'}</div><h2 id="detail-title">${escapeHTML(item.name)}</h2>${type === 'hall' && item.nameEn ? `<p class="detail-name-en">${escapeHTML(item.nameEn)}</p>` : ''}<p class="detail-subtitle">${escapeHTML(subtitle)}</p>${type === 'course' && item.description ? `<section class="course-description"><h3>课程描述</h3><p>${escapeHTML(item.description)}</p>${item.officialUrl ? `<a href="${escapeHTML(item.officialUrl)}" target="_blank" rel="noreferrer">查看官方课程页 ↗</a>` : ''}</section>` : ''}${type === 'hall' && item.description ? `<section class="course-description"><h3>餐厅特色</h3><p>${escapeHTML(item.description)}</p></section>` : ''}<div class="detail-rating"><strong>${ratingLabel(item.rating)}</strong><div>${stars(item.rating)}<br><span>${item.reviews} 条认证评价</span></div></div>${Object.keys(scores).length ? `<div class="score-grid">${Object.entries(scores).map(([label, score]) => `<div class="score-cell"><b>${score}</b><span>${label}</span></div>`).join('')}</div>` : ''}<div class="detail-actions"><button class="primary-action" data-write-review data-type="${type}" data-id="${id}">写匿名评价</button><button class="favorite-button" data-favorite data-type="${type}" data-id="${id}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">${isFavorite ? '♥' : '♡'}</button></div><div class="detail-reviews"><h3>同学评价</h3>${itemReviews.length ? itemReviews.map(reviewCard).join('') : '<div class="empty-state"><div><b>还没有评价</b><p>来写第一条吧。</p></div></div>'}</div>`
+    $('#detail-content').innerHTML = `${type === 'dish' ? `<div class="detail-visual"><img src="${item.image}" style="object-position:${item.position}" alt="${escapeHTML(item.name)}"></div>` : ''}<div class="detail-kicker">${type === 'course' ? 'COURSE REVIEW' : type === 'dish' ? 'DISH REVIEW' : 'DINING HALL'}</div><h2 id="detail-title">${escapeHTML(item.name)}</h2>${type === 'hall' && item.nameEn ? `<p class="detail-name-en">${escapeHTML(item.nameEn)}</p>` : ''}<p class="detail-subtitle">${escapeHTML(subtitle)}</p>${type === 'course' && item.description ? `<section class="course-description"><h3>课程描述</h3><p>${escapeHTML(item.description)}</p>${item.officialUrl ? `<a href="${escapeHTML(item.officialUrl)}" target="_blank" rel="noreferrer">查看官方课程页 ↗</a>` : ''}</section>` : ''}${type === 'hall' && item.description ? `<section class="course-description"><h3>餐厅特色</h3><p>${escapeHTML(item.description)}</p></section>` : ''}<div class="detail-rating"><strong>${ratingLabel(item.rating)}</strong><div>${stars(item.rating)}<br><span>${item.reviews} 条认证评价</span></div></div>${Object.keys(scores).length ? `<div class="score-grid">${Object.entries(scores).map(([label, score]) => `<div class="score-cell"><b>${score}</b><span>${label}</span></div>`).join('')}</div>` : ''}<div class="detail-actions"><button class="primary-action" data-write-review data-type="${type}" data-id="${id}">写匿名评价</button><button class="favorite-button" data-favorite data-type="${type}" data-id="${id}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">${isFavorite ? '♥' : '♡'}</button></div><div class="detail-reviews"><h3>同学评价</h3>${reviewsMarkup}</div>`
     $('#detail-overlay').hidden = false
     document.body.style.overflow = 'hidden'
     $('.close-button', $('#detail-overlay')).focus()
@@ -349,6 +391,8 @@
     if (route) { event.preventDefault(); navigate(route.dataset.route); return }
     const open = event.target.closest('[data-open-type]')
     if (open) { closeSearch(); openDetail(open.dataset.openType, open.dataset.id); return }
+    const loadReviews = event.target.closest('[data-load-reviews]')
+    if (loadReviews) { void loadDetailReviews(loadReviews.dataset.type, loadReviews.dataset.id, Number(loadReviews.dataset.offset || 0)); return }
     if (event.target.closest('[data-close-overlay]')) closeDetail()
     if (event.target.closest('[data-close-modal]')) closeReview()
     if (event.target.closest('[data-close-auth]')) closeAuth()

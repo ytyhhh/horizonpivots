@@ -144,17 +144,35 @@
     }
   }
 
+  async function readPublicReviews({ targetType = '', targetId = '', offset = 0, limit = 2 } = {}) {
+    const params = new URLSearchParams()
+    if (targetType) params.set('targetType', targetType)
+    if (targetId) params.set('targetId', targetId)
+    params.set('offset', String(offset))
+    params.set('limit', String(limit))
+    const response = await fetch(`${config.apiBase || '/api'}/reviews?${params.toString()}`, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+    if (!response.ok) throw new Error('公开评价暂时无法加载')
+    const payload = await response.json()
+    return {
+      reviews: (payload.reviews || []).map(reviewView),
+      hasMore: Boolean(payload.hasMore),
+    }
+  }
+
   async function loadData(fallback) {
     if (!client) return { data: fallback, live: false, session: null, mine: [], favorites: [], points: [] }
     try {
-      const [courseRows, hallRows, dishRows, reviewRows, session] = await Promise.all([
+      const [courseRows, hallRows, dishRows, initialReviews, session] = await Promise.all([
         readTable('cuhksz_courses', '*'),
         readTable('cuhksz_dining_halls', '*'),
         readTable('cuhksz_dishes', '*'),
-        readTable('cuhksz_reviews', '*', {
-          orderBy: 'created_at',
-          ascending: false,
-          filter: (request) => request.eq('status', 'published'),
+        readPublicReviews().catch((error) => {
+          console.warn('[Supabase] 公开评价接口暂不可用', error)
+          return { reviews: [], hasMore: false }
         }),
         getSession(),
       ])
@@ -192,7 +210,7 @@
           courses: courseRows.map(courseView),
           halls: hallRows.map(hallView),
           dishes: dishRows.map(dishView),
-          reviews: reviewRows.map(reviewView),
+          reviews: initialReviews.reviews,
         },
       }
     } catch (error) {
@@ -272,6 +290,7 @@
     signOut,
     toggleFavorite,
     createReview,
+    readPublicReviews,
     get config() { return config },
   }
 })()

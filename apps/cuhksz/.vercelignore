@@ -1,0 +1,5 @@
+# Source datasets and one-off import tooling never need to be deployed.
+data/
+data-cleaned/
+scripts/
+*.xlsx

@@ -1,3 +1,9 @@
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Local source exports and generated Python bytecode must not be published.
+/data/
+/scripts/__pycache__/
+.vercel
+.env*

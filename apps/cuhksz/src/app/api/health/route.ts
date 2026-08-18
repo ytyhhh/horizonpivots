@@ -6,10 +6,11 @@ export async function GET() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const reviewProxyKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !key || !clerkKey) {
+  if (!url || !key || !clerkKey || !reviewProxyKey) {
     return NextResponse.json(
-      { ok: false, configured: false, message: "Clerk or Supabase environment variables are missing" },
+      { ok: false, configured: false, message: "Clerk or Supabase review-proxy environment variables are missing" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
