@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,6 +23,11 @@ type ReviewRow = {
   term: string;
   is_historical: boolean;
   created_at: string;
+};
+
+type ReviewTarget = {
+  target: string;
+  context: string;
 };
 
 function requestIdentity(request: NextRequest) {
@@ -65,6 +71,39 @@ function errorResponse(message: string, status: number, headers: HeadersInit = {
       },
     },
   );
+}
+
+function text(value: unknown, maxLength: number) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function rating(value: unknown) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 5 ? parsed : null;
+}
+
+async function lookupTarget(url: string, serviceRoleKey: string, type: string, id: string, instructor: string, term: string) {
+  const source = type === "course"
+    ? { table: "cuhksz_courses", select: "code,name" }
+    : type === "dish"
+      ? { table: "cuhksz_dishes", select: "name,hall,stall" }
+      : { table: "cuhksz_dining_halls", select: "name,location" };
+  const params = new URLSearchParams({ select: source.select, id: `eq.${id}`, active: "eq.true", limit: "1" });
+  const response = await fetch(`${url}/rest/v1/${source.table}?${params}`, {
+    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error("target lookup failed");
+  const [row] = (await response.json()) as Array<Record<string, string>>;
+  if (!row) return null;
+  if (type === "course") {
+    return { target: `${row.code} · ${row.name}`, context: `${instructor} · ${term}` } satisfies ReviewTarget;
+  }
+  if (type === "dish") {
+    return { target: row.name, context: [row.hall, row.stall].filter(Boolean).join(" · ") } satisfies ReviewTarget;
+  }
+  return { target: row.name, context: row.location || "" } satisfies ReviewTarget;
 }
 
 export async function GET(request: NextRequest) {
@@ -121,5 +160,77 @@ export async function GET(request: NextRequest) {
     );
   } catch {
     return errorResponse("Review service is unavailable", 502);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (blockedRequest(request)) return errorResponse("Request denied", 403);
+  if (isRateLimited(request)) return errorResponse("Too many requests", 429, { "Retry-After": "60" });
+
+  const { userId } = await auth();
+  if (!userId) return errorResponse("请先登录后再提交评价", 401);
+
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "").replace(/\/$/, "");
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!url || !serviceRoleKey) return errorResponse("Review service is unavailable", 503);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return errorResponse("Invalid request body", 400);
+  }
+  const targetType = text(body.type, 16);
+  const targetId = text(body.id, 160);
+  const content = text(body.content, 800);
+  const instructor = targetType === "course" ? text(body.instructor, 120) : "";
+  const term = targetType === "course" ? text(body.term, 80) : "";
+  const overall = rating(body.rating);
+  const grading = targetType === "course" ? rating(body.gradingRating) : null;
+  const difficulty = targetType === "course" ? rating(body.difficultyRating) : null;
+
+  if (!targetTypes.has(targetType) || !/^[a-z0-9_-]{1,160}$/i.test(targetId)) {
+    return errorResponse("Invalid review target", 400);
+  }
+  if (!overall || content.length < 10) return errorResponse("请填写 10 至 800 字的评价及总体评分", 400);
+  if (targetType === "course" && (!instructor || !term || !grading || !difficulty)) {
+    return errorResponse("课程评价需要授课老师、学期、给分和难度评分", 400);
+  }
+
+  try {
+    const target = await lookupTarget(url, serviceRoleKey, targetType, targetId, instructor, term);
+    if (!target) return errorResponse("该评价对象不存在或已下架", 404);
+
+    const response = await fetch(`${url}/rest/v1/cuhksz_reviews?on_conflict=author_id,target_type,target_id,instructor,term`, {
+      method: "POST",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=representation",
+      },
+      body: JSON.stringify({
+        author_id: userId,
+        target_type: targetType,
+        target_id: targetId,
+        target: target.target,
+        context: target.context,
+        instructor,
+        term,
+        rating: overall,
+        grading_rating: grading,
+        difficulty_rating: difficulty,
+        content,
+        status: "pending",
+        is_historical: false,
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return errorResponse("评价暂时无法保存，请稍后再试", 502);
+    const [review] = (await response.json()) as ReviewRow[];
+    return NextResponse.json({ review }, { status: 201, headers: { "Cache-Control": "no-store, private" } });
+  } catch {
+    return errorResponse("评价服务暂时不可用，请稍后再试", 502);
   }
 }

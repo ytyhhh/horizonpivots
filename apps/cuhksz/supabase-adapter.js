@@ -259,39 +259,30 @@
     return { favorite: true }
   }
 
-  async function createReview({ type, id, rating, gradingRating = null, difficultyRating = null, content, instructor = '', term = '', item }) {
-    if (!authenticatedClient) throw new Error('服务配置尚未完成')
-    const user = await requireUser()
-    const targetType = type === 'course' ? 'course' : type
-    const row = {
-      author_id: user.id,
-      target_type: targetType,
-      target_id: id,
-      target: type === 'course' ? `${item.code} · ${item.name}` : item.name,
-      instructor: type === 'course' ? instructor : '',
-      term: type === 'course' ? term : '',
-      context: type === 'course' ? `${instructor} · ${term}` : item.location || `${item.hall} · ${item.stall}`,
-      rating,
-      grading_rating: type === 'course' ? gradingRating : null,
-      difficulty_rating: type === 'course' ? difficultyRating : null,
-      content,
-      status: 'pending',
-    }
-    const result = await authenticatedClient.from('cuhksz_reviews').upsert(row, { onConflict: 'author_id,target_type,target_id,instructor,term' }).select().single()
-    if (result.error) throw result.error
-    return { status: result.data.status, review: reviewView(result.data) }
+  async function createReview({ type, id, rating, gradingRating = null, difficultyRating = null, content, instructor = '', term = '' }) {
+    await requireUser()
+    const response = await fetch(`${config.apiBase || '/api'}/reviews`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ type, id, rating, gradingRating, difficultyRating, content, instructor, term }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || '评价暂时无法保存，请稍后再试')
+    return { status: payload.review.status, review: reviewView(payload.review) }
   }
 
   async function createFeedback({ category, content }) {
-    if (!authenticatedClient) throw new Error('服务配置尚未完成')
-    const user = await requireUser()
-    const result = await authenticatedClient
-      .from('cuhksz_feedback')
-      .insert({ author_id: user.id, category, content })
-      .select('id,status')
-      .single()
-    if (result.error) throw result.error
-    return result.data
+    await requireUser()
+    const response = await fetch(`${config.apiBase || '/api'}/feedback`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ category, content }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || '反馈暂时无法保存，请稍后再试')
+    return payload.feedback
   }
 
   window.CUHK_SUPABASE = {
