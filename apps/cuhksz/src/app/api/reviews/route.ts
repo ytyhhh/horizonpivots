@@ -3,8 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const MAX_PAGE_SIZE = 25;
-const MAX_OFFSET = 250;
+const MAX_DETAIL_REVIEWS = 1_000;
 const REQUEST_WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 40;
 const requestBuckets = new Map<string, { count: number; resetAt: number }>();
@@ -24,11 +23,6 @@ type ReviewRow = {
   is_historical: boolean;
   created_at: string;
 };
-
-function positiveInteger(value: string | null, fallback: number, maximum: number) {
-  const parsed = Number.parseInt(value ?? "", 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? Math.min(parsed, maximum) : fallback;
-}
 
 function requestIdentity(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -88,18 +82,15 @@ export async function GET(request: NextRequest) {
     return errorResponse("Invalid review target", 400);
   }
 
-  const limit = hasTarget
-    ? Math.max(1, positiveInteger(request.nextUrl.searchParams.get("limit"), MAX_PAGE_SIZE, MAX_PAGE_SIZE))
-    : 2;
-  const offset = hasTarget
-    ? positiveInteger(request.nextUrl.searchParams.get("offset"), 0, MAX_OFFSET)
-    : 0;
+  // A detail view receives all reviews for its one selected item. The cap is
+  // deliberately high enough for the product data while keeping a malformed
+  // request from turning into an unbounded database response.
+  const limit = hasTarget ? MAX_DETAIL_REVIEWS : 2;
   const params = new URLSearchParams({
     select: "id,target_type,target_id,target,context,rating,content,instructor,term,is_historical,created_at",
     status: "eq.published",
     order: "created_at.desc,id.desc",
-    limit: String(limit + 1),
-    offset: String(offset),
+    limit: String(limit),
   });
   if (hasTarget) {
     params.set("target_type", `eq.${targetType}`);
@@ -119,7 +110,7 @@ export async function GET(request: NextRequest) {
 
     const rows = (await response.json()) as ReviewRow[];
     return NextResponse.json(
-      { reviews: rows.slice(0, limit), hasMore: rows.length > limit },
+      { reviews: rows },
       {
         headers: {
           "Cache-Control": "no-store, private",

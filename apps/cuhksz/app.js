@@ -254,17 +254,16 @@
     return allReviews().filter((review) => review.targetId === id)
   }
 
-  async function loadDetailReviews(type, id, offset = 0) {
+  async function loadDetailReviews(type, id) {
     if (!runtime?.isLive()) return
     const key = reviewPageKey(type, id)
-    const current = state.detailReviewPages.get(key) || { reviews: [], hasMore: false, loading: false, error: '' }
-    if (current.loading || (offset > 0 && !current.hasMore)) return
+    const current = state.detailReviewPages.get(key) || { reviews: [], loading: false, error: '' }
+    if (current.loading) return
     state.detailReviewPages.set(key, { ...current, loading: true, error: '' })
     if (state.detail?.type === type && state.detail?.id === id) openDetail(type, id)
     try {
-      const result = await runtime.readPublicReviews({ targetType: type, targetId: id, offset, limit: 25 })
-      const merged = offset ? [...current.reviews, ...result.reviews] : result.reviews
-      state.detailReviewPages.set(key, { reviews: merged, hasMore: result.hasMore, loading: false, error: '' })
+      const result = await runtime.readPublicReviews({ targetType: type, targetId: id })
+      state.detailReviewPages.set(key, { reviews: result.reviews, loading: false, error: '' })
     } catch (_) {
       state.detailReviewPages.set(key, { ...current, loading: false, error: '评价暂时无法加载，请稍后重试。' })
     }
@@ -279,17 +278,17 @@
     const pageKey = reviewPageKey(type, id)
     let page = state.detailReviewPages.get(pageKey)
     if (runtime?.isLive() && !page) {
-      page = { reviews: [], hasMore: false, loading: true, error: '' }
+      page = { reviews: [], loading: true, error: '' }
       state.detailReviewPages.set(pageKey, page)
       void loadDetailReviews(type, id)
     }
     const itemReviews = detailReviews(type, id, page)
     const reviewsMarkup = page?.loading
-      ? '<div class="empty-state"><div><b>正在加载评价</b><p>每次仅加载当前课程的一小页内容。</p></div></div>'
+      ? '<div class="empty-state"><div><b>正在加载评价</b><p>正在获取当前课程的全部评价。</p></div></div>'
       : page?.error
-        ? `<div class="empty-state"><div><b>${escapeHTML(page.error)}</b><button class="text-action" data-load-reviews data-type="${type}" data-id="${id}" data-offset="0">重试</button></div></div>`
+        ? `<div class="empty-state"><div><b>${escapeHTML(page.error)}</b><button class="text-action" data-load-reviews data-type="${type}" data-id="${id}">重试</button></div></div>`
         : itemReviews.length
-          ? `${itemReviews.map(reviewCard).join('')}${page?.hasMore ? `<button class="text-action" data-load-reviews data-type="${type}" data-id="${id}" data-offset="${page.reviews.length}">显示更多评价</button>` : ''}`
+          ? itemReviews.map(reviewCard).join('')
           : '<div class="empty-state"><div><b>还没有评价</b><p>来写第一条吧。</p></div></div>'
     const subtitle = type === 'course' ? `${item.code} · ${item.instructor} · ${item.term}` : type === 'dish' ? `${item.hall} · ${item.stall} · ¥${item.price}` : `${item.location} · ${item.hours}`
     const scores = type === 'hall' ? {} : item.scores || { 口味: item.rating, 价格: 4.2, 分量: 4.4, 环境: 4.3 }
@@ -392,7 +391,7 @@
     const open = event.target.closest('[data-open-type]')
     if (open) { closeSearch(); openDetail(open.dataset.openType, open.dataset.id); return }
     const loadReviews = event.target.closest('[data-load-reviews]')
-    if (loadReviews) { void loadDetailReviews(loadReviews.dataset.type, loadReviews.dataset.id, Number(loadReviews.dataset.offset || 0)); return }
+    if (loadReviews) { void loadDetailReviews(loadReviews.dataset.type, loadReviews.dataset.id); return }
     if (event.target.closest('[data-close-overlay]')) closeDetail()
     if (event.target.closest('[data-close-modal]')) closeReview()
     if (event.target.closest('[data-close-auth]')) closeAuth()

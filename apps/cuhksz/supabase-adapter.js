@@ -144,12 +144,10 @@
     }
   }
 
-  async function readPublicReviews({ targetType = '', targetId = '', offset = 0, limit = 2 } = {}) {
+  async function readPublicReviews({ targetType = '', targetId = '' } = {}) {
     const params = new URLSearchParams()
     if (targetType) params.set('targetType', targetType)
     if (targetId) params.set('targetId', targetId)
-    params.set('offset', String(offset))
-    params.set('limit', String(limit))
     const response = await fetch(`${config.apiBase || '/api'}/reviews?${params.toString()}`, {
       cache: 'no-store',
       credentials: 'same-origin',
@@ -159,7 +157,6 @@
     const payload = await response.json()
     return {
       reviews: (payload.reviews || []).map(reviewView),
-      hasMore: Boolean(payload.hasMore),
     }
   }
 
@@ -172,7 +169,7 @@
         readTable('cuhksz_dishes', '*'),
         readPublicReviews().catch((error) => {
           console.warn('[Supabase] 公开评价接口暂不可用', error)
-          return { reviews: [], hasMore: false }
+          return { reviews: [] }
         }),
         getSession(),
       ])
