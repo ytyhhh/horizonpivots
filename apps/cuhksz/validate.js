@@ -13,6 +13,8 @@ const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8')
 assert(html.includes('id="page-home"') && html.includes('id="page-courses"') && html.includes('id="page-dining"') && html.includes('id="page-profile"'), '四个主页面入口不完整')
 assert(html.includes('supabase-adapter.js') && html.includes('clerk-adapter.js'), 'Clerk 或 Supabase 适配层未接入网页')
 assert(html.includes('class="skip-link"'), '缺少键盘跳转入口')
+assert(html.includes('id="grading-rating-picker"') && html.includes('id="difficulty-rating-picker"'), '课程评价缺少给分或难度维度')
+assert(html.includes('id="feedback-form"'), '缺少用户反馈入口')
 assert(css.includes('@media (max-width: 760px)'), '缺少移动端断点')
 assert(css.includes('prefers-reduced-motion'), '缺少减少动效支持')
 

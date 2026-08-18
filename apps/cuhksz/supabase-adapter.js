@@ -74,6 +74,8 @@
       term: row.term || '',
       context: row.context || row.target_context || (row.target_type === 'course' ? [row.instructor, row.term].filter(Boolean).join(' · ') : ''),
       rating: nullableNumber(row.rating ?? row.overall),
+      gradingRating: nullableNumber(row.grading_rating ?? row.gradingRating),
+      difficultyRating: nullableNumber(row.difficulty_rating ?? row.difficultyRating),
       content: row.content || '',
       date: row.is_historical ? '历史评价' : row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '刚刚',
       status: row.status || 'published',
@@ -257,7 +259,7 @@
     return { favorite: true }
   }
 
-  async function createReview({ type, id, rating, content, instructor = '', term = '', item }) {
+  async function createReview({ type, id, rating, gradingRating = null, difficultyRating = null, content, instructor = '', term = '', item }) {
     if (!authenticatedClient) throw new Error('服务配置尚未完成')
     const user = await requireUser()
     const targetType = type === 'course' ? 'course' : type
@@ -270,12 +272,26 @@
       term: type === 'course' ? term : '',
       context: type === 'course' ? `${instructor} · ${term}` : item.location || `${item.hall} · ${item.stall}`,
       rating,
+      grading_rating: type === 'course' ? gradingRating : null,
+      difficulty_rating: type === 'course' ? difficultyRating : null,
       content,
       status: 'pending',
     }
     const result = await authenticatedClient.from('cuhksz_reviews').upsert(row, { onConflict: 'author_id,target_type,target_id,instructor,term' }).select().single()
     if (result.error) throw result.error
     return { status: result.data.status, review: reviewView(result.data) }
+  }
+
+  async function createFeedback({ category, content }) {
+    if (!authenticatedClient) throw new Error('服务配置尚未完成')
+    const user = await requireUser()
+    const result = await authenticatedClient
+      .from('cuhksz_feedback')
+      .insert({ author_id: user.id, category, content })
+      .select('id,status')
+      .single()
+    if (result.error) throw result.error
+    return result.data
   }
 
   window.CUHK_SUPABASE = {
@@ -287,6 +303,7 @@
     signOut,
     toggleFavorite,
     createReview,
+    createFeedback,
     readPublicReviews,
     get config() { return config },
   }

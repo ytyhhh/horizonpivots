@@ -24,6 +24,8 @@
     detailReviewPages: new Map(),
     reviewTarget: null,
     reviewRating: 0,
+    reviewGradingRating: 0,
+    reviewDifficultyRating: 0,
     pendingReviewTarget: null
   }
 
@@ -88,9 +90,12 @@
   }
 
   function reviewCard(review) {
+    const courseMetrics = review.type === 'course' && (review.gradingRating != null || review.difficultyRating != null)
+      ? `<div class="review-metrics"><span>给分 ${review.gradingRating == null ? '—' : `${review.gradingRating} / 5`}</span><span>难度 ${review.difficultyRating == null ? '—' : `${review.difficultyRating} / 5`}</span></div>`
+      : ''
     return `<article class="review-card">
       <div class="review-top"><div><div class="review-target">${escapeHTML(review.target)}</div><div class="review-context">匿名同学 · 校内认证<br>${escapeHTML(review.context)}</div></div>${stars(review.rating)}</div>
-      <p>${escapeHTML(review.content)}</p><div class="review-date">${escapeHTML(review.date)}</div>
+      ${courseMetrics}<p>${escapeHTML(review.content)}</p><div class="review-date">${escapeHTML(review.date)}</div>
     </article>`
   }
 
@@ -216,7 +221,7 @@
   }
 
   function renderProfile() {
-    $('#page-profile').innerHTML = `<header class="page-heading"><div><h1 id="profile-title">我的</h1><p>管理自己的匿名评价、收藏与积分。公开页面不会展示账号信息。</p></div></header><div class="profile-layout"><aside class="profile-card"><div class="profile-avatar">${state.verified ? '深' : '访'}</div><h2>${state.verified ? '已登录 Horizon Pivots' : '游客模式'}</h2><p>${state.verified ? `${maskedEmail()}<br>账号与其他 Horizon Pivots 产品共用` : '浏览无需登录，发布评价与收藏需要登录。'}</p>${state.verified ? '<button class="auth-button verify-inline" data-sign-out>退出登录</button>' : '<button class="auth-button verify-inline" data-open-auth>登录后管理收藏</button>'}<div class="profile-stats"><div><strong>${state.userReviews.length}</strong><span>我的评价</span></div><div><strong>${state.favorites.size}</strong><span>收藏</span></div><div><strong>${totalPoints()}</strong><span>积分</span></div></div></aside><section class="profile-content"><nav class="profile-tabs"><button data-profile-tab="reviews" class="${state.profileTab === 'reviews' ? 'active' : ''}">我的评价</button><button data-profile-tab="favorites" class="${state.profileTab === 'favorites' ? 'active' : ''}">我的收藏</button><button data-profile-tab="points" class="${state.profileTab === 'points' ? 'active' : ''}">我的积分</button></nav><div id="profile-tab-content"></div></section></div>`
+    $('#page-profile').innerHTML = `<header class="page-heading"><div><h1 id="profile-title">我的</h1><p>管理自己的匿名评价、收藏与积分。公开页面不会展示账号信息。</p></div></header><div class="profile-layout"><aside class="profile-card"><div class="profile-avatar">${state.verified ? '深' : '访'}</div><h2>${state.verified ? '已登录 Horizon Pivots' : '游客模式'}</h2><p>${state.verified ? `${maskedEmail()}<br>账号与其他 Horizon Pivots 产品共用` : '浏览无需登录，发布评价与收藏需要登录。'}</p>${state.verified ? '<button class="auth-button verify-inline" data-sign-out>退出登录</button>' : '<button class="auth-button verify-inline" data-open-auth>登录后管理收藏</button>'}<button class="text-action feedback-trigger" data-open-feedback>提交反馈 →</button><div class="profile-stats"><div><strong>${state.userReviews.length}</strong><span>我的评价</span></div><div><strong>${state.favorites.size}</strong><span>收藏</span></div><div><strong>${totalPoints()}</strong><span>积分</span></div></div></aside><section class="profile-content"><nav class="profile-tabs"><button data-profile-tab="reviews" class="${state.profileTab === 'reviews' ? 'active' : ''}">我的评价</button><button data-profile-tab="favorites" class="${state.profileTab === 'favorites' ? 'active' : ''}">我的收藏</button><button data-profile-tab="points" class="${state.profileTab === 'points' ? 'active' : ''}">我的积分</button></nav><div id="profile-tab-content"></div></section></div>`
     renderProfileContent()
   }
 
@@ -337,8 +342,11 @@
     const item = findItem(type, id)
     state.reviewTarget = { type, id }
     state.reviewRating = 0
+    state.reviewGradingRating = 0
+    state.reviewDifficultyRating = 0
     $('#review-target-label').textContent = type === 'course' ? `${item.code} · ${item.name}` : item.name
     const isCourse = type === 'course'
+    $('#course-review-metrics').hidden = !isCourse
     $('#course-review-context').hidden = !isCourse
     $('#review-instructor').required = isCourse
     $('#review-term').required = isCourse
@@ -347,6 +355,7 @@
     $('#review-content').value = ''
     $('#review-count').textContent = '0'
     $('#rating-error').textContent = ''
+    $('#course-rating-error').textContent = ''
     $('#course-context-error').textContent = ''
     $('#content-error').textContent = ''
     renderRatingPicker()
@@ -356,9 +365,26 @@
 
   function renderRatingPicker() {
     $('#rating-picker').innerHTML = [1,2,3,4,5].map((value) => `<button type="button" data-rating="${value}" class="${value <= state.reviewRating ? 'active' : ''}" aria-label="${value} 星">★</button>`).join('')
+    $('#grading-rating-picker').innerHTML = [1,2,3,4,5].map((value) => `<button type="button" data-grading-rating="${value}" class="${value <= state.reviewGradingRating ? 'active' : ''}" aria-label="给分 ${value} 星">★</button>`).join('')
+    $('#difficulty-rating-picker').innerHTML = [1,2,3,4,5].map((value) => `<button type="button" data-difficulty-rating="${value}" class="${value <= state.reviewDifficultyRating ? 'active' : ''}" aria-label="难度 ${value} 星">★</button>`).join('')
   }
 
   function closeReview() { $('#review-modal').hidden = true; document.body.style.overflow = ''; state.reviewTarget = null }
+  function openFeedback() {
+    if (!state.verified) {
+      openAuth()
+      toast('提交反馈前需要登录')
+      return
+    }
+    $('#feedback-category').value = 'suggestion'
+    $('#feedback-content').value = ''
+    $('#feedback-count').textContent = '0'
+    $('#feedback-error').textContent = ''
+    $('#feedback-modal').hidden = false
+    document.body.style.overflow = 'hidden'
+    setTimeout(() => $('#feedback-content').focus(), 30)
+  }
+  function closeFeedback() { $('#feedback-modal').hidden = true; document.body.style.overflow = '' }
   function openAuth() {
     if (runtime?.isLive()) { runtime.signIn(); return }
     $('#auth-modal').hidden = false
@@ -396,11 +422,13 @@
     if (loadReviews) { void loadDetailReviews(loadReviews.dataset.type, loadReviews.dataset.id); return }
     if (event.target.closest('[data-close-overlay]')) closeDetail()
     if (event.target.closest('[data-close-modal]')) closeReview()
+    if (event.target.closest('[data-close-feedback]')) closeFeedback()
     if (event.target.closest('[data-close-auth]')) closeAuth()
     if (event.target.closest('[data-close-search]')) closeSearch()
     if (event.target.closest('#global-search-trigger')) openSearch()
     if (event.target.closest('#header-auth') || event.target.closest('[data-open-auth]')) state.verified ? navigate('profile') : openAuth()
     if (event.target.closest('[data-start-sign-in]')) runtime?.signIn()
+    if (event.target.closest('[data-open-feedback]')) openFeedback()
     if (event.target.closest('[data-sign-out]')) {
       void runtime?.signOut().then(() => {
         state.verified = false
@@ -419,6 +447,10 @@
     if (write) openReview(write.dataset.type, write.dataset.id)
     const rating = event.target.closest('[data-rating]')
     if (rating) { state.reviewRating = Number(rating.dataset.rating); renderRatingPicker(); $('#rating-error').textContent = '' }
+    const gradingRating = event.target.closest('[data-grading-rating]')
+    if (gradingRating) { state.reviewGradingRating = Number(gradingRating.dataset.gradingRating); renderRatingPicker(); $('#course-rating-error').textContent = '' }
+    const difficultyRating = event.target.closest('[data-difficulty-rating]')
+    if (difficultyRating) { state.reviewDifficultyRating = Number(difficultyRating.dataset.difficultyRating); renderRatingPicker(); $('#course-rating-error').textContent = '' }
     const sort = event.target.closest('[data-course-sort]')
     if (sort) { state.courseSort = sort.dataset.courseSort; renderCourses() }
     const initial = event.target.closest('[data-course-initial]')
@@ -442,7 +474,7 @@
   })
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') { closeDetail(); closeReview(); closeAuth(); closeSearch() }
+    if (event.key === 'Escape') { closeDetail(); closeReview(); closeFeedback(); closeAuth(); closeSearch() }
     if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-open-type]')) event.target.click()
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); openSearch() }
   })
@@ -450,6 +482,7 @@
   document.addEventListener('input', (event) => {
     if (event.target.id === 'course-search') { state.courseQuery = event.target.value; renderCourses(); requestAnimationFrame(() => { const input = $('#course-search'); input.focus(); input.setSelectionRange(input.value.length, input.value.length) }) }
     if (event.target.id === 'review-content') { $('#review-count').textContent = event.target.value.length; $('#content-error').textContent = '' }
+    if (event.target.id === 'feedback-content') { $('#feedback-count').textContent = event.target.value.length; $('#feedback-error').textContent = '' }
     if (event.target.id === 'global-search') renderSearchResults(event.target.value)
   })
 
@@ -471,6 +504,7 @@
     const term = isCourse ? $('#review-term').value.trim() : ''
     let valid = true
     if (!state.reviewRating) { $('#rating-error').textContent = '请选择总体评分'; valid = false }
+    if (isCourse && (!state.reviewGradingRating || !state.reviewDifficultyRating)) { $('#course-rating-error').textContent = '请分别选择给分和难度'; valid = false }
     if (isCourse && (!instructor || !term)) { $('#course-context-error').textContent = '请填写授课老师和学期'; valid = false }
     if (content.length < 10) { $('#content-error').textContent = '请至少写 10 个字'; valid = false }
     if (!valid) return
@@ -478,11 +512,25 @@
     const item = findItem(type, id)
     if (!runtime?.isLive()) { $('#content-error').textContent = '服务配置尚未完成'; return }
     try {
-      const result = await runtime.createReview({ type, id, rating: state.reviewRating, content, instructor, term, item })
+      const result = await runtime.createReview({ type, id, rating: state.reviewRating, gradingRating: state.reviewGradingRating, difficultyRating: state.reviewDifficultyRating, content, instructor, term, item })
       if (result.review) state.userReviews.unshift(result.review)
       save(); closeReview(); closeDetail(); renderRoute(); toast(result.status === 'pending' ? '评价已提交；审核通过后可获得 5 积分' : '评价已匿名发布')
     } catch (error) {
       $('#content-error').textContent = error.message || '评价提交失败'
+    }
+  })
+
+  $('#feedback-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const content = $('#feedback-content').value.trim()
+    if (content.length < 10) { $('#feedback-error').textContent = '请至少写 10 个字'; return }
+    if (!runtime?.isLive()) { $('#feedback-error').textContent = '服务配置尚未完成'; return }
+    try {
+      await runtime.createFeedback({ category: $('#feedback-category').value, content })
+      closeFeedback()
+      toast('反馈已收到，感谢你帮助港中声变得更好')
+    } catch (error) {
+      $('#feedback-error').textContent = error.message || '反馈提交失败'
     }
   })
 

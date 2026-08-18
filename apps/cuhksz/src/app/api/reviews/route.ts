@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
   // request from turning into an unbounded database response.
   const limit = hasTarget ? MAX_DETAIL_REVIEWS : 2;
   const params = new URLSearchParams({
-    select: "id,target_type,target_id,target,context,rating,content,instructor,term,is_historical,created_at",
+    select: "id,target_type,target_id,target,context,rating,grading_rating,difficulty_rating,content,instructor,term,is_historical,created_at",
     status: "eq.published",
     order: "created_at.desc,id.desc",
     limit: String(limit),

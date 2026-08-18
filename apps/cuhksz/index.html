@@ -58,10 +58,26 @@
       <p id="review-target-label" class="modal-subtitle"></p>
       <form id="review-form">
         <fieldset class="rating-field"><legend>总体评分</legend><div class="rating-picker" id="rating-picker"></div><p class="field-error" id="rating-error"></p></fieldset>
+        <fieldset id="course-review-metrics" class="course-review-metrics" hidden><legend>课程维度</legend><div class="course-metric-grid"><div><span>给分友好度</span><div class="rating-picker compact" id="grading-rating-picker"></div></div><div><span>课程难度</span><div class="rating-picker compact" id="difficulty-rating-picker"></div></div></div><p class="field-error" id="course-rating-error"></p></fieldset>
         <fieldset id="course-review-context" class="course-review-context" hidden><legend>授课信息</legend><div class="course-context-fields"><label class="field"><span>授课老师</span><input id="review-instructor" type="text" maxlength="120" autocomplete="off" placeholder="例如：张老师"></label><label class="field"><span>学期</span><input id="review-term" type="text" maxlength="80" autocomplete="off" placeholder="例如：2025-2026 秋季"></label></div><p class="field-error" id="course-context-error"></p></fieldset>
         <label class="field"><span>评价内容</span><textarea id="review-content" maxlength="800" placeholder="哪些地方值得推荐？有什么需要提前知道？"></textarea><small><span id="review-count">0</span> / 800</small><em class="field-error" id="content-error"></em></label>
         <p class="privacy-note">评价会匿名展示。请勿包含隐私、攻击性内容或未经证实的指控；审核通过后将自动获得 5 积分。</p>
         <button class="primary-action" type="submit">匿名发布</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-wrap" id="feedback-modal" hidden>
+    <button class="modal-backdrop" data-close-feedback aria-label="关闭反馈窗口"></button>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
+      <button class="close-button" data-close-feedback aria-label="关闭">×</button>
+      <div class="modal-kicker">反馈</div>
+      <h2 id="feedback-modal-title">告诉我们如何改进</h2>
+      <p class="modal-subtitle">仅团队可见，我们会结合内容持续优化港中声。</p>
+      <form id="feedback-form">
+        <label class="field"><span>反馈类型</span><select id="feedback-category"><option value="suggestion">功能建议</option><option value="bug">问题反馈</option><option value="data">课程或食堂资料</option><option value="other">其他</option></select></label>
+        <label class="field"><span>反馈内容</span><textarea id="feedback-content" maxlength="1200" placeholder="请尽量描述使用场景、问题或建议。"></textarea><small><span id="feedback-count">0</span> / 1200</small><em class="field-error" id="feedback-error"></em></label>
+        <button class="primary-action" type="submit">提交反馈</button>
       </form>
     </section>
   </div>
