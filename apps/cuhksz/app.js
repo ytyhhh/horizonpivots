@@ -295,9 +295,16 @@
     state.reviewTarget = { type, id }
     state.reviewRating = 0
     $('#review-target-label').textContent = type === 'course' ? `${item.code} · ${item.name}` : item.name
+    const isCourse = type === 'course'
+    $('#course-review-context').hidden = !isCourse
+    $('#review-instructor').required = isCourse
+    $('#review-term').required = isCourse
+    $('#review-instructor').value = isCourse && item.instructor !== '教师待补充' ? item.instructor : ''
+    $('#review-term').value = isCourse && item.term !== '学期待补充' ? item.term : ''
     $('#review-content').value = ''
     $('#review-count').textContent = '0'
     $('#rating-error').textContent = ''
+    $('#course-context-error').textContent = ''
     $('#content-error').textContent = ''
     renderRatingPicker()
     $('#review-modal').hidden = false
@@ -414,15 +421,19 @@
   $('#review-form').addEventListener('submit', async (event) => {
     event.preventDefault()
     const content = $('#review-content').value.trim()
+    const isCourse = state.reviewTarget.type === 'course'
+    const instructor = isCourse ? $('#review-instructor').value.trim() : ''
+    const term = isCourse ? $('#review-term').value.trim() : ''
     let valid = true
     if (!state.reviewRating) { $('#rating-error').textContent = '请选择总体评分'; valid = false }
+    if (isCourse && (!instructor || !term)) { $('#course-context-error').textContent = '请填写授课老师和学期'; valid = false }
     if (content.length < 10) { $('#content-error').textContent = '请至少写 10 个字'; valid = false }
     if (!valid) return
     const { type, id } = state.reviewTarget
     const item = findItem(type, id)
     if (!runtime?.isLive()) { $('#content-error').textContent = '服务配置尚未完成'; return }
     try {
-      const result = await runtime.createReview({ type, id, rating: state.reviewRating, content, item })
+      const result = await runtime.createReview({ type, id, rating: state.reviewRating, content, instructor, term, item })
       if (result.review) state.userReviews.unshift(result.review)
       save(); closeReview(); closeDetail(); renderRoute(); toast(result.status === 'pending' ? '评价已提交；审核通过后可获得 5 积分' : '评价已匿名发布')
     } catch (error) {

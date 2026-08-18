@@ -70,7 +70,9 @@
       type: row.target_type || row.type || 'course',
       targetId: row.target_id || row.targetId,
       target: row.target || row.target_name || '',
-      context: row.context || row.target_context || '',
+      instructor: row.instructor || '',
+      term: row.term || '',
+      context: row.context || row.target_context || (row.target_type === 'course' ? [row.instructor, row.term].filter(Boolean).join(' · ') : ''),
       rating: nullableNumber(row.rating ?? row.overall),
       content: row.content || '',
       date: row.is_historical ? '历史评价' : row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '刚刚',
@@ -240,7 +242,7 @@
     return { favorite: true }
   }
 
-  async function createReview({ type, id, rating, content, item }) {
+  async function createReview({ type, id, rating, content, instructor = '', term = '', item }) {
     if (!authenticatedClient) throw new Error('服务配置尚未完成')
     const user = await requireUser()
     const targetType = type === 'course' ? 'course' : type
@@ -249,12 +251,14 @@
       target_type: targetType,
       target_id: id,
       target: type === 'course' ? `${item.code} · ${item.name}` : item.name,
-      context: type === 'course' ? `${item.instructor} · ${item.term}` : item.location || `${item.hall} · ${item.stall}`,
+      instructor: type === 'course' ? instructor : '',
+      term: type === 'course' ? term : '',
+      context: type === 'course' ? `${instructor} · ${term}` : item.location || `${item.hall} · ${item.stall}`,
       rating,
       content,
       status: 'pending',
     }
-    const result = await authenticatedClient.from('cuhksz_reviews').upsert(row, { onConflict: 'author_id,target_type,target_id' }).select().single()
+    const result = await authenticatedClient.from('cuhksz_reviews').upsert(row, { onConflict: 'author_id,target_type,target_id,instructor,term' }).select().single()
     if (result.error) throw result.error
     return { status: result.data.status, review: reviewView(result.data) }
   }

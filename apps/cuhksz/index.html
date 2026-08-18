@@ -58,6 +58,7 @@
       <p id="review-target-label" class="modal-subtitle"></p>
       <form id="review-form">
         <fieldset class="rating-field"><legend>总体评分</legend><div class="rating-picker" id="rating-picker"></div><p class="field-error" id="rating-error"></p></fieldset>
+        <fieldset id="course-review-context" class="course-review-context" hidden><legend>授课信息</legend><div class="course-context-fields"><label class="field"><span>授课老师</span><input id="review-instructor" type="text" maxlength="120" autocomplete="off" placeholder="例如：张老师"></label><label class="field"><span>学期</span><input id="review-term" type="text" maxlength="80" autocomplete="off" placeholder="例如：2025-2026 秋季"></label></div><p class="field-error" id="course-context-error"></p></fieldset>
         <label class="field"><span>评价内容</span><textarea id="review-content" maxlength="800" placeholder="哪些地方值得推荐？有什么需要提前知道？"></textarea><small><span id="review-count">0</span> / 800</small><em class="field-error" id="content-error"></em></label>
         <p class="privacy-note">评价会匿名展示。请勿包含隐私、攻击性内容或未经证实的指控；审核通过后将自动获得 5 积分。</p>
         <button class="primary-action" type="submit">匿名发布</button>
