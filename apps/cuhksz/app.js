@@ -278,7 +278,9 @@
     const pageKey = reviewPageKey(type, id)
     let page = state.detailReviewPages.get(pageKey)
     if (runtime?.isLive() && !page) {
-      page = { reviews: [], loading: true, error: '' }
+      // The loader flips this flag itself. Starting at `true` here causes the
+      // first request to short-circuit as though another request were active.
+      page = { reviews: [], loading: false, error: '' }
       state.detailReviewPages.set(pageKey, page)
       void loadDetailReviews(type, id)
     }
