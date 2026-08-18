@@ -5,12 +5,12 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_CUHK_SZ_URL ?? "https://cuhksz.horizonpivots.com"),
-  title: "港中深课饭评 | CUHK-Shenzhen Student Voice",
-  description: "港中深学生的匿名课程与食堂评价社区。",
+  title: "港中声 | CUHK-Shenzhen Student Voice",
+  description: "港中声：港中深学生的匿名课程与食堂评价社区。",
   openGraph: {
     type: "website",
     locale: "zh_CN",
-    title: "港中深课饭评",
+    title: "港中声",
     description: "从真实评价开始选课和吃饭。",
   },
 };

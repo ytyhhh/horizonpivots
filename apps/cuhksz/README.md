@@ -1,4 +1,4 @@
-# 港中深课饭评
+# 港中声
 
 Horizon Pivots 的课程与食堂评价产品。它是一个 Next.js 应用：页面和 API 都由 Vercel 的 Next.js 运行时处理；登录、收藏和匿名评价使用平台共用的 Clerk 账号与现有 Supabase 项目。
 
