@@ -27,6 +27,8 @@ npm run dev --workspace=@horizon/cuhksz
 
 个人数据列使用 Clerk `user_…` ID 的 `text` 类型。RLS 通过 `auth.jwt()->>'sub'` 隔离收藏、草稿评价和待审核评价，不使用 Supabase Auth 或 `auth.users`。
 
+Clerk Dashboard 必须创建名为 `supabase` 的 JWT Template；浏览器会使用该模板令牌访问受 RLS 保护的个人数据和提交评价。
+
 [`supabase/seed.sql`](supabase/seed.sql) 不会写入演示数据。生产数据导入应使用服务端受控脚本或 Supabase SQL Editor，不能向浏览器暴露 Service Role key。
 
 如需导入仓库内已有的课程和开课教师目录，在本地终端运行：

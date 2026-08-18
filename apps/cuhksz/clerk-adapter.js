@@ -17,7 +17,9 @@
   }
 
   async function getToken() {
-    return clerk?.session?.getToken() || null
+    // Supabase validates Clerk's dedicated JWT template, not Clerk's default
+    // browser session token. The template must be named `supabase` in Clerk.
+    return clerk?.session?.getToken({ template: 'supabase' }) || null
   }
 
   function signInUrl(returnUrl = window.location.href) {
