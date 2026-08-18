@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-sync-scripts */
+
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 

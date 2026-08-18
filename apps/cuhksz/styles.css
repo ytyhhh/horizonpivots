@@ -197,15 +197,17 @@ main { min-height: calc(100dvh - 72px); }
 .dining-directory { margin-top: 78px; padding-top: 30px; border-top: 1px solid var(--line); }
 .dining-dishes-heading { margin-top: 58px; }
 .hall-grid { display: grid; grid-template-columns: 1.15fr .85fr .85fr; gap: 16px; }
-.hall-card { min-height: 270px; padding: 28px; border-radius: var(--radius); cursor: pointer; transition: transform .22s ease; }
+.hall-card { display: flex; min-height: 312px; flex-direction: column; padding: 28px; border-radius: var(--radius); cursor: pointer; transition: transform .22s ease; }
 .hall-card:hover { transform: translateY(-3px); }
 .hall-card.purple { background: var(--purple); color: white; }
 .hall-card.gold { background: var(--gold); }
 .hall-card.cream { border: 1px solid var(--line); background: var(--surface); }
 .hall-number { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: .12em; opacity: .65; }
-.hall-card h3 { margin: 50px 0 6px; font-size: 28px; }
+.hall-card h3 { margin: 34px 0 4px; font-size: 28px; }
+.hall-name-en { color: currentColor; font-size: 11px; font-weight: 700; letter-spacing: .07em; opacity: .62; }
 .hall-card p { margin: 0; opacity: .7; }
-.hall-card footer { display: flex; justify-content: space-between; margin-top: 42px; padding-top: 18px; border-top: 1px solid currentColor; font-size: 12px; opacity: .78; }
+.hall-description { margin-top: 14px; color: currentColor; font-size: 12px; line-height: 1.65; opacity: .76; }
+.hall-card footer { display: flex; justify-content: space-between; gap: 16px; margin-top: auto; padding-top: 18px; border-top: 1px solid currentColor; font-size: 12px; opacity: .78; }
 
 .profile-layout { display: grid; grid-template-columns: minmax(280px, .42fr) minmax(500px, 1fr); gap: 22px; margin-top: 22px; }
 .profile-card { min-height: 390px; padding: 36px; border-radius: 22px; background: var(--purple); color: white; }
@@ -254,6 +256,7 @@ main { min-height: calc(100dvh - 72px); }
 .detail-visual img { width: 100%; height: 100%; object-fit: cover; }
 .detail-kicker, .modal-kicker { color: var(--gold-deep); font-size: 10px; font-weight: 800; letter-spacing: .16em; }
 .detail-panel h2, .modal h2 { margin: 11px 0 6px; font-size: 34px; letter-spacing: -.035em; }
+.detail-name-en { margin: 0; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .07em; }
 .detail-subtitle, .modal-subtitle { margin: 0; color: var(--muted); line-height: 1.6; }
 .course-description { margin-top: 22px; padding: 18px 0; border-top: 1px solid var(--line); }
 .course-description h3 { margin: 0 0 8px; font-size: 15px; }

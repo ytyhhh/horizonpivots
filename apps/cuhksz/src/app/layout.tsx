@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-css-tags */
+
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 

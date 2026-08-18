@@ -36,9 +36,11 @@
     return {
       id: row.id || row._id,
       name: row.name,
+      nameEn: row.name_en || row.nameEn || '',
       location: row.location || '',
       hours: row.hours || row.open_hours || '',
-      rating: asNumber(row.rating),
+      description: row.description || '',
+      rating: nullableNumber(row.rating),
       reviews: asNumber(row.review_count ?? row.reviews),
       stalls: asNumber(row.stall_count ?? row.stalls),
       tone: row.tone || row.cover_class || 'green',
