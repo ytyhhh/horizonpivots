@@ -6,12 +6,13 @@ import { isAllowedReturnUrl, platformOrigins } from "@horizon/platform";
 
 const appearance = {
   variables: {
-    colorPrimary: "#166847",
-    colorBackground: "#f2f5f1",
-    colorText: "#17201c",
-    colorTextSecondary: "#64706a",
-    colorInputBackground: "#ffffff",
-    colorInputText: "#17201c",
+    colorPrimary: "var(--accent)",
+    colorBackground: "transparent",
+    colorText: "var(--ink)",
+    colorTextSecondary: "var(--muted)",
+    colorInputBackground: "var(--auth-input)",
+    colorInputText: "var(--ink)",
+    colorNeutral: "var(--line)",
     borderRadius: "0.9rem",
     fontFamily: "var(--font-geist-sans), Arial, sans-serif",
   },
@@ -20,8 +21,8 @@ const appearance = {
     cardBox: "w-full shadow-none",
     card: "w-full bg-transparent shadow-none p-0",
     footer: "bg-transparent",
-    socialButtonsBlockButton: "border-[#d5ddd6]",
-    formButtonPrimary: "rounded-full normal-case",
+    socialButtonsBlockButton: "border-[var(--line)] bg-transparent hover:bg-[var(--accent-soft)]",
+    formButtonPrimary: "rounded-full normal-case shadow-none",
   },
 };
 
