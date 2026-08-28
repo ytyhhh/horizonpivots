@@ -7,7 +7,8 @@
 | 平台门户 | `apps/portal` | `horizonpivots.com` | `horizon-portal` |
 | 校招雷达 | `apps/jobs` | `jobs.horizonpivots.com` | 保留现有 jobs 项目 |
 | PhD Scope | `apps/phd` | `phd.horizonpivots.com` | `horizon-phd` |
-| 港中深课饭评 | `apps/cuhksz` | `cuhksz.horizonpivots.com` | `horizon-cuhksz` |
+| 港中声 | `apps/cuhksz` | `cuhksz.horizonpivots.com` | `horizon-cuhksz` |
+| 私密好友牌桌 | `apps/dp` | `dp.horizonpivots.com` | `horizon-dp` |
 
 > 不要将任何实际密钥提交到 GitHub。`.env.local` 已被忽略；生产密钥只配置在 Vercel 和 GitHub Actions Secrets。
 
@@ -59,7 +60,7 @@ GitHub Action 只接收搜索任务 ID，再从 Supabase 读取用户查询内�
 
 ## 2. Supabase
 
-四个应用共用现有 hiring Supabase 项目。
+五个部署单元共用现有 hiring Supabase 项目。DP 不使用 Supabase Auth，浏览器也不能直接读写 DP 表；所有牌局访问都经过 Next.js 服务端。
 
 ### 获取项目值
 
@@ -69,6 +70,7 @@ Supabase Dashboard → 项目 → **Settings** → **API Keys**：
 NEXT_PUBLIC_SUPABASE_URL = Project URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = Publishable key
 SUPABASE_SERVICE_ROLE_KEY = Secret key 或 legacy service_role key
+DP_DATABASE_ACCESS_KEY = DP 服务端专用的随机密钥（至少 48 字符）
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` 仅可用于 Vercel 服务端和 GitHub Actions；它拥有绕过 RLS 的权限，绝不能使用 `NEXT_PUBLIC_` 前缀。
@@ -101,6 +103,15 @@ npx supabase db push
 - `cuhksz_reviews`
 - `cuhksz_favorites`
 
+迁移 `20260823171846_dp_private_poker.sql` 还会创建：
+
+- `dp_rooms`、`dp_participants`、`dp_public_state`
+- `dp_action_log`、`dp_chat_messages`
+- `private.dp_game_state`、访客令牌哈希与加入限流
+- 原子 RPC、Realtime 安全提示和清理任务
+
+迁移 `20260828074237_dp_scoped_server_access.sql` 增加 DP 服务端专用密钥。Data API 的最小 `anon` 权限仍受 RLS 和 `X-DP-Server-Key` 双重限制；密钥只由 Next.js 服务端发送，前端和其他产品无法直接读取 DP 数据。不要启用 Supabase Anonymous Auth，也不要在前端使用 `DP_DATABASE_ACCESS_KEY`。
+
 不要运行 `apps/phd/supabase/migrations/0001_initial.sql`，它仅作为原型历史留存。
 
 ### Clerk Third-Party Auth
@@ -109,7 +120,7 @@ Supabase Dashboard → **Authentication** → **Third-party Auth** → 启用 Cl
 
 ## 3. Clerk
 
-四个应用必须使用同一个 Clerk Production instance。
+需要登录的应用必须使用同一个 Clerk Production instance。DP 只使用它确认唯一房主，受邀朋友无需登录。
 
 在 Clerk Dashboard 的允许来源、重定向地址或域名配置中加入：
 
@@ -118,6 +129,7 @@ https://horizonpivots.com
 https://jobs.horizonpivots.com
 https://phd.horizonpivots.com
 https://cuhksz.horizonpivots.com
+https://dp.horizonpivots.com
 ```
 
 统一登录入口：
@@ -126,7 +138,7 @@ https://cuhksz.horizonpivots.com
 https://horizonpivots.com/login
 ```
 
-四个 Vercel 项目使用相同的：
+需要服务端登录识别的 Vercel 项目使用相同的：
 
 ```text
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -134,6 +146,8 @@ CLERK_SECRET_KEY
 ```
 
 同一根域的子域默认共享 Clerk 会话，无需 satellite 模式。
+
+在 Clerk 的 Allowed Subdomains 与重定向来源中加入 `dp.horizonpivots.com`。`DP_OWNER_CLERK_USER_ID` 必须填写你本人生产账号的 Clerk User ID；其他已登录账号不会因此获得房主管理权。
 
 ## 4. Vercel
 
@@ -223,9 +237,9 @@ CLERK_SECRET_KEY=
 
 将 `horizonpivots.com` 设为主域名，`www.horizonpivots.com` 将由门户跳转到根域。
 
-### 港中深课饭评 cuhksz
+### 港中声 cuhksz
 
-导入同一仓库并创建第四个 Vercel 项目：
+导入同一仓库并创建港中声 Vercel 项目：
 
 ```text
 Project Name: horizon-cuhksz
@@ -246,6 +260,35 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 
 不要配置 `CLERK_SECRET_KEY` 或 `SUPABASE_SERVICE_ROLE_KEY`。该应用只接收公开 Clerk key 和 Supabase publishable key，用户数据由 Clerk token 加 Supabase RLS 保护。
 
+### 私密好友牌桌 dp
+
+导入同一仓库并创建独立 Vercel 项目：
+
+```text
+Project Name: horizon-dp
+Root Directory: apps/dp
+Framework Preset: Next.js
+Node.js Version: 22.x
+Build Command: npm run build
+Domain: dp.horizonpivots.com
+```
+
+允许该项目读取 Root Directory 外的 `packages/platform`，不要给 DP 配置 cron。生产变量：
+
+```text
+NEXT_PUBLIC_DP_URL=https://dp.horizonpivots.com
+NEXT_PUBLIC_PLATFORM_URL=https://horizonpivots.com
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+DP_OWNER_CLERK_USER_ID=
+DP_SESSION_SECRET=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+DP_DATABASE_ACCESS_KEY=
+```
+
+`DP_SESSION_SECRET` 与 `DP_DATABASE_ACCESS_KEY` 分别生成独立的高强度随机值，不要复用 Clerk、Supabase 或彼此的密钥。生产构建在这些变量缺失时会直接失败。DP 不加入 Portal 产品卡片、公开产品切换器或 Sitemap。
+
 ## 5. Porkbun DNS
 
 先在 Vercel 对应项目添加域名，再复制 Vercel 展示的精确 DNS 值到 Porkbun。通常为：
@@ -256,9 +299,10 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 | CNAME | `www` | portal 项目给出的 Vercel CNAME |
 | CNAME | `jobs` | jobs 项目给出的 Vercel CNAME |
 | CNAME | `phd` | PhD 项目给出的 Vercel CNAME |
-| CNAME | `cuhksz` | 港中深课饭评项目给出的 Vercel CNAME |
+| CNAME | `cuhksz` | 港中声项目给出的 Vercel CNAME |
+| CNAME | `dp` | 私密好友牌桌项目给出的 Vercel CNAME |
 
-在 Porkbun 的 **Domain Management** → 域名 → **DNS** 中填写。`Host` 只填写 `@`、`www`、`jobs`、`phd`、`cuhksz`，不要填写完整域名。删除同名冲突的 A、AAAA 或 CNAME 记录，但不要删除 MX、TXT 等邮件记录。
+在 Porkbun 的 **Domain Management** → 域名 → **DNS** 中填写。`Host` 只填写 `@`、`www`、`jobs`、`phd`、`cuhksz`、`dp`，不要填写完整域名。为 DP 添加前先在 Vercel 接受该域名，并使用 Vercel 页面给出的精确 CNAME 目标；只删除与 `dp` 同名冲突的 A、AAAA 或 CNAME，不要删除 MX、TXT 等邮件记录。
 
 ## 6. 将来开启时：PhD 搜索工作流验证
 
@@ -277,4 +321,5 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 4. 创建并部署 PhD Vercel 项目，先验证院校浏览和统一登录。
 5. 创建并部署 portal Vercel 项目，绑定根域与 `www`。
 6. 创建并部署 `horizon-cuhksz`，绑定 `cuhksz` 子域并验证收藏和评价 RLS。
-7. 完成 Porkbun DNS 后，确认四个 HTTPS 域名和跨子域登录。
+7. 完成 Porkbun DNS 后，确认五个 HTTPS 域名和需要登录产品的跨子域会话。
+8. 最后部署 `horizon-dp`，绑定 `dp` 子域，使用房主和访客分别完成创建、加入、刷新恢复、踢出与关闭验收；不要在任何公开页面添加入口。

@@ -16,3 +16,4 @@ apps/*/coverage/
 apps/*/.env.local
 .vercel
 .env*
+!apps/dp/.env.example

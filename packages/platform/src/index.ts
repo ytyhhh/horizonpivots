@@ -1,10 +1,11 @@
-export type HorizonProduct = "portal" | "jobs" | "phd" | "cuhksz";
+export type HorizonProduct = "portal" | "jobs" | "phd" | "cuhksz" | "dp";
 
 export const platformOrigins = {
   portal: process.env.NEXT_PUBLIC_PLATFORM_URL ?? "https://horizonpivots.com",
   jobs: process.env.NEXT_PUBLIC_JOBS_URL ?? "https://jobs.horizonpivots.com",
   phd: process.env.NEXT_PUBLIC_PHD_URL ?? "https://phd.horizonpivots.com",
   cuhksz: process.env.NEXT_PUBLIC_CUHK_SZ_URL ?? "https://cuhksz.horizonpivots.com",
+  dp: process.env.NEXT_PUBLIC_DP_URL ?? "https://dp.horizonpivots.com",
 } as const;
 
 export const products = [
@@ -22,7 +23,7 @@ export const products = [
   },
   {
     id: "cuhksz" as const,
-    name: "港中深课饭评",
+    name: "港中声",
     description: "课程与食堂的同学评价",
     href: platformOrigins.cuhksz,
   },
@@ -37,7 +38,7 @@ export function isAllowedReturnUrl(value: string | null | undefined) {
   try {
     const url = new URL(value);
     return Object.values(platformOrigins).some((origin) => new URL(origin).origin === url.origin)
-      || /^http:\/\/localhost:(3000|3001|3002|3003|4173)$/.test(url.origin);
+      || /^http:\/\/localhost:(3000|3001|3002|3003|3004|4173)$/.test(url.origin);
   } catch {
     return false;
   }

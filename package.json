@@ -11,13 +11,17 @@
     "dev:jobs": "npm run dev --workspace=@horizon/jobs",
     "dev:phd": "npm run dev --workspace=@horizon/phd",
     "dev:cuhksz": "npm run dev --workspace=@horizon/cuhksz",
+    "dev:dp": "npm run dev --workspace=@horizon/dp",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspace=@horizon/portal && npm run build --workspace=@horizon/jobs && npm run build --workspace=@horizon/phd && npm run build --workspace=@horizon/cuhksz",
+    "build": "npm run build --workspace=@horizon/portal && npm run build --workspace=@horizon/jobs && npm run build --workspace=@horizon/phd && npm run build --workspace=@horizon/cuhksz && npm run build --workspace=@horizon/dp",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
+  },
+  "overrides": {
+    "nanoid": "3.3.18"
   }
 }

@@ -25,7 +25,7 @@ export default function PortalHome() {
 
       <section className="product-section" aria-labelledby="products-title">
         <div className="section-intro">
-          <p className="kicker">同一个账号，三个工作区</p>
+          <p className="kicker">同一个账号，三个公开工作区</p>
           <h2 id="products-title">选择一条正在推进的路径。</h2>
           <p>身份验证共享，求职与研究申请资料则分别保存在对应工作区。</p>
         </div>
@@ -42,7 +42,7 @@ export default function PortalHome() {
           </a>
           <a className="product-tile cuhksz-tile" href={platformOrigins.cuhksz}>
             <BookOpenText size={31} weight="duotone" aria-hidden="true" />
-            <div><span>港中深课饭评</span><strong>从真实评价开始选课和吃饭</strong></div>
+            <div><span>港中声</span><strong>从真实评价开始选课和吃饭</strong></div>
             <ArrowUpRight size={22} weight="bold" aria-hidden="true" />
           </a>
         </div>
@@ -50,7 +50,7 @@ export default function PortalHome() {
 
       <footer className="portal-footer">
         <span>Horizon Pivots</span>
-        <div><a href={platformOrigins.jobs}>校招雷达</a><a href={platformOrigins.phd}>PhD Scope</a><a href={platformOrigins.cuhksz}>港中深课饭评</a></div>
+        <div><a href={platformOrigins.jobs}>校招雷达</a><a href={platformOrigins.phd}>PhD Scope</a><a href={platformOrigins.cuhksz}>港中声</a></div>
       </footer>
     </main>
   );
