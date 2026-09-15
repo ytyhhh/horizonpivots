@@ -120,7 +120,7 @@ Supabase Dashboard → **Authentication** → **Third-party Auth** → 启用 Cl
 
 ## 3. Clerk
 
-需要登录的应用必须使用同一个 Clerk Production instance。DP 只使用它确认唯一房主，受邀朋友无需登录。
+需要登录的应用必须使用同一个 Clerk Production instance。DP 使用它确认开桌用户身份；每位已登录用户只能管理自己的房间，凭房间号加入的朋友无需登录。
 
 在 Clerk Dashboard 的允许来源、重定向地址或域名配置中加入：
 
@@ -147,7 +147,7 @@ CLERK_SECRET_KEY
 
 同一根域的子域默认共享 Clerk 会话，无需 satellite 模式。
 
-在 Clerk 的 Allowed Subdomains 与重定向来源中加入 `dp.horizonpivots.com`。`DP_OWNER_CLERK_USER_ID` 必须填写你本人生产账号的 Clerk User ID；其他已登录账号不会因此获得房主管理权。
+在 Clerk 的 Allowed Subdomains 与重定向来源中加入 `dp.horizonpivots.com`。无需配置唯一房主的 Clerk User ID；任何已登录账号都可创建自己的私密房间，但不能管理其他账号的房间。
 
 ## 4. Vercel
 
@@ -280,14 +280,13 @@ NEXT_PUBLIC_DP_URL=https://dp.horizonpivots.com
 NEXT_PUBLIC_PLATFORM_URL=https://horizonpivots.com
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
-DP_OWNER_CLERK_USER_ID=
 DP_SESSION_SECRET=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 DP_DATABASE_ACCESS_KEY=
 ```
 
-`DP_SESSION_SECRET` 与 `DP_DATABASE_ACCESS_KEY` 分别生成独立的高强度随机值，不要复用 Clerk、Supabase 或彼此的密钥。生产构建在这些变量缺失时会直接失败。DP 不加入 Portal 产品卡片、公开产品切换器或 Sitemap。
+`DP_SESSION_SECRET` 与 `DP_DATABASE_ACCESS_KEY` 分别生成独立的高强度随机值，不要复用 Clerk、Supabase 或彼此的密钥。生产构建在这些变量缺失时会直接失败。旧的 `DP_OWNER_CLERK_USER_ID` 变量现在可以从 Vercel 移除。DP 不加入 Portal 产品卡片、公开产品切换器或 Sitemap。
 
 ## 5. Porkbun DNS
 

@@ -41,7 +41,7 @@ export function SiteHeader({ backHref, backLabel = "返回", roomLabel, isOwner 
         {isLoaded && isSignedIn ? (
           <UserButton appearance={{ elements: { avatarBox: "dp-avatar" } }} />
         ) : (
-          <a className="icon-button owner-login" href={loginUrl(returnUrl)} aria-label="房主登录" title="房主登录">
+          <a className="icon-button owner-login" href={loginUrl(returnUrl)} aria-label="登录后开桌" title="登录后开桌">
             <SignIn size={19} weight="bold" aria-hidden="true" />
           </a>
         )}

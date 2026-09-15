@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { loginUrl } from "@horizon/platform";
 import {
   ArrowRight,
   CardsThree,
@@ -15,7 +16,7 @@ import type { CreateRoomPayload, CreateRoomResponse, JoinRoomResponse } from "@/
 import { SiteHeader } from "@/components/site-header";
 
 interface LobbyClientProps {
-  isOwner: boolean;
+  canCreate: boolean;
 }
 
 const defaultRoom: CreateRoomPayload = {
@@ -26,7 +27,7 @@ const defaultRoom: CreateRoomPayload = {
   actionSeconds: 45,
 };
 
-export function LobbyClient({ isOwner }: LobbyClientProps) {
+export function LobbyClient({ canCreate }: LobbyClientProps) {
   const router = useRouter();
   const [mode, setMode] = useState<"join" | "create">("join");
   const [code, setCode] = useState("");
@@ -74,7 +75,7 @@ export function LobbyClient({ isOwner }: LobbyClientProps) {
 
   return (
     <main className="lobby-page">
-      <SiteHeader isOwner={isOwner} />
+      <SiteHeader isOwner={canCreate} />
       <section className="lobby-layout" aria-labelledby="lobby-title">
         <div className="lobby-copy">
           <p className="eyebrow">Horizon Pivots 私密牌局</p>
@@ -88,7 +89,7 @@ export function LobbyClient({ isOwner }: LobbyClientProps) {
         </div>
 
         <div className="lobby-console">
-          {isOwner ? (
+          {canCreate ? (
             <div className="mode-switch" role="tablist" aria-label="牌桌操作">
               <button type="button" role="tab" aria-selected={mode === "join"} onClick={() => { setMode("join"); setError(null); }}>加入牌局</button>
               <button type="button" role="tab" aria-selected={mode === "create"} onClick={() => { setMode("create"); setError(null); }}>开一桌</button>
@@ -102,7 +103,7 @@ export function LobbyClient({ isOwner }: LobbyClientProps) {
 
           {mode === "join" ? (
             <form className="lobby-form" onSubmit={joinRoom} aria-busy={isPending}>
-              {isOwner ? <div className="console-heading compact"><div><h2>加入牌局</h2><p>也可以像朋友一样加入已有房间。</p></div></div> : null}
+              {canCreate ? <div className="console-heading compact"><div><h2>加入牌局</h2><p>也可以像朋友一样加入已有房间。</p></div></div> : null}
               <label htmlFor="room-code">房间号</label>
               <div className="code-field-wrap">
                 <input
@@ -147,6 +148,7 @@ export function LobbyClient({ isOwner }: LobbyClientProps) {
                 {isPending ? "正在验证房间" : "加入牌局"}
                 {!isPending ? <ArrowRight size={18} weight="bold" aria-hidden="true" /> : null}
               </button>
+              {!canCreate ? <a className="lobby-create-link" href={loginUrl(process.env.NEXT_PUBLIC_DP_URL ?? "https://dp.horizonpivots.com")}>想开一桌？登录后创建私密房间</a> : null}
             </form>
           ) : (
             <form className="lobby-form" onSubmit={createRoom} aria-busy={isPending}>

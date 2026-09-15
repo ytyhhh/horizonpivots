@@ -103,6 +103,8 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .number-input-wrap:has(small) input { padding-right: 38px; }
 .form-error { margin: 3px 0; padding: 10px 12px; border-left: 3px solid var(--danger); border-radius: 0 8px 8px 0; color: var(--danger); background: color-mix(in srgb, var(--danger) 7%, transparent); font-size: 12px; line-height: 1.5; }
 .console-note { min-height: 48px; margin: 0; padding: 0 28px; display: flex; align-items: center; gap: 7px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.lobby-create-link { min-height: 40px; margin-top: 10px; display: inline-flex; align-items: center; color: var(--purple); font-size: 12px; font-weight: 690; text-decoration: underline; text-underline-offset: 4px; }
+.lobby-create-link:hover { color: var(--purple-deep); }
 .console-note svg { color: var(--gold); }
 .legal-footer { width: min(1440px, 100%); min-height: 62px; margin: 0 auto; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
 .legal-footer span { color: var(--ink); font-weight: 680; }

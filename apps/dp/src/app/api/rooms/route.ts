@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   if (!assertMutationOrigin(request)) return apiError(403, "ORIGIN_REJECTED", "请求来源无效。");
   const owner = await ownerIdentity();
-  if (!owner.isOwner || !owner.userId) return apiError(403, "OWNER_ONLY", "只有房主可以创建牌桌。");
+  if (!owner.userId) return apiError(401, "SIGN_IN_REQUIRED", "登录后才可以创建牌桌。");
   const body = await readJson(request);
   if (!body) return apiError(400, "INVALID_JSON", "牌桌设置格式无效。");
   const settings = parseRoomSettings(body);
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     response.cookies.set(cookie.name, cookie.value, cookie.options);
     return response;
   } catch (caught) {
-    if (isOpenRoomConflict(caught)) return apiError(409, "ACTIVE_ROOM_EXISTS", "同一时间只能保留一个活动牌桌，请先前往管理页。");
+    if (isOpenRoomConflict(caught)) return apiError(409, "ACTIVE_ROOM_EXISTS", "你已经有一个活动牌桌，请先前往管理页。");
     const error = caught && typeof caught === "object"
       ? caught as { code?: unknown; message?: unknown; status?: unknown }
       : null;

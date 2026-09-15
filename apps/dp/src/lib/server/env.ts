@@ -12,7 +12,6 @@ export function serverEnv() {
   return {
     dpUrl: process.env.NEXT_PUBLIC_DP_URL?.trim() || defaultDpUrl,
     platformUrl: process.env.NEXT_PUBLIC_PLATFORM_URL?.trim() || "https://horizonpivots.com",
-    ownerUserId: required("DP_OWNER_CLERK_USER_ID"),
     sessionSecret,
     supabaseUrl: required("NEXT_PUBLIC_SUPABASE_URL"),
     supabasePublishableKey: required("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),

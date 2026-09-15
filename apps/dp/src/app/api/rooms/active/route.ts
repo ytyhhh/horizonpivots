@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const owner = await ownerIdentity();
-  if (!owner.isOwner || !owner.userId) return apiError(403, "OWNER_ONLY", "只有房主可以查看牌桌管理信息。");
+  if (!owner.userId) return apiError(401, "SIGN_IN_REQUIRED", "登录后才能查看自己的牌桌管理信息。");
   try {
     const room = await activeRoomForOwner(owner.userId);
     if (!room) return json({ room: null });

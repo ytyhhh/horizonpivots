@@ -3,7 +3,7 @@ import { createPublicSnapshot } from "@/lib/game";
 import type { RoomState } from "@/types/game";
 import { dpAdminClient } from "./supabase";
 import { guestTokenHash, ownerRoomCode } from "./session";
-import { ownerIdentity } from "./owner";
+import { ownerIdentity, ownsRoom } from "./owner";
 
 export interface DbRoom {
   id: string;
@@ -107,16 +107,7 @@ export async function participantsForRoom(roomId: string) {
 
 export async function actorForRoom(room: DbRoom): Promise<RoomActor | null> {
   const owner = await ownerIdentity();
-  if (owner.isOwner && owner.userId === room.owner_clerk_user_id) {
-    return ownerActorForRoom(room);
-  }
-
-  // Clerk's cross-subdomain session can briefly be unavailable while the
-  // browser refreshes it. The encrypted room-code cookie is only issued after
-  // this exact Clerk owner has created or re-entered the room, so it is a
-  // bounded, HttpOnly recovery credential rather than a second login path.
-  const sealedOwnerRoom = await ownerRoomCode();
-  if (sealedOwnerRoom?.roomId === room.id) {
+  if (ownsRoom(owner.userId, room.owner_clerk_user_id)) {
     return ownerActorForRoom(room);
   }
 

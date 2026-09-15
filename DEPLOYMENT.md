@@ -16,7 +16,7 @@
 
 jobs 和 PhD 还需要 `SUPABASE_SERVICE_ROLE_KEY`。DP 使用独立的服务端 `DP_DATABASE_ACCESS_KEY`，只授权 `dp_*` 数据；该变量绝不能加上 `NEXT_PUBLIC_` 前缀。PhD 导师搜索当前关闭，因此暂时不需要 `GITHUB_DISPATCH_TOKEN` 或搜索服务密钥。
 
-在 Clerk Dashboard 中将五个 Origin 加入允许重定向列表，登录页面固定为 `https://horizonpivots.com/login`。同根域入口共享同一 Clerk 会话，不配置 satellite 模式。DP 仅使用 Clerk 识别房主，受邀朋友不注册账号，也不启用 Supabase Anonymous Auth。
+在 Clerk Dashboard 中将五个 Origin 加入允许重定向列表，登录页面固定为 `https://horizonpivots.com/login`。同根域入口共享同一 Clerk 会话，不配置 satellite 模式。DP 使用 Clerk 识别每位开桌用户；凭房间号加入的朋友无需注册，也不启用 Supabase Anonymous Auth。
 
 ## Supabase
 
@@ -33,6 +33,9 @@ npx supabase db push
 5. 确认 `202608130002_cuhksz_clerk_reviews.sql` 已创建 `cuhksz_*` 课程、食堂、评价与收藏表。
 6. 确认 `20260823171846_dp_private_poker.sql` 已创建 `dp_*` 公共业务表、`private.dp_*` 私密状态表、原子 RPC、广播触发器和清理 cron。
 7. 确认 `20260828074237_dp_scoped_server_access.sql` 已启用 DP 专用服务密钥校验，并修复清理 cron 的 pgcrypto 调用。
+8. 确认 `20260915184816_dp_per_creator_rooms.sql` 已将“全站最多一桌”改为“每位 Clerk 用户最多一桌”。
+
+若只发布 DP 改动，而仓库中还有其他未完成的迁移，不要执行整库 `db push`；先核对线上迁移记录，只应用目标 DP 迁移。
 
 ## Vercel
 
@@ -71,7 +74,7 @@ PhD 搜索通过根目录的 `.github/workflows/phd-search.yml` 运行。功能�
 - 发起一项 PhD 搜索，确认任务状态从 queued 更新到 complete、partial 或 failed。
 - 检查 jobs 的画像、收藏、推荐、管理员页面和 cron 仍正常。
 - 使用两个 Clerk 测试账号验证 `cuhksz_reviews` 和 `cuhksz_favorites` 互相隔离。
-- 确认只有 `DP_OWNER_CLERK_USER_ID` 能创建和管理牌桌，其他 Horizon Pivots 账号只能像访客一样凭房间号加入。
+- 确认未登录用户开桌得到 401；两个已登录测试账号可分别开桌，但只能管理自己的房间。
 - 从 Supabase Data API 不带正确 `X-DP-Server-Key` 访问 `dp_*` 表，确认全部被 RLS 拒绝。
 - 用错误、过期和已重置房间号验证统一失败响应，并确认正确房间号能设置 HttpOnly 访客 Cookie 后恢复同一座位。
 - 检查 DP 不在 Portal、产品切换器或 Sitemap 中，并确认所有 DP 页面响应 `X-Robots-Tag: noindex, nofollow, noarchive`。

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   const codeHash = hashRoomCode(code);
   const owner = await ownerIdentity();
-  if (owner.isOwner && owner.userId) {
+  if (owner.userId) {
     const { data, error } = await dpAdminClient()
       .from("dp_rooms")
       .select("id,public_id,expires_at")
