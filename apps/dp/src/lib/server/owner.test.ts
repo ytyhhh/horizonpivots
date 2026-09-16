@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ownerIdentity, ownsRoom } from "./owner";
+import { issueMobileOwnerToken } from "./security";
 
 const authMock = vi.hoisted(() => vi.fn());
+const headersMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
+vi.mock("next/headers", () => ({ headers: headersMock }));
 
-beforeEach(() => authMock.mockReset());
+beforeEach(() => {
+  authMock.mockReset();
+  headersMock.mockResolvedValue(new Headers());
+  process.env.DP_SESSION_SECRET = "test-only-secret-with-more-than-32-characters";
+});
 
 describe("DP room ownership", () => {
   it("allows the signed-in creator to manage their own room", () => {
@@ -24,5 +31,12 @@ describe("DP room ownership", () => {
     authMock.mockResolvedValueOnce({ userId: null });
     expect(await ownerIdentity()).toEqual({ userId: "user_a" });
     expect(await ownerIdentity()).toEqual({ userId: null });
+  });
+
+  it("accepts a valid mobile owner session without exposing a Clerk token", async () => {
+    const mobile = issueMobileOwnerToken("user_mobile");
+    headersMock.mockResolvedValueOnce(new Headers({ "x-dp-mobile-token": mobile.token }));
+    expect(await ownerIdentity()).toEqual({ userId: "user_mobile" });
+    expect(authMock).not.toHaveBeenCalled();
   });
 });

@@ -1,10 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import {
   generateOpaqueToken,
   generateRoomCode,
   hashGuestToken,
   hashRoomCode,
+  exchangeMobileAuthorizationCode,
+  issueMobileAuthorizationCode,
+  issueMobileOwnerToken,
   isFixedReaction,
+  openMobileOwnerToken,
   normalizeRoomCode,
   openOwnerRoomCode,
   sanitizeChat,
@@ -51,6 +56,23 @@ describe("DP invitation and session security", () => {
     });
     const replacement = sealed.startsWith("A") ? "B" : "A";
     expect(openOwnerRoomCode(`${replacement}${sealed.slice(1)}`)).toBeNull();
+  });
+
+  it("exchanges a short-lived PKCE code for a time-limited mobile owner session", () => {
+    const now = 1_800_000_000_000;
+    const verifier = "test-verifier-with-at-least-forty-three-characters-123456";
+    const challenge = createHash("sha256").update(verifier).digest("base64url");
+    const code = issueMobileAuthorizationCode("user_mobile", challenge, now);
+    expect(exchangeMobileAuthorizationCode(code, verifier, now + 60_000)).toEqual({ userId: "user_mobile" });
+    expect(exchangeMobileAuthorizationCode(code, `${verifier}x`, now + 60_000)).toBeNull();
+    expect(exchangeMobileAuthorizationCode(code, verifier, now + 6 * 60_000)).toBeNull();
+
+    const session = issueMobileOwnerToken("user_mobile", now);
+    expect(openMobileOwnerToken(session.token, now + 60_000)).toEqual({
+      userId: "user_mobile",
+      expiresAt: session.expiresAt,
+    });
+    expect(openMobileOwnerToken(session.token, session.expiresAt + 1)).toBeNull();
   });
 
   it("accepts plain short chat and rejects links or malformed identity text", () => {
