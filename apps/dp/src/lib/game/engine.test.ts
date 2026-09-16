@@ -11,6 +11,7 @@ import {
   createPublicSnapshot,
   parseCard,
   setPlayerConnection,
+  setPlayerReady,
   setPlayerStack,
   setTableStatus,
   startHand,
@@ -141,7 +142,57 @@ describe("table and hand lifecycle", () => {
     expect(state.hand?.bigBlindSeat).toBe(0);
   });
 
-  it("lets a mid-hand arrival join only the next hand", () => {
+  it("keeps the same match players between hands without rechecking ready", () => {
+    let state = start(table([1_000, 1_000]));
+    state = act(state, "p0", "fold");
+    state = setPlayerReady(state, "p1", false, {
+      commandId: "not-ready-between-hands",
+      expectedVersion: state.version,
+    }).state;
+
+    state = start(state);
+
+    expect(state.matchNumber).toBe(1);
+    expect(state.hand?.players.map((player) => player.playerId).sort()).toEqual(["p0", "p1"]);
+  });
+
+  it("settles the match when a player busts, ranks stacks, and waits for a new match", () => {
+    let state = start(
+      table([100, 100]),
+      riggedDeck("Kc", "Ac", "Kd", "Ad", "2c", "3c", "4d", "7s", "5h", "9c", "Jh", "2d"),
+    );
+
+    state = act(state, "p0", "call");
+
+    expect(state.status).toBe("waiting");
+    expect(state.matchSettlement).toMatchObject({
+      matchNumber: 1,
+      reason: "player-busted",
+      standings: [
+        { playerId: "p0", stack: 200, rank: 1 },
+        { playerId: "p1", stack: 0, rank: 2 },
+      ],
+    });
+    expect(state.players.map((player) => player.ready)).toEqual([false, false]);
+    expect(() => start(state)).toThrowError(expect.objectContaining({ code: "NOT_ENOUGH_PLAYERS" }));
+
+    state = setPlayerReady(state, "p0", true, {
+      commandId: "ready-next-p0",
+      expectedVersion: state.version,
+    }).state;
+    state = setPlayerReady(state, "p1", true, {
+      commandId: "ready-next-p1",
+      expectedVersion: state.version,
+    }).state;
+    state = start(state);
+
+    expect(state.matchNumber).toBe(2);
+    expect(state.matchSettlement).toBeNull();
+    expect(state.players.map((player) => player.stack)).toEqual([900, 950]);
+    expect(state.hand?.players.map((player) => player.playerId).sort()).toEqual(["p0", "p1"]);
+  });
+
+  it("keeps a mid-match arrival waiting until the next match", () => {
     let state = start(table([1_000, 1_000]));
     state = addPlayer(
       state,
@@ -151,7 +202,8 @@ describe("table and hand lifecycle", () => {
     expect(state.hand?.players.map((player) => player.playerId)).not.toContain("late");
     state = act(state, "p0", "fold");
     state = start(state);
-    expect(state.hand?.players.map((player) => player.playerId)).toContain("late");
+    expect(state.hand?.players.map((player) => player.playerId)).not.toContain("late");
+    expect(state.players.find((player) => player.id === "late")?.ready).toBe(true);
   });
 
   it("rejects topping up a player in the current hand", () => {

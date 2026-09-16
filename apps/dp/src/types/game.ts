@@ -105,8 +105,26 @@ export interface HandHistoryItem {
   createdAt: string;
 }
 
+export interface MatchStandingState {
+  participantId: string;
+  nickname: string;
+  seat: number;
+  stack: number;
+  rank: number;
+}
+
+export interface MatchState {
+  matchNumber: number;
+  result: {
+    reason: "player-busted";
+    completedAt: string;
+    standings: MatchStandingState[];
+  } | null;
+}
+
 export interface RoomState {
   room: RoomSummary;
+  match: MatchState;
   viewer: ViewerState;
   participants: ParticipantState[];
   hand: HandState | null;

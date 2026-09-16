@@ -106,6 +106,21 @@ export interface HandSettlement {
   completedAt: number;
 }
 
+export interface MatchStanding {
+  playerId: string;
+  name: string;
+  seat: number;
+  stack: number;
+  rank: number;
+}
+
+export interface MatchSettlement {
+  matchNumber: number;
+  reason: "player-busted";
+  standings: MatchStanding[];
+  completedAt: number;
+}
+
 export interface HandState {
   id: string;
   street: BettingStreet;
@@ -133,6 +148,11 @@ export interface GameState {
   version: number;
   status: TableStatus;
   config: GameConfig;
+  /** Increments only when a fresh match starts; a match can contain many hands. */
+  matchNumber: number;
+  /** Fixed participants for the current match. New arrivals wait for the next match. */
+  matchPlayerIds: string[];
+  matchSettlement: MatchSettlement | null;
   handNumber: number;
   dealerSeat: number | null;
   players: TablePlayer[];
@@ -167,6 +187,7 @@ export interface GameEvent {
     | "player-acted"
     | "street-dealt"
     | "hand-settled"
+    | "match-settled"
     | "connection-changed"
     | "sit-out-changed";
   at: number;
@@ -231,6 +252,8 @@ export interface PublicGameSnapshot {
   version: number;
   status: TableStatus;
   config: GameConfig;
+  matchNumber: number;
+  matchSettlement: MatchSettlement | null;
   handNumber: number;
   dealerSeat: number | null;
   players: PublicPlayerSnapshot[];

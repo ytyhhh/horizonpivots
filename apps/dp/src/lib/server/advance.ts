@@ -15,7 +15,7 @@ export async function advanceRoomIfDue(room: DbRoom) {
   state = pruneResult.state;
   let rootActionId = pruneResult.rootActionId;
 
-  if (room.pause_after_hand && state.status === "waiting" && state.handNumber > 0) {
+  if (room.pause_after_hand && state.status === "waiting" && state.handNumber > 0 && !state.matchSettlement) {
     const commandId = randomUUID();
     rootActionId ??= commandId;
     state = setTableStatus(state, "paused", {
@@ -69,10 +69,13 @@ async function pruneInactivePlayers(roomId: string, initial: GameState) {
 }
 
 function shouldStartNextHand(state: GameState) {
-  if (state.handNumber < 1 || state.status !== "waiting") return false;
+  if (state.handNumber < 1 || state.status !== "waiting" || state.matchSettlement) return false;
   const settledAt = state.hand?.settlement?.completedAt;
   if (!settledAt || Date.now() - settledAt < SHOWDOWN_DISPLAY_MS) return false;
-  return state.players.filter((player) => player.ready && !player.sittingOut && player.stack > 0).length >= 2;
+  const matchPlayerIds = new Set(state.matchPlayerIds ?? []);
+  return state.players.filter(
+    (player) => matchPlayerIds.has(player.id) && !player.sittingOut && player.stack > 0,
+  ).length >= 2;
 }
 
 async function ownerIsOnline(roomId: string) {

@@ -3,6 +3,7 @@ import type {
   Card,
   GameState,
   HandSettlement,
+  MatchSettlement,
   PublicGameSnapshot,
 } from "./types";
 
@@ -31,6 +32,14 @@ function cloneSettlement(settlement: HandSettlement | null): HandSettlement | nu
   };
 }
 
+function cloneMatchSettlement(settlement: MatchSettlement | null | undefined): MatchSettlement | null {
+  if (!settlement) return null;
+  return {
+    ...settlement,
+    standings: settlement.standings.map((standing) => ({ ...standing })),
+  };
+}
+
 /**
  * Produces the only state shape suitable for clients. It never includes the deck,
  * burned cards, action ids, or another player's private cards during play.
@@ -45,6 +54,8 @@ export function createPublicSnapshot(
     version: state.version,
     status: state.status,
     config: { ...state.config },
+    matchNumber: state.matchNumber ?? (state.handNumber > 0 ? 1 : 0),
+    matchSettlement: cloneMatchSettlement(state.matchSettlement),
     handNumber: state.handNumber,
     dealerSeat: state.dealerSeat,
     players: state.players.map((player) => {

@@ -80,7 +80,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       await updateRoom(room.id, { pause_after_hand: false });
       if (state.status === "paused") {
         state = setTableStatus(state, "waiting", { commandId: actionId, expectedVersion: state.version }).state;
-        if (readyPlayerCount(state) >= 2) {
+        if (nextHandPlayerCount(state) >= 2) {
           state = startHand(state, { commandId: randomUUID(), expectedVersion: state.version }).state;
         }
       }
@@ -181,8 +181,14 @@ async function revokeAllGuestSessions(roomId: string) {
   await Promise.all((data ?? []).map((participant) => dpAdminClient().rpc("dp_revoke_guest_session", { p_room_id: roomId, p_participant_id: participant.id })));
 }
 
-function readyPlayerCount(state: GameState) {
-  return state.players.filter((player) => player.ready && !player.sittingOut && player.stack > 0).length;
+function nextHandPlayerCount(state: GameState) {
+  if (state.matchSettlement || !(state.matchPlayerIds?.length > 0)) {
+    return state.players.filter((player) => player.ready && !player.sittingOut).length;
+  }
+  const matchPlayerIds = new Set(state.matchPlayerIds);
+  return state.players.filter(
+    (player) => matchPlayerIds.has(player.id) && !player.sittingOut && player.stack > 0,
+  ).length;
 }
 
 function managementError(code: string) {

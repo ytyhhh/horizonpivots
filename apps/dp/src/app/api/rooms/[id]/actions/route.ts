@@ -84,8 +84,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     const settled = transition.events.some((event) => event.type === "hand-settled");
+    const matchSettled = transition.events.some((event) => event.type === "match-settled");
     let nextState = transition.state;
-    if (settled && room.pause_after_hand) {
+    if (settled && room.pause_after_hand && !matchSettled) {
       nextState = setTableStatus(nextState, "paused", {
         commandId: randomUUID(),
         expectedVersion: nextState.version,
@@ -96,7 +97,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       actionId,
       expectedVersion,
       actorParticipantId: actor.participantId,
-      actionKind: settled ? "hand_settled" : normalizeActionKind(type),
+      actionKind: matchSettled ? "match_settled" : settled ? "hand_settled" : normalizeActionKind(type),
       state: nextState,
       metadata: settled ? settlementMetadata(nextState) : actionMetadata(type, body.amount),
     });
@@ -161,7 +162,11 @@ function settlementMetadata(state: GameTransition["state"]) {
   return {
     handSettled: true,
     handNumber: state.handNumber,
-    summary: winners.length ? `${winners.join("、")} 赢得本手。` : "本手牌局已结算。",
+    matchSettled: Boolean(state.matchSettlement),
+    matchNumber: state.matchSettlement?.matchNumber ?? state.matchNumber,
+    summary: state.matchSettlement
+      ? `${state.matchSettlement.standings[0]?.name ?? "玩家"} 获得本局第一名。`
+      : winners.length ? `${winners.join("、")} 赢得本手。` : "本手牌局已结算。",
   };
 }
 

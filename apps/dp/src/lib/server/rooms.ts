@@ -229,7 +229,7 @@ export async function roomStatePayload(
   const snapshotIds = new Set(snapshot.players.map((player) => player.id));
   const participantState: RoomState["participants"] = snapshot.players.map((player) => {
     const db = byId.get(player.id);
-    const handStatus = player.handStatus;
+    const handStatus = snapshot.hand?.street === "showdown" ? null : player.handStatus;
     const status = player.sittingOut
       ? "away"
       : handStatus === "all-in"
@@ -306,6 +306,22 @@ export async function roomStatePayload(
       spectatorsAllowed: room.spectators_enabled,
       expiresAt: room.expires_at,
       realtimeTopic: `dp:${room.broadcast_topic}`,
+    },
+    match: {
+      matchNumber: snapshot.matchNumber,
+      result: snapshot.matchSettlement
+        ? {
+            reason: snapshot.matchSettlement.reason,
+            completedAt: new Date(snapshot.matchSettlement.completedAt).toISOString(),
+            standings: snapshot.matchSettlement.standings.map((standing) => ({
+              participantId: standing.playerId,
+              nickname: standing.name,
+              seat: standing.seat,
+              stack: standing.stack,
+              rank: standing.rank,
+            })),
+          }
+        : null,
     },
     viewer: {
       participantId: actor.participantId,

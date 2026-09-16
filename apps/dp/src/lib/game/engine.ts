@@ -11,6 +11,7 @@ import {
   type HandPlayerState,
   type HandState,
   type LegalActions,
+  type MatchSettlement,
   type PlayerAction,
   type PotAward,
   type SidePot,
@@ -112,6 +113,9 @@ export function createGameState(options: CreateGameStateOptions): GameState {
     version: 0,
     status: "waiting",
     config,
+    matchNumber: 0,
+    matchPlayerIds: [],
+    matchSettlement: null,
     handNumber: 0,
     dealerSeat: options.dealerSeat ?? null,
     players: players.sort((left, right) => left.seat - right.seat),
@@ -125,10 +129,21 @@ function cloneCards(cards: readonly Card[]): Card[] {
 }
 
 function cloneState(state: GameState): GameState {
+  const legacyMatchPlayers = state.handNumber > 0
+    ? state.players.filter((player) => player.ready && !player.sittingOut).map((player) => player.id)
+    : [];
   return {
     ...state,
     config: { ...state.config },
     players: state.players.map((player) => ({ ...player })),
+    matchNumber: state.matchNumber ?? (state.handNumber > 0 ? 1 : 0),
+    matchPlayerIds: [...(state.matchPlayerIds?.length ? state.matchPlayerIds : legacyMatchPlayers)],
+    matchSettlement: state.matchSettlement
+      ? {
+          ...state.matchSettlement,
+          standings: state.matchSettlement.standings.map((standing) => ({ ...standing })),
+        }
+      : null,
     processedActionIds: [...state.processedActionIds],
     hand: state.hand
       ? {
@@ -320,6 +335,44 @@ function settleByFold(state: GameState, now: number, events: GameEvent[]): void 
   };
   state.status = "waiting";
   events.push({ type: "hand-settled", at: now, playerId: winner.playerId, amount });
+  settleMatchIfPlayerBusted(state, now, events);
+}
+
+function settleMatchIfPlayerBusted(state: GameState, now: number, events: GameEvent[]): void {
+  const matchPlayerIds = state.matchPlayerIds ?? [];
+  if (!matchPlayerIds.length || state.matchSettlement) return;
+  const matchPlayers = state.players.filter((player) => matchPlayerIds.includes(player.id));
+  if (!matchPlayers.some((player) => player.stack === 0)) return;
+
+  const ordered = [...matchPlayers].sort((left, right) =>
+    right.stack - left.stack || left.seat - right.seat,
+  );
+  let previousStack: number | null = null;
+  let previousRank = 0;
+  const standings = ordered.map((player, index) => {
+    const rank = previousStack === player.stack ? previousRank : index + 1;
+    previousStack = player.stack;
+    previousRank = rank;
+    return {
+      playerId: player.id,
+      name: player.name,
+      seat: player.seat,
+      stack: player.stack,
+      rank,
+    };
+  });
+
+  const settlement: MatchSettlement = {
+    matchNumber: Math.max(1, state.matchNumber ?? 0),
+    reason: "player-busted",
+    standings,
+    completedAt: now,
+  };
+  state.matchSettlement = settlement;
+  matchPlayers.forEach((player) => {
+    player.ready = false;
+  });
+  events.push({ type: "match-settled", at: now });
 }
 
 function winnerOrder(state: GameState, winnerIds: readonly string[]): string[] {
@@ -376,6 +429,7 @@ function settleShowdown(state: GameState, now: number, events: GameEvent[]): voi
   hand.settlement = { reason: "showdown", pots, awards, completedAt: now };
   state.status = "waiting";
   events.push({ type: "hand-settled", at: now });
+  settleMatchIfPlayerBusted(state, now, events);
 }
 
 function dealNextStreet(hand: HandState): BettingStreet {
@@ -449,8 +503,24 @@ export function startHand(state: GameState, options: StartHandOptions): GameTran
   }
 
   const next = cloneState(state);
+  const beginsNewMatch = Boolean(next.matchSettlement) || (next.matchPlayerIds?.length ?? 0) === 0;
+  if (beginsNewMatch) {
+    const readyPlayers = next.players.filter((player) => player.ready && !player.sittingOut);
+    if (readyPlayers.length < 2) {
+      throw new PokerEngineError("NOT_ENOUGH_PLAYERS", "At least two ready players are needed for a match");
+    }
+    if (next.matchSettlement) {
+      readyPlayers.forEach((player) => {
+        player.stack = next.config.startingStack;
+      });
+    }
+    next.matchNumber = Math.max(0, next.matchNumber ?? 0) + 1;
+    next.matchPlayerIds = readyPlayers.map((player) => player.id);
+    next.matchSettlement = null;
+  }
+  const matchPlayers = new Set(next.matchPlayerIds ?? []);
   const eligible = next.players.filter(
-    (player) => player.ready && !player.sittingOut && player.stack > 0,
+    (player) => matchPlayers.has(player.id) && !player.sittingOut && player.stack > 0,
   );
   if (eligible.length < 2) {
     throw new PokerEngineError("NOT_ENOUGH_PLAYERS", "At least two ready players need chips");
@@ -480,7 +550,7 @@ export function startHand(state: GameState, options: StartHandOptions): GameTran
     }))
     .sort((left, right) => left.seat - right.seat);
   next.hand = {
-    id: options.handId ?? `${next.tableId}-${handNumber}`,
+    id: options.handId ?? `${next.tableId}-${next.matchNumber}-${handNumber}`,
     street: "preflop",
     board: [],
     deck,

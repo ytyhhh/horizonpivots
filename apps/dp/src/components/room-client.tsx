@@ -17,6 +17,7 @@ import {
   Play,
   ShareNetwork,
   SignOut,
+  Trophy,
   UsersThree,
 } from "@phosphor-icons/react";
 import { ApiError, errorMessage, fetchJsonWithClerkRetry } from "@/lib/api-client";
@@ -289,6 +290,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
   }
 
   const currentPlayer = state.participants.find((participant) => participant.id === state.hand?.actingParticipantId);
+  const matchFinished = Boolean(state.match.result);
   const isWaiting = state.room.status === "waiting" || state.hand?.phase === "waiting";
 
   return (
@@ -322,7 +324,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       {state.viewer.isOwner && ownerMenuOpen ? (
         <div className="owner-popover" role="menu" aria-label="房主管理">
           <div><CrownSimple size={19} weight="duotone" aria-hidden="true" /><span><strong>房主管理</strong><small>{state.room.code ? `房间号 ${state.room.code}` : "私密牌桌"}</small></span></div>
-          {state.room.status === "waiting" ? <button role="menuitem" type="button" onClick={() => manageRoom("start")} disabled={isPending}><Play size={17} weight="fill" aria-hidden="true" /> 开始牌局</button> : null}
+          {state.room.status === "waiting" ? <button role="menuitem" type="button" onClick={() => manageRoom("start")} disabled={isPending}><Play size={17} weight="fill" aria-hidden="true" /> {matchFinished ? "开始新局" : "开始牌局"}</button> : null}
           {state.room.status === "playing" ? <button role="menuitem" type="button" onClick={() => manageRoom("pause")} disabled={isPending}><Pause size={17} weight="fill" aria-hidden="true" /> 本手后暂停</button> : null}
           {state.room.status === "paused" ? <button role="menuitem" type="button" onClick={() => manageRoom("resume")} disabled={isPending}><Play size={17} weight="fill" aria-hidden="true" /> 继续牌局</button> : null}
           <button role="menuitem" type="button" onClick={() => manageRoom(state.room.locked ? "unlock" : "lock")} disabled={isPending}><LockKey size={17} weight="bold" aria-hidden="true" /> {state.room.locked ? "开放加入" : "锁定加入"}</button>
@@ -338,18 +340,26 @@ export function RoomClient({ roomId }: RoomClientProps) {
         <div className="table-column">
           <div className="table-meta">
             <div>
-              <span>第 {state.hand?.handNumber ?? 0} 手</span>
+              <span>第 {state.match.matchNumber || 1} 局 · 第 {state.hand?.handNumber ?? 0} 手</span>
               <strong>{currentPlayer ? `${currentPlayer.nickname} 行动` : statusCopy(state)}</strong>
             </div>
             {state.room.locked ? <span className="locked-state"><LockKey size={14} weight="fill" aria-hidden="true" /> 已锁定加入</span> : null}
           </div>
           <PokerTable state={state} secondsLeft={secondsLeft} />
 
-          {isWaiting ? (
+          {matchFinished && state.match.result ? (
+            <MatchResultPanel
+              state={state}
+              viewerParticipant={viewerParticipant}
+              pending={isPending}
+              onReady={() => startTransition(() => performAction("ready"))}
+              onSitOut={() => startTransition(() => performAction("sit_out"))}
+            />
+          ) : isWaiting ? (
             <div className="waiting-strip" aria-live="polite">
               <CardsThree size={21} weight="duotone" aria-hidden="true" />
               <span><strong>{state.participants.filter((person) => person.seat !== null).length < 2 ? "再等一位朋友" : "朋友已到，可以开局"}</strong><small>{state.viewer.isOwner ? "你可以从房主管理中开始第一手。" : "房主开始后会自动发牌。"}</small></span>
-              {state.viewer.role === "player" && viewerParticipant ? (
+              {state.viewer.role !== "spectator" && viewerParticipant ? (
                 viewerParticipant.status === "ready"
                   ? <button className="secondary-button secondary-button--dark" type="button" onClick={() => startTransition(() => performAction("sit_out"))} disabled={isPending}><SignOut size={17} weight="bold" aria-hidden="true" /> 暂时离桌</button>
                   : <button className="primary-button primary-button--gold" type="button" onClick={() => startTransition(() => performAction("ready"))} disabled={isPending}><Check size={17} weight="bold" aria-hidden="true" /> 准备好了</button>
@@ -379,6 +389,44 @@ export function RoomClient({ roomId }: RoomClientProps) {
       </div>
       {drawerOpen ? <button className="drawer-scrim" type="button" aria-label="关闭侧栏" onClick={() => setDrawerOpen(false)} /> : null}
     </main>
+  );
+}
+
+function MatchResultPanel({ state, viewerParticipant, pending, onReady, onSitOut }: {
+  state: RoomState;
+  viewerParticipant?: RoomState["participants"][number];
+  pending: boolean;
+  onReady: () => void;
+  onSitOut: () => void;
+}) {
+  const result = state.match.result;
+  if (!result) return null;
+  const isReady = viewerParticipant?.status === "ready";
+  const readyCount = state.participants.filter((participant) => participant.status === "ready").length;
+  return (
+    <section className="match-result-panel" aria-live="polite" aria-label={`第 ${state.match.matchNumber} 局排名`}>
+      <div className="match-result-panel__heading">
+        <Trophy size={22} weight="duotone" aria-hidden="true" />
+        <span><strong>第 {state.match.matchNumber} 局结束</strong><small>有玩家筹码归零，本局已自动结算。</small></span>
+      </div>
+      <ol className="match-ranking">
+        {result.standings.map((standing) => (
+          <li key={standing.participantId} className={standing.participantId === state.viewer.participantId ? "match-ranking__self" : undefined}>
+            <b>{standing.rank}</b>
+            <span>{standing.nickname}{standing.participantId === state.viewer.participantId ? "（你）" : ""}</span>
+            <strong>{formatChips(standing.stack)}</strong>
+          </li>
+        ))}
+      </ol>
+      <div className="match-result-panel__next">
+        <span><strong>{readyCount} 人已准备新局</strong><small>{state.viewer.isOwner ? "至少两人准备后，即可开始新局。" : "准备后等待房主开始新局。"}</small></span>
+        {state.viewer.role !== "spectator" && viewerParticipant ? (
+          isReady
+            ? <button className="secondary-button secondary-button--dark" type="button" onClick={onSitOut} disabled={pending}><SignOut size={17} weight="bold" aria-hidden="true" /> 取消准备</button>
+            : <button className="primary-button primary-button--gold" type="button" onClick={onReady} disabled={pending}><Check size={17} weight="bold" aria-hidden="true" /> 准备新局</button>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -525,6 +573,7 @@ function connectionLabel(connection: ConnectionState) {
 
 function statusCopy(state: RoomState) {
   if (state.room.status === "paused") return "牌局已暂停";
+  if (state.match.result) return "本局已结算，等待新局";
   if (state.room.status === "waiting") return "等待朋友加入";
   if (state.hand?.phase === "showdown") return state.hand.result?.title ?? "正在结算";
   return "牌局进行中";
