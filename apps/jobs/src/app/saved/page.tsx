@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { SavedJobsClient } from "@/components/saved-jobs-client";
-import { getJobs } from "@/lib/jobs";
 
 export const metadata: Metadata = {
   title: "收藏岗位",
 };
 
-export default async function SavedPage() {
-  const jobs = await getJobs({});
+export default function SavedPage() {
   return (
     <div className="page-shell pb-12 pt-7 sm:pt-10">
       <div className="max-w-2xl">
@@ -20,7 +18,7 @@ export default async function SavedPage() {
         </p>
       </div>
       <div className="mt-8">
-        <SavedJobsClient jobs={jobs} />
+        <SavedJobsClient />
       </div>
     </div>
   );

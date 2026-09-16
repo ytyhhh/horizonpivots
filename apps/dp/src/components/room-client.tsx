@@ -8,8 +8,8 @@ import {
   ArrowLeft,
   ArrowsClockwise,
   CardsThree,
-  ChatCircleDots,
   Check,
+  ClockCounterClockwise,
   CrownSimple,
   DotsThree,
   LockKey,
@@ -30,7 +30,7 @@ import {
   type BetPreset,
   type QueuedAction,
 } from "@/lib/smart-actions";
-import type { ActionKind, AvailableAction, RoomState } from "@/types/game";
+import type { ActionKind, AvailableAction, HandHistoryItem, RoomState } from "@/types/game";
 import { PokerTable } from "@/components/poker-table";
 import { TableDrawer } from "@/components/table-drawer";
 
@@ -51,6 +51,8 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [signInNeeded, setSignInNeeded] = useState(false);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [history, setHistory] = useState<HandHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [actionAmount, setActionAmount] = useState(0);
@@ -71,7 +73,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setState(next);
       setError(null);
       setSignInNeeded(false);
-      setConnection(next.room.realtimeTopic ? "live" : "polling");
+      setConnection((current) => current === "live" ? current : "polling");
     } catch (caught) {
       setError(errorMessage(caught));
       setSignInNeeded(caught instanceof ApiError && caught.status === 401);
@@ -82,10 +84,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
   }, [roomId]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    const timer = window.setTimeout(() => void refresh(true), 0);
+    if (!isLoaded) return;
+    const timer = window.setTimeout(() => void refresh(), 0);
     return () => window.clearTimeout(timer);
-  }, [isLoaded, isSignedIn, refresh]);
+  }, [isLoaded, refresh]);
 
   useEffect(() => {
     latestState.current = state;
@@ -110,21 +112,73 @@ export function RoomClient({ roomId }: RoomClientProps) {
   }, [refresh, roomId]);
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
+    if (!isLoaded) return;
+    const intervalMs = connection === "live" ? 60_000 : 15_000;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh(true);
-    }, 2500);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(interval);
+    }, intervalMs);
+    return () => window.clearInterval(interval);
+  }, [connection, isLoaded, refresh]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !state?.viewer.isOwner || connection !== "live") return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void fetchJsonWithClerkRetry<{ version: number }>(
+        `/api/rooms/${encodeURIComponent(roomId)}/heartbeat`,
+        undefined,
+        sessionTokenRef.current,
+      ).then(({ version }) => {
+        if (version !== latestState.current?.room.version) void refresh(true);
+      }).catch(() => setConnection("polling"));
+    }, 10_000);
+    return () => window.clearInterval(interval);
+  }, [connection, isLoaded, isSignedIn, refresh, roomId, state?.viewer.isOwner]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refresh(true);
     };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [refresh]);
 
   useEffect(() => {
     const topic = state?.room.realtimeTopic;
     if (!topic) return;
-    return subscribeToRoom(topic, () => void refresh(true));
+    return subscribeToRoom(
+      topic,
+      () => void refresh(true),
+      (nextConnection) => {
+        setConnection(nextConnection);
+        if (nextConnection === "live") void refresh(true);
+      },
+    );
   }, [refresh, state?.room.realtimeTopic]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    let cancelled = false;
+    void fetchJsonWithClerkRetry<{ history: HandHistoryItem[] }>(
+      `/api/rooms/${encodeURIComponent(roomId)}/history`,
+      undefined,
+      sessionTokenRef.current,
+    ).then((payload) => {
+      if (!cancelled) setHistory(payload.history);
+    }).catch((caught) => {
+      if (!cancelled) setError(errorMessage(caught));
+    }).finally(() => {
+      if (!cancelled) setHistoryLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [drawerOpen, roomId, state?.room.version]);
+
+  function openHistory() {
+    setHistoryLoading(true);
+    setDrawerOpen(true);
+  }
 
   const secondsLeft = useDeadline(state?.hand?.deadlineAt ?? null, performTimeout);
   const bettingAction = useMemo(
@@ -258,18 +312,6 @@ export function RoomClient({ roomId }: RoomClientProps) {
     });
   }
 
-  async function sendMessage(body: string, kind: "text" | "reaction") {
-    try {
-      await fetchJsonWithClerkRetry(`/api/rooms/${encodeURIComponent(roomId)}/messages`, {
-        method: "POST",
-        body: JSON.stringify({ body, kind }),
-      }, sessionTokenRef.current);
-      await refresh(true);
-    } catch (caught) {
-      setError(errorMessage(caught));
-    }
-  }
-
   async function shareRoom() {
     const code = state?.room.code;
     if (!code) return;
@@ -312,8 +354,8 @@ export function RoomClient({ roomId }: RoomClientProps) {
               <span>{copied ? "已复制" : "邀请"}</span>
             </button>
           ) : null}
-          <button className="header-control" type="button" onClick={() => setDrawerOpen(true)} aria-expanded={drawerOpen}>
-            <ChatCircleDots size={18} weight="bold" aria-hidden="true" /><span>聊天</span>
+          <button className="header-control" type="button" onClick={openHistory} aria-expanded={drawerOpen}>
+            <ClockCounterClockwise size={18} weight="bold" aria-hidden="true" /><span>记录</span>
           </button>
           {state.viewer.isOwner ? (
             <button className="icon-button icon-button--dark" type="button" onClick={() => setOwnerMenuOpen((open) => !open)} aria-label="房主管理" aria-expanded={ownerMenuOpen}><DotsThree size={22} weight="bold" aria-hidden="true" /></button>
@@ -385,7 +427,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
             />
           ) : null}
         </div>
-        <TableDrawer open={drawerOpen} messages={state.messages} history={state.history} pending={isPending} onClose={() => setDrawerOpen(false)} onSend={sendMessage} />
+        <TableDrawer open={drawerOpen} history={history} loading={historyLoading} onClose={() => setDrawerOpen(false)} />
       </div>
       {drawerOpen ? <button className="drawer-scrim" type="button" aria-label="关闭侧栏" onClick={() => setDrawerOpen(false)} /> : null}
     </main>
@@ -434,7 +476,7 @@ function ActionPanel({ state, amount, bettingAction, betPresets, queuedAction, p
   const actions = state.availableActions;
   const isViewerTurn = state.hand?.actingParticipantId === state.viewer.participantId;
   const viewer = state.participants.find((participant) => participant.id === state.viewer.participantId);
-  if (state.viewer.role === "spectator") return <div className="action-panel action-panel--message"><UsersThree size={20} weight="duotone" aria-hidden="true" /><span><strong>正在旁观</strong><small>你可以在聊天里回应朋友。</small></span></div>;
+  if (state.viewer.role === "spectator") return <div className="action-panel action-panel--message"><UsersThree size={20} weight="duotone" aria-hidden="true" /><span><strong>正在旁观</strong><small>你可以实时查看牌局进程。</small></span></div>;
   if (state.room.status === "paused") return <div className="action-panel action-panel--message"><Pause size={20} weight="duotone" aria-hidden="true" /><span><strong>牌局已暂停</strong><small>房主继续后会保留当前筹码。</small></span></div>;
   if (!isViewerTurn || !actions.length) {
     const canPreselect = Boolean(

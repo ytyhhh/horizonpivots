@@ -4,7 +4,7 @@ import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 import { JobCard, JobDetailPanel } from "@/components/job-card";
 import { SectionHeading } from "@/components/ui";
-import { getJob, getJobs } from "@/lib/jobs";
+import { getJob, getSimilarJobs } from "@/lib/jobs";
 
 export const dynamic = "force-dynamic";
 
@@ -29,17 +29,9 @@ export default async function JobPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [job, jobs] = await Promise.all([getJob(id), getJobs({})]);
+  const job = await getJob(id);
   if (!job) notFound();
-
-  const similar = jobs
-    .filter(
-      (item) =>
-        item.id !== job.id &&
-        (item.industry === job.industry ||
-          item.skills.some((skill) => job.skills.includes(skill))),
-    )
-    .slice(0, 3);
+  const similar = await getSimilarJobs(job, 3);
 
   return (
     <div className="page-shell pb-12 pt-6 sm:pt-9">

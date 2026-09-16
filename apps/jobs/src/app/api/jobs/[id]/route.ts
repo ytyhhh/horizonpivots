@@ -1,4 +1,4 @@
-import { getJob, getJobs } from "@/lib/jobs";
+import { getJob, getSimilarJobs } from "@/lib/jobs";
 
 export async function GET(
   _request: Request,
@@ -7,14 +7,6 @@ export async function GET(
   const { id } = await context.params;
   const job = await getJob(id);
   if (!job) return Response.json({ message: "岗位不存在" }, { status: 404 });
-  const jobs = await getJobs({});
-  const similar = jobs
-    .filter(
-      (item) =>
-        item.id !== job.id &&
-        (item.industry === job.industry ||
-          item.skills.some((skill) => job.skills.includes(skill))),
-    )
-    .slice(0, 5);
+  const similar = await getSimilarJobs(job, 5);
   return Response.json({ data: job, similar });
 }

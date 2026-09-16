@@ -194,7 +194,7 @@ export function AdminClient() {
             </section>
             {audit.length ? (
               <section className="participant-admin" aria-labelledby="audit-title">
-                <div className="participant-admin__heading"><ArrowsClockwise size={23} weight="duotone" aria-hidden="true" /><div><h2 id="audit-title">最近操作</h2><p>只保留必要的牌桌操作摘要，不包含底牌、牌堆或聊天正文。</p></div></div>
+                <div className="participant-admin__heading"><ArrowsClockwise size={23} weight="duotone" aria-hidden="true" /><div><h2 id="audit-title">最近操作</h2><p>只保留必要的牌桌操作摘要，不包含底牌或牌堆。</p></div></div>
                 <div className="participant-admin__grid">
                   {audit.slice(0, 12).map((entry) => (
                     <article key={entry.id} className="participant-row">

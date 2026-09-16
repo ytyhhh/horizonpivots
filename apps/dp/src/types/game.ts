@@ -89,15 +89,6 @@ export interface HandState {
   } | null;
 }
 
-export interface ChatMessage {
-  id: string;
-  participantId?: string | null;
-  nickname: string;
-  body: string;
-  kind: "text" | "reaction" | "system";
-  createdAt: string;
-}
-
 export interface HandHistoryItem {
   id: string;
   handNumber: number;
@@ -128,8 +119,6 @@ export interface RoomState {
   viewer: ViewerState;
   participants: ParticipantState[];
   hand: HandState | null;
-  messages: ChatMessage[];
-  history: HandHistoryItem[];
   availableActions: AvailableAction[];
 }
 

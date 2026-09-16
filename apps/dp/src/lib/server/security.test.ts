@@ -8,11 +8,9 @@ import {
   exchangeMobileAuthorizationCode,
   issueMobileAuthorizationCode,
   issueMobileOwnerToken,
-  isFixedReaction,
   openMobileOwnerToken,
   normalizeRoomCode,
   openOwnerRoomCode,
-  sanitizeChat,
   sanitizeNickname,
   sealOwnerRoomCode,
 } from "./security";
@@ -75,11 +73,7 @@ describe("DP invitation and session security", () => {
     expect(openMobileOwnerToken(session.token, session.expiresAt + 1)).toBeNull();
   });
 
-  it("accepts plain short chat and rejects links or malformed identity text", () => {
+  it("normalizes a valid display name", () => {
     expect(sanitizeNickname("  小明  ")).toBe("小明");
-    expect(sanitizeChat("这手打得好")).toBe("这手打得好");
-    expect(sanitizeChat("看 https://example.com")).toBeNull();
-    expect(isFixedReaction("👏")).toBe(true);
-    expect(isFixedReaction("打开链接")).toBe(false);
   });
 });

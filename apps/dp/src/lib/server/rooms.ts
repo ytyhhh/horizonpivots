@@ -45,19 +45,8 @@ export interface RoomActor {
   isOwner: boolean;
 }
 
-interface DbChatMessage {
-  id: string;
-  participant_id: string;
-  kind: "text" | "reaction";
-  content: string;
-  created_at: string;
-}
-
 interface DbActionLog {
   action_id: string;
-  participant_id: string | null;
-  action_kind: string;
-  resulting_version: number;
   metadata: Record<string, unknown> | null;
   created_at: string;
 }
@@ -209,22 +198,17 @@ export async function roomStatePayload(
   actor: RoomActor,
   options?: { stored?: { version: number; state: GameState } },
 ): Promise<RoomState> {
-  const [participants, stored, messagesResult, actionsResult, sealedCode] = await Promise.all([
+  const [participants, stored, sealedCode] = await Promise.all([
     participantsForRoom(room.id),
     options?.stored ? Promise.resolve(options.stored) : gameStateForRoom(room.id),
-    dpAdminClient().from("dp_chat_messages").select("id,participant_id,kind,content,created_at").eq("room_id", room.id).order("created_at", { ascending: false }).limit(80),
-    dpAdminClient().from("dp_action_log").select("action_id,participant_id,action_kind,resulting_version,metadata,created_at").eq("room_id", room.id).order("created_at", { ascending: false }).limit(60),
     actor.isOwner ? ownerRoomCode() : Promise.resolve(null),
   ]);
-  if (messagesResult.error) throw messagesResult.error;
-  if (actionsResult.error) throw actionsResult.error;
   if (!stored || stored.version !== room.version || stored.state.tableId !== room.id) {
     throw new Error("Poker state is unavailable or inconsistent.");
   }
 
   const viewerPlayerId = actor.role === "spectator" ? null : actor.participantId;
   const snapshot = createPublicSnapshot(stored.state, viewerPlayerId);
-  const names = new Map(participants.map((person) => [person.id, person.display_name]));
   const byId = new Map(participants.map((person) => [person.id, person]));
   const snapshotIds = new Set(snapshot.players.map((player) => player.id));
   const participantState: RoomState["participants"] = snapshot.players.map((player) => {
@@ -273,24 +257,6 @@ export async function roomStatePayload(
   }
 
   const viewer = byId.get(actor.participantId);
-  const messages = ((messagesResult.data ?? []) as unknown as DbChatMessage[]).reverse().map((message) => ({
-    id: message.id,
-    participantId: message.participant_id,
-    nickname: names.get(message.participant_id) ?? "已离桌玩家",
-    body: message.content,
-    kind: message.kind,
-    createdAt: message.created_at,
-  }));
-  const history = ((actionsResult.data ?? []) as unknown as DbActionLog[])
-    .filter((entry) => entry.action_kind === "hand_settled" || entry.metadata?.handSettled === true)
-    .slice(0, 20)
-    .map((entry) => ({
-      id: entry.action_id,
-      handNumber: numberMetadata(entry.metadata, "handNumber") ?? 0,
-      summary: stringMetadata(entry.metadata, "summary") ?? "本手牌局已结算。",
-      createdAt: entry.created_at,
-    }));
-
   return {
     room: {
       id: room.public_id,
@@ -332,10 +298,25 @@ export async function roomStatePayload(
     },
     participants: participantState,
     hand: toHandState(snapshot, stored.state, actor.participantId),
-    messages,
-    history,
     availableActions: toAvailableActions(snapshot),
   };
+}
+
+export async function handHistoryForRoom(roomId: string) {
+  const { data, error } = await dpAdminClient()
+    .from("dp_action_log")
+    .select("action_id,metadata,created_at")
+    .eq("room_id", roomId)
+    .in("action_kind", ["hand_settled", "match_settled"])
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return ((data ?? []) as unknown as DbActionLog[]).map((entry) => ({
+    id: entry.action_id,
+    handNumber: numberMetadata(entry.metadata, "handNumber") ?? 0,
+    summary: stringMetadata(entry.metadata, "summary") ?? "本手牌局已结算。",
+    createdAt: entry.created_at,
+  }));
 }
 
 export async function adminAuditForRoom(roomId: string) {

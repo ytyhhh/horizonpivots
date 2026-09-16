@@ -155,17 +155,3 @@ export function sanitizeNickname(value: unknown) {
   if (nickname.length < 1 || nickname.length > 20) return null;
   return nickname;
 }
-
-export function sanitizeChat(value: unknown) {
-  if (typeof value !== "string") return null;
-  const body = value.normalize("NFKC").replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
-  if (body.length < 1 || body.length > 240) return null;
-  if (/(?:https?:\/\/|www\.|[a-z0-9-]+\.(?:com|cn|net|org|io|xyz)\b)/iu.test(body)) return null;
-  return body;
-}
-
-export const fixedReactions = ["👍", "👏", "😂", "🤔", "好运", "好牌"] as const;
-
-export function isFixedReaction(value: unknown): value is (typeof fixedReactions)[number] {
-  return typeof value === "string" && fixedReactions.includes(value as (typeof fixedReactions)[number]);
-}

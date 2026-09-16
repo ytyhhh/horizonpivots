@@ -12,7 +12,7 @@ import {
   Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
 import { ArrowLink } from "@/components/ui";
-import { getJobs } from "@/lib/jobs";
+import { getHomepageJobs } from "@/lib/jobs";
 import { daysUntil, formatDate } from "@/lib/utils";
 import type { Job } from "@/types";
 
@@ -52,14 +52,7 @@ function EditorialJobTile({ job, index }: { job: Job; index: number }) {
 }
 
 export default async function Home() {
-  const jobs = await getJobs({});
-  const latest = jobs.slice(0, 4);
-  const urgent = jobs
-    .filter((job) => {
-      const days = daysUntil(job.deadline);
-      return days !== null && days >= 0 && days <= 30;
-    })
-    .slice(0, 4);
+  const { latest, urgent, total } = await getHomepageJobs();
 
   return (
     <>
@@ -100,7 +93,7 @@ export default async function Home() {
 
         <div className="hero-data-rail" data-hero>
           <div className="page-shell hero-data-grid">
-            <div><span>岗位动态</span><strong data-count={jobs.length}>{jobs.length}</strong><small>条可浏览机会</small></div>
+            <div><span>岗位动态</span><strong data-count={total}>{total}</strong><small>条可浏览机会</small></div>
             <div><span>覆盖方向</span><strong data-count="14">14</strong><small>个行业方向</small></div>
             <div><span>更新节奏</span><strong>6H</strong><small>持续核验</small></div>
             <a href="#latest"><span>浏览新近收录</span><ArrowDown size={23} weight="bold" /></a>

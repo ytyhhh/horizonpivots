@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { unstable_cache } from "next/cache";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -82,6 +83,35 @@ function rating(value: unknown) {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= 5 ? parsed : null;
 }
 
+const getPublishedReviews = unstable_cache(
+  async (url: string, targetType: string, targetId: string, limit: number) => {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+    if (!serviceRoleKey) throw new Error("review service is unavailable");
+    const params = new URLSearchParams({
+      select: "id,target_type,target_id,target,context,rating,grading_rating,difficulty_rating,content,instructor,term,is_historical,created_at",
+      status: "eq.published",
+      order: "created_at.desc,id.desc",
+      limit: String(limit),
+    });
+    if (targetType && targetId) {
+      params.set("target_type", `eq.${targetType}`);
+      params.set("target_id", `eq.${targetId}`);
+    }
+    const response = await fetch(`${url}/rest/v1/cuhksz_reviews?${params}`, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error("review service is unavailable");
+    return response.json() as Promise<ReviewRow[]>;
+  },
+  ["cuhksz-published-reviews-v1"],
+  { revalidate: 300, tags: ["cuhksz-published-reviews"] },
+);
+
 async function lookupTarget(url: string, serviceRoleKey: string, type: string, id: string, instructor: string, term: string) {
   const source = type === "course"
     ? { table: "cuhksz_courses", select: "code,name" }
@@ -125,29 +155,8 @@ export async function GET(request: NextRequest) {
   // deliberately high enough for the product data while keeping a malformed
   // request from turning into an unbounded database response.
   const limit = hasTarget ? MAX_DETAIL_REVIEWS : 2;
-  const params = new URLSearchParams({
-    select: "id,target_type,target_id,target,context,rating,grading_rating,difficulty_rating,content,instructor,term,is_historical,created_at",
-    status: "eq.published",
-    order: "created_at.desc,id.desc",
-    limit: String(limit),
-  });
-  if (hasTarget) {
-    params.set("target_type", `eq.${targetType}`);
-    params.set("target_id", `eq.${targetId}`);
-  }
-
   try {
-    const response = await fetch(`${url}/rest/v1/cuhksz_reviews?${params}`, {
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-      },
-      cache: "no-store",
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) return errorResponse("Review service is unavailable", 502);
-
-    const rows = (await response.json()) as ReviewRow[];
+    const rows = await getPublishedReviews(url, hasTarget ? targetType : "", hasTarget ? targetId : "", limit);
     return NextResponse.json(
       { reviews: rows },
       {

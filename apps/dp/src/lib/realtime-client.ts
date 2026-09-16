@@ -17,15 +17,26 @@ function getRealtimeClient() {
   return client;
 }
 
-export function subscribeToRoom(topic: string, onStateHint: () => void): () => void {
+export type RealtimeConnectionState = "live" | "polling";
+
+export function subscribeToRoom(
+  topic: string,
+  onStateHint: () => void,
+  onConnectionChange: (state: RealtimeConnectionState) => void,
+): () => void {
   const realtime = getRealtimeClient();
-  if (!realtime || !topic) return () => undefined;
+  if (!realtime || !topic) {
+    onConnectionChange("polling");
+    return () => undefined;
+  }
 
   let channel: RealtimeChannel | null = realtime.channel(topic, { config: { broadcast: { self: false } } });
   channel
     .on("broadcast", { event: "state" }, onStateHint)
     .on("broadcast", { event: "room" }, onStateHint)
-    .subscribe();
+    .subscribe((status) => {
+      onConnectionChange(status === "SUBSCRIBED" ? "live" : "polling");
+    });
 
   return () => {
     if (channel) void realtime.removeChannel(channel);
