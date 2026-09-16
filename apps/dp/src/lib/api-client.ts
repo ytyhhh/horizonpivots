@@ -35,6 +35,31 @@ export async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit)
   return response.json() as Promise<T>;
 }
 
+// A newly shared Clerk session can be visible to the client before its cookie
+// is accepted by the Route Handler. Only retry auth-related failures with a
+// fresh Clerk session token; the server still verifies the token and room owner.
+export async function fetchJsonWithClerkRetry<T>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  getToken?: (() => Promise<string | null>) | null,
+): Promise<T> {
+  try {
+    return await fetchJson<T>(input, init);
+  } catch (caught) {
+    if (!getToken || !(caught instanceof ApiError) || ![401, 403, 404].includes(caught.status)) throw caught;
+    let token: string | null;
+    try {
+      token = await getToken();
+    } catch {
+      throw caught;
+    }
+    if (!token) throw caught;
+    const headers = Object.fromEntries(new Headers(init?.headers).entries());
+    headers.Authorization = `Bearer ${token}`;
+    return fetchJson<T>(input, { ...init, headers });
+  }
+}
+
 export function roomIdFromResponse(payload: { roomId?: string; id?: string; publicId?: string; room?: { id?: string } }) {
   return payload.roomId ?? payload.publicId ?? payload.id ?? payload.room?.id ?? null;
 }

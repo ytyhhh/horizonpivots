@@ -156,8 +156,8 @@ export function LobbyClient({ canCreate }: LobbyClientProps) {
               <div className="settings-grid">
                 <NumberField label="座位数" value={settings.maxSeats} min={2} max={9} step={1} onChange={(maxSeats) => setSettings({ ...settings, maxSeats })} />
                 <NumberField label="起始筹码" value={settings.startingStack} min={1000} max={1000000} step={500} onChange={(startingStack) => setSettings({ ...settings, startingStack })} />
-                <NumberField label="小盲" value={settings.smallBlind} min={1} max={50000} step={5} onChange={(smallBlind) => setSettings({ ...settings, smallBlind })} />
-                <NumberField label="大盲" value={settings.bigBlind} min={2} max={100000} step={5} onChange={(bigBlind) => setSettings({ ...settings, bigBlind })} />
+                <NumberField label="小盲" value={settings.smallBlind} min={1} max={50000} step={1} onChange={(smallBlind) => setSettings({ ...settings, smallBlind })} />
+                <NumberField label="大盲" value={settings.bigBlind} min={2} max={100000} step={1} onChange={(bigBlind) => setSettings({ ...settings, bigBlind })} />
                 <NumberField label="行动时间" value={settings.actionSeconds} min={15} max={120} step={5} suffix="秒" onChange={(actionSeconds) => setSettings({ ...settings, actionSeconds })} />
               </div>
               {error ? <p className="form-error" role="alert">{error}</p> : null}

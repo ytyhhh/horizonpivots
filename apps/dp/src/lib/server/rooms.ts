@@ -134,8 +134,22 @@ async function ownerActorForRoom(room: DbRoom): Promise<RoomActor | null> {
     .select("id,role")
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
-  return { participantId: data.id as string, role: "owner", isOwner: true };
+  if (data) return { participantId: data.id as string, role: "owner", isOwner: true };
+
+  // A missed heartbeat is not proof that Clerk ownership or the seat vanished.
+  // Read the seat before denying the owner during an intermittent update race.
+  const { data: seat, error: seatError } = await dpAdminClient()
+    .from("dp_participants")
+    .select("id")
+    .eq("room_id", room.id)
+    .eq("kind", "owner")
+    .eq("clerk_user_id", room.owner_clerk_user_id)
+    .not("status", "in", "(left,kicked)")
+    .maybeSingle();
+  if (seatError) throw seatError;
+  if (!seat) return null;
+  console.warn(JSON.stringify({ event: "dp_owner_heartbeat_missed" }));
+  return { participantId: seat.id as string, role: "owner", isOwner: true };
 }
 
 export async function gameStateForRoom(roomId: string) {

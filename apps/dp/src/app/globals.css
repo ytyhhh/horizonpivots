@@ -119,6 +119,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .admin-heading p:last-child { margin: 0; color: var(--muted); font-size: 14px; }
 .notice { margin-bottom: 20px; padding: 13px 15px; border-radius: var(--radius-control); font-size: 13px; }
 .notice-error { color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--line)); background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }
+.notice-error a { margin-left: 8px; color: inherit; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
 .admin-content { display: grid; gap: 18px; }
 .room-overview, .participant-admin { padding: 28px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
 .room-overview__top { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
@@ -364,7 +365,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .room-failure > svg { margin-bottom: 20px; color: var(--game-gold); }
 .room-failure h1 { margin-bottom: 10px; font-size: 34px; letter-spacing: -.05em; }
 .room-failure p { margin-bottom: 24px; color: var(--game-muted); line-height: 1.6; }
-.room-failure > div { display: flex; gap: 9px; }
+.room-failure > div { display: flex; flex-wrap: wrap; gap: 9px; }
 
 @keyframes enter-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes skeleton-pulse { 50% { opacity: .48; } }

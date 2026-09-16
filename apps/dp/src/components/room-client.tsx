@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+import { loginUrl } from "@horizon/platform";
 import {
   ArrowLeft,
   ArrowsClockwise,
@@ -17,7 +19,7 @@ import {
   SignOut,
   UsersThree,
 } from "@phosphor-icons/react";
-import { errorMessage, fetchJson } from "@/lib/api-client";
+import { ApiError, errorMessage, fetchJsonWithClerkRetry } from "@/lib/api-client";
 import { subscribeToRoom } from "@/lib/realtime-client";
 import {
   buildBetPresets,
@@ -38,8 +40,14 @@ interface RoomClientProps {
 type ConnectionState = "connecting" | "live" | "polling" | "offline";
 
 export function RoomClient({ roomId }: RoomClientProps) {
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const sessionTokenRef = useRef<(() => Promise<string | null>) | null>(null);
+  useEffect(() => {
+    sessionTokenRef.current = isLoaded && isSignedIn ? getToken : null;
+  }, [getToken, isLoaded, isSignedIn]);
   const [state, setState] = useState<RoomState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [signInNeeded, setSignInNeeded] = useState(false);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
@@ -58,17 +66,25 @@ export function RoomClient({ roomId }: RoomClientProps) {
     requestInFlight.current = true;
     if (!silent) setConnection("connecting");
     try {
-      const next = await fetchJson<RoomState>(`/api/rooms/${encodeURIComponent(roomId)}/state`);
+      const next = await fetchJsonWithClerkRetry<RoomState>(`/api/rooms/${encodeURIComponent(roomId)}/state`, undefined, sessionTokenRef.current);
       setState(next);
       setError(null);
+      setSignInNeeded(false);
       setConnection(next.room.realtimeTopic ? "live" : "polling");
     } catch (caught) {
       setError(errorMessage(caught));
+      setSignInNeeded(caught instanceof ApiError && caught.status === 401);
       setConnection("offline");
     } finally {
       requestInFlight.current = false;
     }
   }, [roomId]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    const timer = window.setTimeout(() => void refresh(true), 0);
+    return () => window.clearTimeout(timer);
+  }, [isLoaded, isSignedIn, refresh]);
 
   useEffect(() => {
     latestState.current = state;
@@ -78,14 +94,14 @@ export function RoomClient({ roomId }: RoomClientProps) {
     const current = latestState.current;
     if (!current?.hand?.deadlineAt) return;
     try {
-      await fetchJson(`/api/rooms/${encodeURIComponent(roomId)}/actions`, {
+      await fetchJsonWithClerkRetry(`/api/rooms/${encodeURIComponent(roomId)}/actions`, {
         method: "POST",
         body: JSON.stringify({
           actionId: crypto.randomUUID(),
           expectedVersion: current.room.version,
           type: "timeout",
         }),
-      });
+      }, sessionTokenRef.current);
     } catch {
       // Another client may have advanced the same deadline first. Refresh resolves either result.
     }
@@ -147,7 +163,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
     setActionPending(true);
     setActionAnnouncement(`正在${actionVerb(type)}…`);
     try {
-      const payload = await fetchJson<RoomState | { state?: RoomState }>(`/api/rooms/${encodeURIComponent(roomId)}/actions`, {
+      const payload = await fetchJsonWithClerkRetry<RoomState | { state?: RoomState }>(`/api/rooms/${encodeURIComponent(roomId)}/actions`, {
         method: "POST",
         body: JSON.stringify({
           actionId: crypto.randomUUID(),
@@ -155,7 +171,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           type,
           ...(amount !== undefined ? { amount } : {}),
         }),
-      });
+      }, sessionTokenRef.current);
       const next = "state" in payload && payload.state ? payload.state : payload as RoomState;
       if (next.room) {
         latestState.current = next;
@@ -227,10 +243,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
     setError(null);
     startTransition(async () => {
       try {
-        const payload = await fetchJson<RoomState | { state?: RoomState }>(`/api/rooms/${encodeURIComponent(roomId)}`, {
+        const payload = await fetchJsonWithClerkRetry<RoomState | { state?: RoomState }>(`/api/rooms/${encodeURIComponent(roomId)}`, {
           method: "PATCH",
           body: JSON.stringify({ command, participantId, expectedVersion: state.room.version }),
-        });
+        }, sessionTokenRef.current);
         const next = "state" in payload && payload.state ? payload.state : payload as RoomState;
         if (next.room) setState(next);
         else await refresh(true);
@@ -243,10 +259,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
   async function sendMessage(body: string, kind: "text" | "reaction") {
     try {
-      await fetchJson(`/api/rooms/${encodeURIComponent(roomId)}/messages`, {
+      await fetchJsonWithClerkRetry(`/api/rooms/${encodeURIComponent(roomId)}/messages`, {
         method: "POST",
         body: JSON.stringify({ body, kind }),
-      });
+      }, sessionTokenRef.current);
       await refresh(true);
     } catch (caught) {
       setError(errorMessage(caught));
@@ -267,7 +283,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
   }
 
   if (!state && !error) return <RoomLoading />;
-  if (!state) return <RoomFailure message={error ?? "无法读取牌桌。"} onRetry={() => void refresh()} />;
+  if (!state) {
+    const returnUrl = `${process.env.NEXT_PUBLIC_DP_URL ?? "https://dp.horizonpivots.com"}/room/${encodeURIComponent(roomId)}`;
+    return <RoomFailure message={error ?? "无法读取牌桌。"} onRetry={() => void refresh()} signInHref={signInNeeded ? loginUrl(returnUrl) : undefined} />;
+  }
 
   const currentPlayer = state.participants.find((participant) => participant.id === state.hand?.actingParticipantId);
   const isWaiting = state.room.status === "waiting" || state.hand?.phase === "waiting";
@@ -437,11 +456,11 @@ function RoomLoading() {
   );
 }
 
-function RoomFailure({ message, onRetry }: { message: string; onRetry: () => void }) {
+function RoomFailure({ message, onRetry, signInHref }: { message: string; onRetry: () => void; signInHref?: string }) {
   return (
     <main className="game-page">
       <header className="game-header"><Link className="game-wordmark" href="/"><span>HP</span><strong>好友牌桌</strong></Link></header>
-      <section className="room-failure"><LockKey size={38} weight="duotone" aria-hidden="true" /><h1>暂时无法进入牌桌</h1><p>{message}</p><div><button className="primary-button primary-button--gold" type="button" onClick={onRetry}>重新连接</button><Link className="secondary-button secondary-button--dark" href="/">返回首页</Link></div></section>
+      <section className="room-failure"><LockKey size={38} weight="duotone" aria-hidden="true" /><h1>暂时无法进入牌桌</h1><p>{message}</p><div>{signInHref ? <a className="primary-button primary-button--gold" href={signInHref}>重新登录</a> : null}<button className={signInHref ? "secondary-button secondary-button--dark" : "primary-button primary-button--gold"} type="button" onClick={onRetry}>重新连接</button><Link className="secondary-button secondary-button--dark" href="/">返回首页</Link></div></section>
     </main>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+import { loginUrl } from "@horizon/platform";
 import {
   ArrowRight,
   ArrowsClockwise,
@@ -16,22 +18,28 @@ import {
   UsersThree,
 } from "@phosphor-icons/react";
 import { SiteHeader } from "@/components/site-header";
-import { errorMessage, fetchJson } from "@/lib/api-client";
+import { ApiError, errorMessage, fetchJsonWithClerkRetry } from "@/lib/api-client";
 import type { RoomState, RoomSummary } from "@/types/game";
 
 type AuditEntry = { id: string; action: string; actor: string; createdAt: string };
 type ActiveRoomPayload = (RoomState & { audit?: AuditEntry[] }) | { room: RoomSummary | null; participants?: RoomState["participants"]; audit?: AuditEntry[] };
 
 export function AdminClient() {
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const sessionTokenRef = useRef<(() => Promise<string | null>) | null>(null);
+  useEffect(() => {
+    sessionTokenRef.current = isLoaded && isSignedIn ? getToken : null;
+  }, [getToken, isLoaded, isSignedIn]);
   const [payload, setPayload] = useState<ActiveRoomPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [signInNeeded, setSignInNeeded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [settings, setSettings] = useState({ maxSeats: 6, startingStack: 10000, smallBlind: 50, bigBlind: 100, actionSeconds: 45 });
   const [isPending, startTransition] = useTransition();
 
   const refresh = useCallback(async () => {
     try {
-      const next = await fetchJson<ActiveRoomPayload>("/api/rooms/active");
+      const next = await fetchJsonWithClerkRetry<ActiveRoomPayload>("/api/rooms/active", undefined, sessionTokenRef.current);
       if (next.room) {
         setSettings({
           maxSeats: next.room.maxSeats,
@@ -43,15 +51,18 @@ export function AdminClient() {
       }
       setPayload(next);
       setError(null);
+      setSignInNeeded(false);
     } catch (caught) {
       setError(errorMessage(caught));
+      setSignInNeeded(caught instanceof ApiError && caught.status === 401);
     }
   }, []);
 
   useEffect(() => {
+    if (!isLoaded) return;
     const timer = window.setTimeout(() => void refresh(), 0);
     return () => window.clearTimeout(timer);
-  }, [refresh]);
+  }, [isLoaded, isSignedIn, refresh]);
 
   const room = payload?.room ?? null;
   const participants = payload && "participants" in payload ? payload.participants ?? [] : [];
@@ -63,10 +74,10 @@ export function AdminClient() {
     setError(null);
     startTransition(async () => {
       try {
-        await fetchJson(`/api/rooms/${encodeURIComponent(room.id)}`, {
+        await fetchJsonWithClerkRetry(`/api/rooms/${encodeURIComponent(room.id)}`, {
           method: "PATCH",
           body: JSON.stringify({ command, participantId, ...extra }),
-        });
+        }, sessionTokenRef.current);
         await refresh();
       } catch (caught) {
         setError(errorMessage(caught));
@@ -103,7 +114,7 @@ export function AdminClient() {
           </button>
         </div>
 
-        {error ? <div className="notice notice-error" role="alert">{error}</div> : null}
+        {error ? <div className="notice notice-error" role="alert">{error}{signInNeeded ? <a href={loginUrl(`${process.env.NEXT_PUBLIC_DP_URL ?? "https://dp.horizonpivots.com"}/admin`)}>重新登录</a> : null}</div> : null}
 
         {!payload && !error ? <AdminSkeleton /> : null}
         {payload && !room ? (
@@ -144,8 +155,8 @@ export function AdminClient() {
                   <div className="admin-settings__grid">
                     <AdminNumberField label="座位数" value={settings.maxSeats} min={2} max={9} step={1} onChange={(maxSeats) => setSettings({ ...settings, maxSeats })} />
                     <AdminNumberField label="起始筹码" value={settings.startingStack} min={1000} max={1000000} step={500} onChange={(startingStack) => setSettings({ ...settings, startingStack })} />
-                    <AdminNumberField label="小盲" value={settings.smallBlind} min={1} max={50000} step={5} onChange={(smallBlind) => setSettings({ ...settings, smallBlind })} />
-                    <AdminNumberField label="大盲" value={settings.bigBlind} min={2} max={100000} step={5} onChange={(bigBlind) => setSettings({ ...settings, bigBlind })} />
+                    <AdminNumberField label="小盲" value={settings.smallBlind} min={1} max={50000} step={1} onChange={(smallBlind) => setSettings({ ...settings, smallBlind })} />
+                    <AdminNumberField label="大盲" value={settings.bigBlind} min={2} max={100000} step={1} onChange={(bigBlind) => setSettings({ ...settings, bigBlind })} />
                     <AdminNumberField label="行动时间" value={settings.actionSeconds} min={15} max={120} step={5} suffix="秒" onChange={(actionSeconds) => setSettings({ ...settings, actionSeconds })} />
                   </div>
                 </form>
