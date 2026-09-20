@@ -348,7 +348,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .history-list article { padding: 12px; border-radius: 11px; background: var(--game-panel); }
 .history-list span { color: var(--game-gold); font-family: var(--font-geist-mono), monospace; font-size: 8px; }
 .history-list p { margin: 6px 0; color: #dfd4e2; font-size: 10px; line-height: 1.45; }
-.drawer-spinner { animation: drawer-spin .8s linear infinite; }
+.drawer-spinner { display: inline-flex; animation: drawer-spin .8s linear infinite; }
 .drawer-scrim { display: none; }
 @keyframes drawer-spin { to { transform: rotate(360deg); } }
 .room-loading { min-height: calc(100dvh - 56px); padding: 80px 8vw 130px; display: grid; align-content: center; gap: 30px; }

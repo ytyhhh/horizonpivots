@@ -18,7 +18,7 @@ export function TableDrawer({ open, history, loading, onClose }: TableDrawerProp
         <button className="icon-button drawer-close" type="button" onClick={onClose} aria-label="关闭侧栏"><X size={19} weight="bold" aria-hidden="true" /></button>
       </div>
       <div className="history-list" aria-live="polite">
-        {loading ? <div className="drawer-empty"><SpinnerGap className="drawer-spinner" size={27} aria-hidden="true" /><p>正在读取牌局记录…</p></div> : history.length ? history.map((item) => (
+        {loading ? <div className="drawer-empty"><span className="drawer-spinner"><SpinnerGap size={27} aria-hidden="true" /></span><p>正在读取牌局记录…</p></div> : history.length ? history.map((item) => (
           <article key={item.id}><span>第 {item.handNumber} 手</span><p>{item.summary}</p><time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time></article>
         )) : <div className="drawer-empty"><ClockCounterClockwise size={27} weight="duotone" aria-hidden="true" /><p>第一手结束后，这里会显示简要记录。</p></div>}
       </div>

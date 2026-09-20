@@ -6,7 +6,6 @@ import { PrimaryNav } from "@/components/primary-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getCurrentUserId } from "@/lib/auth";
 import { loginUrl, platformOrigins } from "@horizon/platform";
-import { ProductSwitcher } from "@horizon/platform/product-switcher";
 
 export async function AppHeader() {
   const userId = await getCurrentUserId();
@@ -17,10 +16,6 @@ export async function AppHeader() {
         <div className="header-island">
           <div className="page-shell flex items-center justify-between gap-5">
             <Brand compact />
-            <div className="header-product-switcher hidden items-center lg:flex">
-              <a href={platformOrigins.portal}>平台首页</a>
-              <ProductSwitcher active="jobs" />
-            </div>
             <PrimaryNav />
             <div className="flex items-center gap-2">
               <ThemeToggle />
