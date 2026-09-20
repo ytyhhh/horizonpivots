@@ -3,6 +3,7 @@ import "@radix-ui/themes/styles.css";
 import "./globals.css";
 import { AppTheme } from "@/components/app-theme";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_PHD_URL ?? "https://phd.horizonpivots.com"),
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ClerkProvider>
           <AppTheme>{children}</AppTheme>
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );

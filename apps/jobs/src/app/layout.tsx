@@ -3,6 +3,7 @@ import "geist/font/sans";
 import "geist/font/mono";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 import { AppHeader } from "@/components/app-header";
 import { AppFooter } from "@/components/app-footer";
 import { MotionRuntime } from "@/components/motion-runtime";
@@ -58,6 +59,7 @@ export default function RootLayout({
           </main>
           <AppFooter />
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );

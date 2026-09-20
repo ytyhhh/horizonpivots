@@ -2,6 +2,7 @@
 
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_CUHK_SZ_URL ?? "https://cuhksz.horizonpivots.com"),
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body>
         <ClerkProvider>{children}</ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );

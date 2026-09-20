@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 import "geist/font/sans";
 import "geist/font/mono";
 import "./globals.css";
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="zh-CN" suppressHydrationWarning>
       <body>
         <ClerkProvider>{children}</ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
