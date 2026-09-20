@@ -16,6 +16,7 @@
     "@horizon/platform": "file:../../packages/platform",
     "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "2.111.0",
+    "@vercel/analytics": "^2.0.1",
     "geist": "1.7.2",
     "next": "16.2.11",
     "react": "19.2.4",
