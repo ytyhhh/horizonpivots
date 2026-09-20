@@ -32,6 +32,11 @@ export interface HomepageJobs {
   total: number;
 }
 
+export interface PublicJobIndexEntry {
+  id: string;
+  lastModified: string;
+}
+
 const jobSelectColumns = "id,company,title,program,job_type,batch,industry,locations,cohort,skills,summary,description,deadline,apply_url,source_url,source_name,source_confidence,first_seen,last_seen,updated_at,status,fingerprint,cuhk_shenzhen_only";
 
 function hongKongDate(value: Date) {
@@ -109,6 +114,64 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
     fingerprint: String(row.fingerprint),
     cuhkShenzhenOnly,
   };
+}
+
+function demoPublicJobIndex(today: string): PublicJobIndexEntry[] {
+  return filterJobs(
+    filterJobsByAudience(demoJobs, false),
+    {},
+    new Date(`${today}T12:00:00+08:00`),
+  ).map((job) => ({
+    id: job.id,
+    lastModified: job.updatedAt ?? job.lastSeen ?? job.firstSeen,
+  }));
+}
+
+async function loadPublicJobIndex(today: string): Promise<PublicJobIndexEntry[]> {
+  const admin = createAdminClient();
+  const pageSize = 1_000;
+  const maximumJobs = 49_000;
+  const entries: PublicJobIndexEntry[] = [];
+
+  for (let offset = 0; offset < maximumJobs; offset += pageSize) {
+    const { data, error } = await admin
+      .from("jobs")
+      .select("id,updated_at,last_seen,first_seen")
+      .in("status", ["active", "stale"])
+      .eq("cuhk_shenzhen_only", false)
+      .or(`deadline.is.null,deadline.gte.${today}`)
+      .order("first_seen", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (error || !data) {
+      console.error("Unable to load the public job index:", error?.message);
+      return demoPublicJobIndex(today);
+    }
+
+    entries.push(...data.map((row) => ({
+      id: String(row.id),
+      lastModified: String(row.updated_at ?? row.last_seen ?? row.first_seen),
+    })));
+
+    if (data.length < pageSize) break;
+  }
+
+  return entries;
+}
+
+const cachedPublicJobIndex = unstable_cache(
+  async (today: string) => loadPublicJobIndex(today),
+  ["jobs-public-index-v1"],
+  { revalidate: 3_600, tags: ["jobs-public"] },
+);
+
+export async function getPublicJobIndex(now = new Date()): Promise<PublicJobIndexEntry[]> {
+  const today = hongKongDate(now);
+  if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return demoPublicJobIndex(today);
+  }
+  return cachedPublicJobIndex(today);
 }
 
 function encodeCursor(job: Job) {

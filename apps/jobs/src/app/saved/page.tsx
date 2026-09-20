@@ -3,6 +3,7 @@ import { SavedJobsClient } from "@/components/saved-jobs-client";
 
 export const metadata: Metadata = {
   title: "收藏岗位",
+  robots: { index: false, follow: false },
 };
 
 export default function SavedPage() {

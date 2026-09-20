@@ -4,6 +4,7 @@ import { EmailDomainAuth } from "@/components/email-domain-auth";
 
 export const metadata: Metadata = {
   title: "登录",
+  robots: { index: false, follow: false },
 };
 
 export default function LoginPage() {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "隐私说明",
+  description: "了解校招雷达如何处理简历、结构化求职画像、收藏与公开招聘信息。",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

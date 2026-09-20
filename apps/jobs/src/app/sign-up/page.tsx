@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { EmailDomainAuth } from "@/components/email-domain-auth";
 
-export const metadata: Metadata = { title: "注册账号" };
+export const metadata: Metadata = {
+  title: "注册账号",
+  robots: { index: false, follow: false },
+};
 
 export default function SignUpPage() {
   return (

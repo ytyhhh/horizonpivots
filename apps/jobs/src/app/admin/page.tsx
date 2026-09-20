@@ -4,7 +4,10 @@ import { AdminDashboard } from "@/components/admin-dashboard";
 import { getAdminDashboardData } from "@/lib/admin-dashboard";
 import { isAdmin } from "@/lib/auth";
 
-export const metadata: Metadata = { title: "数据状态" };
+export const metadata: Metadata = {
+  title: "数据状态",
+  robots: { index: false, follow: false },
+};
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
@@ -12,4 +15,3 @@ export default async function AdminPage() {
   const data = await getAdminDashboardData();
   return <AdminDashboard data={data} />;
 }
-

@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "简历画像",
   description: "安全解析简历并确认用于岗位推荐的结构化画像。",
+  robots: { index: false, follow: false },
 };
 
 async function loadProfile() {

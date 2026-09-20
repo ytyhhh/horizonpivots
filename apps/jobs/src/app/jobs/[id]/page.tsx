@@ -5,6 +5,12 @@ import { notFound } from "next/navigation";
 import { JobCard, JobDetailPanel } from "@/components/job-card";
 import { SectionHeading } from "@/components/ui";
 import { getJob, getSimilarJobs } from "@/lib/jobs";
+import {
+  buildJobStructuredData,
+  jobCanonicalUrl,
+  jobMetaDescription,
+  serializeJsonLd,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +24,28 @@ export async function generateMetadata({
   return job
     ? {
         title: `${job.company} ${job.title}`,
-        description: job.summary,
+        description: jobMetaDescription(job),
+        keywords: [job.company, job.title, job.type, job.cohort, job.industry, ...job.locations, ...job.skills],
+        alternates: { canonical: jobCanonicalUrl(job.id) },
+        robots: job.cuhkShenzhenOnly
+          ? { index: false, follow: false }
+          : { index: true, follow: true },
+        openGraph: {
+          type: "website",
+          url: jobCanonicalUrl(job.id),
+          title: `${job.company} ${job.title}`,
+          description: jobMetaDescription(job),
+        },
+        twitter: {
+          card: "summary",
+          title: `${job.company} ${job.title}`,
+          description: jobMetaDescription(job),
+        },
       }
-    : { title: "岗位不存在" };
+    : {
+        title: "岗位不存在",
+        robots: { index: false, follow: false },
+      };
 }
 
 export default async function JobPage({
@@ -32,9 +57,16 @@ export default async function JobPage({
   const job = await getJob(id);
   if (!job) notFound();
   const similar = await getSimilarJobs(job, 3);
+  const structuredData = buildJobStructuredData(job);
 
   return (
     <div className="page-shell pb-12 pt-6 sm:pt-9">
+      {!job.cuhkShenzhenOnly ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
+        />
+      ) : null}
       <Link
         href="/jobs"
         className="mb-6 inline-flex items-center gap-2 rounded-full text-sm font-semibold text-muted hover:text-foreground"

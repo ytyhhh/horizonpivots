@@ -6,8 +6,20 @@ import { getJobsPage } from "@/lib/jobs";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "岗位库",
-  description: "筛选最新秋招与实习岗位。",
+  title: "校招与实习岗位库",
+  description: "按行业、地点与届别筛选最新秋招、春招和实习岗位，查看截止日期、岗位说明、信息来源与申请入口。",
+  alternates: { canonical: "/jobs" },
+  openGraph: {
+    type: "website",
+    url: "/jobs",
+    title: "校招与实习岗位库",
+    description: "按行业、地点与届别筛选公开校招、春招和实习岗位。",
+  },
+  twitter: {
+    card: "summary",
+    title: "校招与实习岗位库",
+    description: "按行业、地点与届别筛选公开校招、春招和实习岗位。",
+  },
 };
 
 export default async function JobsPage({

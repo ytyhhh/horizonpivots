@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowDown,
@@ -17,6 +18,23 @@ import { daysUntil, formatDate } from "@/lib/utils";
 import type { Job } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: { absolute: "校招雷达｜2027届秋招、春招与实习岗位" },
+  description: "持续聚合并核验公开校招、春招与实习岗位，查看招聘公司、工作地点、截止日期、信息来源与申请入口。",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "校招雷达｜2027届秋招、春招与实习岗位",
+    description: "公开渠道持续更新，按公司、行业、地点与截止日期浏览校招和实习机会。",
+  },
+  twitter: {
+    card: "summary",
+    title: "校招雷达｜2027届秋招、春招与实习岗位",
+    description: "公开渠道持续更新，按公司、行业、地点与截止日期浏览校招和实习机会。",
+  },
+};
 
 const industries = [
   { name: "互联网", detail: "AI、软件、产品与数据", icon: ChartDonut, count: "01" },

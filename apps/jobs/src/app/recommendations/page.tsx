@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "为你推荐",
   description: "根据技能、经历和求职偏好生成可解释的岗位推荐。",
+  robots: { index: false, follow: false },
 };
 
 const tiers: RecommendationTier[] = ["高匹配", "值得尝试", "拓展机会"];
