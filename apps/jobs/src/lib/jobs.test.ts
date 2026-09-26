@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { demoJobs } from "@/data/demo-jobs";
-import { filterJobs, filterJobsByAudience } from "@/lib/jobs";
+import { filterJobs, filterJobsByAudience, guestJobPage } from "@/lib/jobs";
 
 const now = new Date("2026-07-30T12:00:00+08:00");
 
@@ -46,5 +46,27 @@ describe("job filtering", () => {
     const results = filterJobs(jobs, { cuhkShenzhenOnly: "true" }, now);
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("exclusive");
+  });
+
+  it("keeps guest search and cursors inside the same ten public jobs", () => {
+    const jobs = Array.from({ length: 12 }, (_, index) => ({
+      ...demoJobs[0],
+      id: `preview-${index}`,
+      title: index === 11 ? "hidden-role" : `visible-role-${index}`,
+    }));
+    const preview = guestJobPage(jobs, { limit: 50 }, now);
+    expect(preview.data).toHaveLength(10);
+    expect(preview.nextCursor).toBeNull();
+    expect(guestJobPage(jobs, { query: "hidden-role", cursor: "preview-9" }, now).data).toEqual([]);
+    expect(guestJobPage(jobs, { cursor: "preview-9" }, now).data).toHaveLength(10);
+  });
+
+  it("never shows exclusive or unapproved jobs in the guest preview", () => {
+    const jobs = [
+      { ...demoJobs[0], id: "public" },
+      { ...demoJobs[0], id: "exclusive", cuhkShenzhenOnly: true },
+      { ...demoJobs[0], id: "review", status: "review" as const },
+    ];
+    expect(guestJobPage(jobs, {}, now).data.map((job) => job.id)).toEqual(["public"]);
   });
 });

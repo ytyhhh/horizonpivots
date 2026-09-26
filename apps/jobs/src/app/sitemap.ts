@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPublicJobIndex } from "@/lib/jobs";
 import { JOBS_ORIGIN, jobCanonicalUrl } from "@/lib/seo";
 
-export const revalidate = 3_600;
+export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const jobs = await getPublicJobIndex();

@@ -4,7 +4,7 @@ import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 import { JobCard, JobDetailPanel } from "@/components/job-card";
 import { SectionHeading } from "@/components/ui";
-import { getJob, getSimilarJobs } from "@/lib/jobs";
+import { getGuestJobs, getJob, getSimilarJobs } from "@/lib/jobs";
 import {
   buildJobStructuredData,
   jobCanonicalUrl,
@@ -21,15 +21,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const job = await getJob(id);
+  const isPublicPreview = Boolean(job && !job.cuhkShenzhenOnly &&
+    (await getGuestJobs()).some((preview) => preview.id === id));
   return job
     ? {
         title: `${job.company} ${job.title}`,
         description: jobMetaDescription(job),
         keywords: [job.company, job.title, job.type, job.cohort, job.industry, ...job.locations, ...job.skills],
         alternates: { canonical: jobCanonicalUrl(job.id) },
-        robots: job.cuhkShenzhenOnly
-          ? { index: false, follow: false }
-          : { index: true, follow: true },
+        robots: isPublicPreview
+          ? { index: true, follow: true }
+          : { index: false, follow: false },
         openGraph: {
           type: "website",
           url: jobCanonicalUrl(job.id),
@@ -57,14 +59,15 @@ export default async function JobPage({
   const job = await getJob(id);
   if (!job) notFound();
   const similar = await getSimilarJobs(job, 3);
-  const structuredData = buildJobStructuredData(job);
+  const isPublicPreview = !job.cuhkShenzhenOnly &&
+    (await getGuestJobs()).some((preview) => preview.id === id);
 
   return (
     <div className="page-shell pb-12 pt-6 sm:pt-9">
-      {!job.cuhkShenzhenOnly ? (
+      {isPublicPreview ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildJobStructuredData(job)) }}
         />
       ) : null}
       <Link

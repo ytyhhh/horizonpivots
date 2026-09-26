@@ -1,9 +1,11 @@
 "use client";
 
 import { FunnelSimple, MagnifyingGlass, SpinnerGap, X } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { loginUrl, platformOrigins } from "@horizon/platform";
 import { EmptyState } from "@/components/ui";
-import { JobCard, JobDetailPanel } from "@/components/job-card";
+import { JobCard } from "@/components/job-card";
 import type { Job } from "@/types";
 
 const types = ["全部", "秋招", "春招", "实习"] as const;
@@ -15,6 +17,7 @@ interface JobsExplorerProps {
   initialIndustry: string;
   initialCuhkShenzhenOnly: boolean;
   canFilterCuhkShenzhen: boolean;
+  isSignedIn: boolean;
 }
 
 export function JobsExplorer({
@@ -24,6 +27,7 @@ export function JobsExplorer({
   initialIndustry,
   initialCuhkShenzhenOnly,
   canFilterCuhkShenzhen,
+  isSignedIn,
 }: JobsExplorerProps) {
   const [jobs, setJobs] = useState(initialJobs);
   const [nextCursor, setNextCursor] = useState(initialCursor);
@@ -33,7 +37,6 @@ export function JobsExplorer({
   const [industry, setIndustry] = useState(initialIndustry);
   const [location, setLocation] = useState("全部地点");
   const [cuhkShenzhenOnly, setCuhkShenzhenOnly] = useState(initialCuhkShenzhenOnly);
-  const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -61,7 +64,7 @@ export function JobsExplorer({
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ limit: "50" });
+        const params = new URLSearchParams({ limit: isSignedIn ? "50" : "10" });
         Object.entries(filters).forEach(([key, value]) => {
           if (value) params.set(key, value);
         });
@@ -75,7 +78,6 @@ export function JobsExplorer({
         setJobs(page.data);
         setNextCursor(page.nextCursor);
         setTotal(page.total);
-        setSelectedId(page.data[0]?.id ?? "");
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           setJobs([]);
@@ -90,7 +92,7 @@ export function JobsExplorer({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [filters, query]);
+  }, [filters, query, isSignedIn]);
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
@@ -115,7 +117,6 @@ export function JobsExplorer({
     }
   }
 
-  const selected = jobs.find((job) => job.id === selectedId) ?? jobs[0] ?? null;
   const hasFilters =
     query ||
     type !== "全部" ||
@@ -147,6 +148,19 @@ export function JobsExplorer({
 
   return (
     <div>
+      {!isSignedIn ? (
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-[1.1rem] border border-accent/20 bg-accent-soft px-5 py-4">
+          <p className="text-sm leading-6 text-foreground">
+            当前可预览最新 10 个岗位。登录后浏览完整岗位库。
+          </p>
+          <Link
+            href={loginUrl(new URL("/jobs", platformOrigins.jobs).toString())}
+            className="inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-semibold text-white"
+          >
+            登录查看全部
+          </Link>
+        </div>
+      ) : null}
       <section aria-label="岗位筛选" className="sticky top-[4.75rem] z-20 rounded-[1.15rem] border border-border/75 bg-surface/94 p-3 shadow-[0_12px_40px_rgba(20,35,24,.07)] backdrop-blur-xl sm:p-4">
         <div className="relative">
           <MagnifyingGlass
@@ -263,31 +277,10 @@ export function JobsExplorer({
       </div>
 
       {jobs.length ? (
-        <div className="mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,.82fr)_minmax(0,1.18fr)]">
-          <div className="grid gap-3">
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                onClick={(event) => {
-                  if (window.matchMedia("(min-width: 1024px)").matches) {
-                    event.preventDefault();
-                    setSelectedId(job.id);
-                  }
-                }}
-              >
-                <JobCard
-                  job={job}
-                  selected={job.id === selected?.id}
-                  href={`/jobs/${job.id}`}
-                />
-              </div>
-            ))}
-          </div>
-          {selected ? (
-            <div className="sticky top-[10.6rem] hidden lg:block">
-              <JobDetailPanel job={selected} />
-            </div>
-          ) : null}
+        <div className="mt-4 grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {jobs.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
         </div>
       ) : (
         <div className="mt-4">

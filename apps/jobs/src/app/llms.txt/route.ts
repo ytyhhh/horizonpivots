@@ -14,8 +14,8 @@ export function GET() {
 ## Public content
 
 - [首页](${JOBS_ORIGIN}): 产品说明、新近收录岗位与近期截止岗位。
-- [岗位库](${JOBS_ORIGIN}/jobs): 可公开浏览的校招、春招和实习岗位。
-- [站点地图](${JOBS_ORIGIN}/sitemap.xml): 当前可索引的公开岗位详情页。
+- [岗位库](${JOBS_ORIGIN}/jobs): 访客可预览最新 10 个校招、春招和实习岗位；登录后可浏览完整岗位库。
+- [站点地图](${JOBS_ORIGIN}/sitemap.xml): 当前可公开访问的岗位详情页。
 - [隐私说明](${JOBS_ORIGIN}/privacy): 数据处理与用户隐私边界。
 
 ## Job page semantics
@@ -31,6 +31,7 @@ export function GET() {
 ## Access boundaries
 
 - /profile、/saved、/recommendations、/admin、/api、/login 和 /sign-up 不是公开检索内容。
+- 其余岗位详情要求登录，不包含在公开 sitemap 中。
 - 港中深专属岗位只对通过资格验证的用户开放，不包含在公开 sitemap 或本文件中。
 `;
 

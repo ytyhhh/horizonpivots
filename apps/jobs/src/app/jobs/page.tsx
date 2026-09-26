@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JobsExplorer } from "@/components/jobs-explorer";
-import { canViewCuhkShenzhenJobs } from "@/lib/auth";
+import { canViewCuhkShenzhenJobs, getCurrentUserId } from "@/lib/auth";
 import { getJobsPage } from "@/lib/jobs";
 
 export const dynamic = "force-dynamic";
@@ -28,13 +28,16 @@ export default async function JobsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const canFilterCuhkShenzhen = await canViewCuhkShenzhenJobs();
+  const [userId, canFilterCuhkShenzhen] = await Promise.all([
+    getCurrentUserId(),
+    canViewCuhkShenzhenJobs(),
+  ]);
   const initialCuhkShenzhenOnly =
     canFilterCuhkShenzhen && params.cuhkShenzhenOnly === "true";
   const initialPage = await getJobsPage({
     industry: typeof params.industry === "string" ? params.industry : undefined,
     cuhkShenzhenOnly: initialCuhkShenzhenOnly ? "true" : undefined,
-    limit: 50,
+    limit: userId ? 50 : 10,
   });
 
   return (
@@ -56,6 +59,7 @@ export default async function JobsPage({
           initialIndustry={typeof params.industry === "string" ? params.industry : "全部行业"}
           initialCuhkShenzhenOnly={initialCuhkShenzhenOnly}
           canFilterCuhkShenzhen={canFilterCuhkShenzhen}
+          isSignedIn={Boolean(userId)}
         />
       </div>
     </div>

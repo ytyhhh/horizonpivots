@@ -1,6 +1,6 @@
 import { demoJobs } from "@/data/demo-jobs";
 import { unstable_cache } from "next/cache";
-import { canViewCuhkShenzhenJobs } from "@/lib/auth";
+import { canViewCuhkShenzhenJobs, getCurrentUserId } from "@/lib/auth";
 import { externalApplyUrl } from "@/lib/ingestion/cuhk-shenzhen";
 import { jobQuerySchema } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -37,6 +37,8 @@ export interface PublicJobIndexEntry {
   lastModified: string;
 }
 
+export const GUEST_JOB_LIMIT = 10;
+
 const jobSelectColumns = "id,company,title,program,job_type,batch,industry,locations,cohort,skills,summary,description,deadline,apply_url,source_url,source_name,source_confidence,first_seen,last_seen,updated_at,status,fingerprint,cuhk_shenzhen_only";
 
 function hongKongDate(value: Date) {
@@ -52,7 +54,7 @@ export function filterJobs(jobs: Job[], input: JobQuery, now = new Date()) {
   const parsed = jobQuerySchema.parse(input);
   const normalized = parsed.query.toLocaleLowerCase();
   const filtered = jobs.filter((job) => {
-    if (job.status === "archived" || isExpired(job.deadline, now)) return false;
+    if ((job.status !== "active" && job.status !== "stale") || isExpired(job.deadline, now)) return false;
     if (normalized && !toJobSearchText(job).includes(normalized)) return false;
     if (parsed.type && job.type !== parsed.type) return false;
     if (parsed.industry && job.industry !== parsed.industry) return false;
@@ -116,62 +118,57 @@ function mapDatabaseJob(row: Record<string, unknown>): Job {
   };
 }
 
-function demoPublicJobIndex(today: string): PublicJobIndexEntry[] {
-  return filterJobs(
-    filterJobsByAudience(demoJobs, false),
-    {},
-    new Date(`${today}T12:00:00+08:00`),
-  ).map((job) => ({
+function demoGuestJobs(now: Date) {
+  return filterJobs(filterJobsByAudience(demoJobs, false), {}, now).slice(0, GUEST_JOB_LIMIT);
+}
+
+async function loadGuestJobs(today: string): Promise<Job[]> {
+  const { data, error } = await createAdminClient()
+    .from("jobs")
+    .select(jobSelectColumns)
+    .in("status", ["active", "stale"])
+    .eq("cuhk_shenzhen_only", false)
+    .or(`deadline.is.null,deadline.gte.${today}`)
+    .order("first_seen", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(GUEST_JOB_LIMIT);
+
+  if (error || !data) {
+    console.error("Unable to load guest job previews:", error?.message);
+    return demoGuestJobs(new Date());
+  }
+  return data.map(mapDatabaseJob);
+}
+
+const cachedGuestJobs = unstable_cache(
+  async (today: string) => loadGuestJobs(today),
+  ["jobs-guest-previews-v1"],
+  { revalidate: 300, tags: ["jobs-public"] },
+);
+
+export async function getGuestJobs(now = new Date()): Promise<Job[]> {
+  if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return demoGuestJobs(now);
+  }
+  return cachedGuestJobs(hongKongDate(now));
+}
+
+export async function getPublicJobIndex(now = new Date()): Promise<PublicJobIndexEntry[]> {
+  return (await getGuestJobs(now)).map((job) => ({
     id: job.id,
     lastModified: job.updatedAt ?? job.lastSeen ?? job.firstSeen,
   }));
 }
 
-async function loadPublicJobIndex(today: string): Promise<PublicJobIndexEntry[]> {
-  const admin = createAdminClient();
-  const pageSize = 1_000;
-  const maximumJobs = 49_000;
-  const entries: PublicJobIndexEntry[] = [];
-
-  for (let offset = 0; offset < maximumJobs; offset += pageSize) {
-    const { data, error } = await admin
-      .from("jobs")
-      .select("id,updated_at,last_seen,first_seen")
-      .in("status", ["active", "stale"])
-      .eq("cuhk_shenzhen_only", false)
-      .or(`deadline.is.null,deadline.gte.${today}`)
-      .order("first_seen", { ascending: false })
-      .order("id", { ascending: false })
-      .range(offset, offset + pageSize - 1);
-
-    if (error || !data) {
-      console.error("Unable to load the public job index:", error?.message);
-      return demoPublicJobIndex(today);
-    }
-
-    entries.push(...data.map((row) => ({
-      id: String(row.id),
-      lastModified: String(row.updated_at ?? row.last_seen ?? row.first_seen),
-    })));
-
-    if (data.length < pageSize) break;
-  }
-
-  return entries;
-}
-
-const cachedPublicJobIndex = unstable_cache(
-  async (today: string) => loadPublicJobIndex(today),
-  ["jobs-public-index-v1"],
-  { revalidate: 3_600, tags: ["jobs-public"] },
-);
-
-export async function getPublicJobIndex(now = new Date()): Promise<PublicJobIndexEntry[]> {
-  const today = hongKongDate(now);
-  if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return demoPublicJobIndex(today);
-  }
-  return cachedPublicJobIndex(today);
+export function guestJobPage(jobs: Job[], input: JobQuery, now = new Date()): JobPage {
+  // Filters only narrow the fixed preview set. Cursor and requested page size
+  // cannot be used to enumerate jobs beyond the ten public previews.
+  const data = filterJobs(
+    filterJobsByAudience(jobs.slice(0, GUEST_JOB_LIMIT), false),
+    input,
+    now,
+  );
+  return { data, nextCursor: null, total: data.length };
 }
 
 function encodeCursor(job: Job) {
@@ -203,6 +200,8 @@ const cachedPublicJobsPage = unstable_cache(
 export async function getJobsPage(input: JobQuery = {}): Promise<JobPage> {
   const parsed = jobQuerySchema.parse(input);
   const limit = parsed.limit;
+  const userId = await getCurrentUserId();
+  if (!userId) return guestJobPage(await getGuestJobs(), parsed);
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
 
   if (parsed.cuhkShenzhenOnly === "true" && !canViewCuhkShenzhenOnly) {
@@ -305,6 +304,11 @@ const cachedPublicHomepageJobs = unstable_cache(
 export async function getJobsByIds(ids: string[]): Promise<Job[]> {
   const uniqueIds = [...new Set(ids)].slice(0, 100);
   if (!uniqueIds.length) return [];
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const byId = new Map((await getGuestJobs()).map((job) => [job.id, job]));
+    return uniqueIds.flatMap((id) => byId.get(id) ?? []);
+  }
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const matching = withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly)
@@ -338,6 +342,8 @@ export async function getJobsByIds(ids: string[]): Promise<Job[]> {
 }
 
 export async function getJobs(input: JobQuery = {}): Promise<Job[]> {
+  const userId = await getCurrentUserId();
+  if (!userId) return guestJobPage(await getGuestJobs(), input).data;
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return filterJobs(
@@ -366,6 +372,18 @@ export async function getJobs(input: JobQuery = {}): Promise<Job[]> {
 }
 
 export async function getHomepageJobs(now = new Date()): Promise<HomepageJobs> {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    const jobs = await getGuestJobs(now);
+    return {
+      latest: jobs.slice(0, 4),
+      urgent: jobs.filter((job) => {
+        const days = daysUntil(job.deadline, now);
+        return days !== null && days >= 0 && days <= 30;
+      }).slice(0, 4),
+      total: jobs.length,
+    };
+  }
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const jobs = filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), {}, now);
@@ -449,6 +467,12 @@ async function loadHomepageJobs(
 }
 
 export async function getSimilarJobs(job: Job, limit = 3): Promise<Job[]> {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return (await getGuestJobs())
+      .filter((item) => item.id !== job.id && (item.industry === job.industry || item.skills.some((skill) => job.skills.includes(skill))))
+      .slice(0, limit);
+  }
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return filterJobs(withCuhkShenzhenJobs(demoJobs, canViewCuhkShenzhenOnly), {})
@@ -502,6 +526,8 @@ const cachedPublicJob = unstable_cache(
 );
 
 export async function getJob(id: string) {
+  const userId = await getCurrentUserId();
+  if (!userId) return (await getGuestJobs()).find((job) => job.id === id) ?? null;
   const canViewCuhkShenzhenOnly = await canViewCuhkShenzhenJobs();
   if (!isConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return filterJobs(
