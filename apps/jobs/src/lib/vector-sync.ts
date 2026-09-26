@@ -97,7 +97,7 @@ export async function syncProfileEmbedding(
   if (data?.embedding_source_hash === hash && data.embedding_model === model) return false;
 
   const [embedding] = await createEmbeddings([text]);
-  const { error: updateError } = await admin
+  const { data: updated, error: updateError } = await admin
     .from("candidate_profiles")
     .update({
       embedding,
@@ -106,8 +106,12 @@ export async function syncProfileEmbedding(
       embedding_model: model,
       embedded_at: new Date().toISOString(),
     })
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("version", profile.version)
+    .select("user_id")
+    .maybeSingle();
   if (updateError) throw updateError;
+  if (!updated) return false;
   await admin.from("recommendation_cache").delete().eq("user_id", userId);
   return true;
 }

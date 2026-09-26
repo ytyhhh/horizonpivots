@@ -4,6 +4,7 @@ import { Info, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { demoProfile } from "@/data/demo-jobs";
 import { getJobs } from "@/lib/jobs";
+import { mapCandidateProfileRow } from "@/lib/profile-data";
 import { recommendJobs } from "@/lib/recommendation";
 import { getCurrentUserId } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -34,27 +35,15 @@ async function getProfile(): Promise<{
 
   return {
     demoMode: false,
-    profile: {
-      userId,
-      graduationYear: data.graduation_year,
-      education: data.education,
-      major: data.major,
-      skills: data.skills ?? [],
-      experiences: data.experiences ?? [],
-      projectDomains: data.project_domains ?? [],
-      preferredLocations: data.preferred_locations ?? [],
-      preferredIndustries: data.preferred_industries ?? [],
-      preferredRoles: data.preferred_roles ?? [],
-      excludedCompanies: data.excluded_companies ?? [],
-      confirmed: data.confirmed,
-      version: data.version,
-    },
+    profile: mapCandidateProfileRow(data, userId),
   };
 }
 
 export default async function RecommendationsPage() {
   const [jobs, profileResult] = await Promise.all([getJobs({}), getProfile()]);
-  const recommendations = recommendJobs(profileResult.profile, jobs);
+  const recommendations = profileResult.profile.confirmed
+    ? recommendJobs(profileResult.profile, jobs)
+    : [];
 
   return (
     <div className="page-shell pb-12 pt-7 sm:pt-10">
@@ -87,6 +76,11 @@ export default async function RecommendationsPage() {
       ) : null}
 
       <div className="mt-12 grid gap-14">
+        {!profileResult.profile.confirmed ? (
+          <div className="rounded-[1rem] border border-border bg-surface p-6 text-sm text-muted">
+            你的画像仍是草稿。<Link href="/profile" className="font-semibold text-accent underline">确认画像</Link>后才会用于推荐。
+          </div>
+        ) : null}
         {tiers.map((tier) => {
           const items = recommendations.filter((item) => item.tier === tier).slice(0, 4);
           if (!items.length) return null;

@@ -7,6 +7,7 @@ import type {
   RecommendationTier,
 } from "@/types";
 import { isExpired, toJobSearchText } from "@/lib/utils";
+import { profileContent, profileSkills } from "@/lib/profile-data";
 
 const RELATED_SKILLS: Record<string, string[]> = {
   Python: ["机器学习", "深度学习", "数据分析", "算法"],
@@ -21,8 +22,9 @@ function clamp(value: number) {
 }
 
 function scoreSkills(profile: CandidateProfile, job: Job) {
-  if (!job.skills.length || !profile.skills.length) return 0.35;
-  const owned = new Set(profile.skills.map((skill) => skill.toLocaleLowerCase()));
+  const skills = profileSkills(profile);
+  if (!job.skills.length || !skills.length) return 0.35;
+  const owned = new Set(skills.map((skill) => skill.toLocaleLowerCase()));
   let matched = 0;
   for (const required of job.skills) {
     const normalized = required.toLocaleLowerCase();
@@ -30,7 +32,7 @@ function scoreSkills(profile: CandidateProfile, job: Job) {
       matched += 1;
       continue;
     }
-    const related = profile.skills.some((skill) =>
+    const related = skills.some((skill) =>
       (RELATED_SKILLS[skill] ?? []).some(
         (item) =>
           normalized.includes(item.toLocaleLowerCase()) ||
@@ -50,10 +52,9 @@ function scoreSemantic(
   const vectorSimilarity = vectorSimilarities?.get(job.id);
   if (vectorSimilarity !== undefined) return clamp(vectorSimilarity);
   const terms = [
-    ...profile.skills,
+    ...profileSkills(profile),
     ...profile.preferredRoles,
-    ...profile.projectDomains,
-    profile.major ?? "",
+    ...profileContent(profile),
   ]
     .map((term) => term.toLocaleLowerCase())
     .filter(Boolean);
@@ -142,7 +143,7 @@ export function recommendJobs(
         scores.freshness * 0.1 +
         scores.source * 0.05;
       const matches = job.skills.filter((skill) =>
-        profile.skills.some(
+        profileSkills(profile).some(
           (owned) => owned.toLocaleLowerCase() === skill.toLocaleLowerCase(),
         ),
       );

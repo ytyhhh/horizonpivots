@@ -14,6 +14,36 @@ export const jobQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
+const monthSchema = z.union([z.literal(""), z.string().regex(/^20\\d{2}-(0[1-9]|1[0-2])$/)]);
+
+export const educationEntrySchema = z.object({
+  school: z.string().trim().max(100),
+  degree: z.string().trim().max(40),
+  major: z.string().trim().max(80),
+  startMonth: monthSchema,
+  endMonth: monthSchema,
+  coursework: z.string().trim().max(300),
+}).strict().refine((entry) => !entry.startMonth || !entry.endMonth || entry.endMonth >= entry.startMonth, {
+  message: "结束月份不能早于开始月份", path: ["endMonth"],
+});
+
+export const workExperienceEntrySchema = z.object({
+  organization: z.string().trim().max(100),
+  role: z.string().trim().max(80),
+  startMonth: monthSchema,
+  endMonth: monthSchema,
+  achievements: z.string().trim().max(500),
+}).strict().refine((entry) => !entry.startMonth || !entry.endMonth || entry.endMonth >= entry.startMonth, {
+  message: "结束月份不能早于开始月份", path: ["endMonth"],
+});
+
+export const projectEntrySchema = z.object({
+  name: z.string().trim().max(100),
+  role: z.string().trim().max(80),
+  technologies: z.array(z.string().trim().min(1).max(50)).max(20),
+  outcome: z.string().trim().max(500),
+}).strict();
+
 export const candidateProfileSchema = z.object({
   graduationYear: z.number().int().min(2024).max(2035).nullable().optional(),
   education: z.string().trim().max(30).default(""),
@@ -21,6 +51,11 @@ export const candidateProfileSchema = z.object({
   skills: z.array(z.string().trim().min(1).max(50)).max(40).default([]),
   experiences: z.array(z.string().trim().min(1).max(240)).max(12).default([]),
   projectDomains: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
+  educations: z.array(educationEntrySchema).max(5).default([]),
+  workExperiences: z.array(workExperienceEntrySchema).max(10).default([]),
+  projects: z.array(projectEntrySchema).max(10).default([]),
+  languages: z.array(z.string().trim().min(1).max(50)).max(20).default([]),
+  certifications: z.array(z.string().trim().min(1).max(100)).max(20).default([]),
   preferredLocations: z.array(z.string().trim().min(1).max(30)).max(20).default([]),
   preferredIndustries: z.array(z.enum(INDUSTRIES)).max(14).default([]),
   preferredRoles: z.array(z.string().trim().min(1).max(50)).max(20).default([]),
@@ -28,6 +63,11 @@ export const candidateProfileSchema = z.object({
   confirmed: z.boolean().default(false),
   version: z.number().int().min(1).default(1),
 });
+
+export const candidateProfileUpdateSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  profile: candidateProfileSchema.omit({ version: true }).strict(),
+}).strict();
 
 export const resumeFileSchema = z
   .instanceof(File)

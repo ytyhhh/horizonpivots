@@ -50,6 +50,30 @@ export interface Job {
   cuhkShenzhenOnly?: boolean;
 }
 
+export interface EducationEntry {
+  school: string;
+  degree: string;
+  major: string;
+  startMonth: string;
+  endMonth: string;
+  coursework: string;
+}
+
+export interface WorkExperienceEntry {
+  organization: string;
+  role: string;
+  startMonth: string;
+  endMonth: string;
+  achievements: string;
+}
+
+export interface ProjectEntry {
+  name: string;
+  role: string;
+  technologies: string[];
+  outcome: string;
+}
+
 export interface CandidateProfile {
   userId?: string;
   graduationYear?: number | null;
@@ -58,6 +82,11 @@ export interface CandidateProfile {
   skills: string[];
   experiences: string[];
   projectDomains: string[];
+  educations?: EducationEntry[];
+  workExperiences?: WorkExperienceEntry[];
+  projects?: ProjectEntry[];
+  languages?: string[];
+  certifications?: string[];
   preferredLocations: string[];
   preferredIndustries: Industry[];
   preferredRoles: string[];

@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { jobFromEmbeddingRow, syncJobEmbeddings, syncProfileEmbedding } from "@/lib/vector-sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SILICONFLOW_EMBEDDING_MODEL } from "@/lib/embeddings";
+import { mapCandidateProfileRow } from "@/lib/profile-data";
 
 const JOB_BATCH_SIZE = 48;
 const PROFILE_BATCH_SIZE = 12;
@@ -40,21 +41,7 @@ export async function GET(request: Request) {
     if (profileError) throw profileError;
     let profilesUpdated = 0;
     for (const profile of profiles ?? []) {
-      const updated = await syncProfileEmbedding(admin, String(profile.user_id), {
-        userId: String(profile.user_id),
-        graduationYear: profile.graduation_year,
-        education: profile.education ?? "",
-        major: profile.major ?? "",
-        skills: profile.skills ?? [],
-        experiences: profile.experiences ?? [],
-        projectDomains: profile.project_domains ?? [],
-        preferredLocations: profile.preferred_locations ?? [],
-        preferredIndustries: profile.preferred_industries ?? [],
-        preferredRoles: profile.preferred_roles ?? [],
-        excludedCompanies: profile.excluded_companies ?? [],
-        confirmed: profile.confirmed ?? false,
-        version: profile.version ?? 1,
-      });
+      const updated = await syncProfileEmbedding(admin, String(profile.user_id), mapCandidateProfileRow(profile, String(profile.user_id)));
       profilesUpdated += Number(updated);
     }
     return Response.json({ jobs: jobsResult, profilesUpdated });

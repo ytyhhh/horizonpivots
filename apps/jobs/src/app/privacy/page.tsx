@@ -14,13 +14,13 @@ export default function PrivacyPage() {
         隐私说明
       </h1>
       <p className="mt-4 text-sm leading-7 text-muted">
-        校招雷达只收集提供推荐所必需的数据，并把简历原文件的保留时间降到最低。
+        校招雷达允许你手动填写结构化求职画像，无需上传简历。上传的原文件仅短暂用于解析。
       </p>
       <div className="mt-10 grid gap-px overflow-hidden rounded-[1.2rem] bg-border/70 text-sm leading-7 text-muted">
         <section className="bg-surface p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-foreground">简历处理</h2>
           <p className="mt-2">
-            PDF 或 DOCX 仅用于提取学历、专业、毕业年份、技能、经历摘要和求职偏好。处理成功或失败后都会删除原文件。
+            PDF 或 DOCX 仅用于提取学历、专业、毕业年份、技能和经历摘要；只补充画像中的空白基础字段。处理成功或失败后都会删除原文件。
           </p>
         </section>
         <section className="bg-surface p-6 sm:p-8">
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
         <section className="bg-surface p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-foreground">你的控制权</h2>
           <p className="mt-2">
-            你可以查看、修改或清除结构化画像。删除账号时，画像、收藏和推荐缓存会一并删除。
+            你可以手动填写教育、工作、项目、语言能力、证书与求职偏好，保存为草稿，或确认后用于推荐；也可以随时查看、修改或清除画像。清除画像不会删除收藏岗位。
           </p>
         </section>
         <section className="bg-surface p-6 sm:p-8">

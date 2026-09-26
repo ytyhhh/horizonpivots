@@ -1,5 +1,6 @@
 import { demoProfile } from "@/data/demo-jobs";
 import { getCurrentUserId } from "@/lib/auth";
+import { mapCandidateProfileRow } from "@/lib/profile-data";
 import { getJobs } from "@/lib/jobs";
 import { isEligible, recommendJobs } from "@/lib/recommendation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -157,22 +158,11 @@ export async function GET() {
     .eq("user_id", userId)
     .maybeSingle();
   if (data) {
-    profile = {
-      userId,
-      graduationYear: data.graduation_year,
-      education: data.education,
-      major: data.major,
-      skills: data.skills ?? [],
-      experiences: data.experiences ?? [],
-      projectDomains: data.project_domains ?? [],
-      preferredLocations: data.preferred_locations ?? [],
-      preferredIndustries: data.preferred_industries ?? [],
-      preferredRoles: data.preferred_roles ?? [],
-      excludedCompanies: data.excluded_companies ?? [],
-      confirmed: data.confirmed,
-      version: data.version,
-    } satisfies CandidateProfile;
+    profile = mapCandidateProfileRow(data, userId);
     demo = false;
+    if (!profile.confirmed) {
+      return Response.json({ data: [], profileVersion: profile.version, demo: false, requiresConfirmation: true });
+    }
   }
 
   const jobs = await getJobs({});

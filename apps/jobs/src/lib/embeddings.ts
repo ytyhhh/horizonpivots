@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { CandidateProfile, Job } from "@/types";
+import { profileContent, profileSkills } from "@/lib/profile-data";
 
 export const SILICONFLOW_EMBEDDING_MODEL = "BAAI/bge-m3";
 export const SILICONFLOW_EMBEDDING_DIMENSIONS = 1024;
@@ -48,6 +49,8 @@ export function profileEmbeddingText(profile: CandidateProfile) {
       `技能：${profile.skills.join("、")}`,
       `经历摘要：${profile.experiences.join("；")}`,
       `项目领域：${profile.projectDomains.join("、")}`,
+      `结构化经历：${profileContent(profile).join("；")}`,
+      `扩展技能：${profileSkills(profile).join("、")}`,
       `期望地点：${profile.preferredLocations.join("、")}`,
       `期望行业：${profile.preferredIndustries.join("、")}`,
       `期望岗位：${profile.preferredRoles.join("、")}`,
