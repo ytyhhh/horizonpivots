@@ -114,10 +114,3 @@ export function isVersionConflict(error: unknown) {
   const candidate = error as { code?: unknown; message?: unknown };
   return candidate.code === "40001" || (typeof candidate.message === "string" && candidate.message.includes("version_conflict"));
 }
-
-export function isOpenRoomConflict(error: unknown) {
-  if (!error || typeof error !== "object") return false;
-  const candidate = error as { code?: unknown; message?: unknown; details?: unknown };
-  return candidate.code === "23505"
-    && [candidate.message, candidate.details].some((value) => typeof value === "string" && (value.includes("dp_rooms_one_open_room_idx") || value.includes("dp_rooms_one_open_room_per_owner_idx")));
-}

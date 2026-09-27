@@ -51,7 +51,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       const payload = await roomStatePayload(room, actor);
       payload.room.code = code;
       const response = json({ ...payload, code, shareText: `来好友牌桌一起玩。房间号：${code}` });
-      const cookie = ownerCodeCookie(sealOwnerRoomCode(room.id, code), new Date(room.expires_at));
+      const cookie = ownerCodeCookie(sealOwnerRoomCode(room.id, code), new Date(room.expires_at), room.public_id);
       response.cookies.set(cookie.name, cookie.value, cookie.options);
       return response;
     }

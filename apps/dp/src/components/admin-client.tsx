@@ -19,10 +19,12 @@ import {
 } from "@phosphor-icons/react";
 import { SiteHeader } from "@/components/site-header";
 import { ApiError, errorMessage, fetchJsonWithClerkRetry } from "@/lib/api-client";
-import type { RoomState, RoomSummary } from "@/types/game";
+import type { RoomState } from "@/types/game";
 
 type AuditEntry = { id: string; action: string; actor: string; createdAt: string };
-type ActiveRoomPayload = (RoomState & { audit?: AuditEntry[] }) | { room: RoomSummary | null; participants?: RoomState["participants"]; audit?: AuditEntry[] };
+type AdminRoom = RoomState & { audit?: AuditEntry[] };
+type ActiveRoomsPayload = { rooms: AdminRoom[]; maxRooms: number };
+type EditableSettings = { maxSeats: number; startingStack: number; smallBlind: number; bigBlind: number; actionSeconds: number };
 
 export function AdminClient() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -30,25 +32,17 @@ export function AdminClient() {
   useEffect(() => {
     sessionTokenRef.current = isLoaded && isSignedIn ? getToken : null;
   }, [getToken, isLoaded, isSignedIn]);
-  const [payload, setPayload] = useState<ActiveRoomPayload | null>(null);
+  const [payload, setPayload] = useState<ActiveRoomsPayload | null>(null);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signInNeeded, setSignInNeeded] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [settings, setSettings] = useState({ maxSeats: 6, startingStack: 10000, smallBlind: 50, bigBlind: 100, actionSeconds: 45 });
+  const [settingsDraft, setSettingsDraft] = useState<{ roomId: string; values: EditableSettings } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const refresh = useCallback(async () => {
     try {
-      const next = await fetchJsonWithClerkRetry<ActiveRoomPayload>("/api/rooms/active", undefined, sessionTokenRef.current);
-      if (next.room) {
-        setSettings({
-          maxSeats: next.room.maxSeats,
-          startingStack: next.room.startingStack,
-          smallBlind: next.room.smallBlind,
-          bigBlind: next.room.bigBlind,
-          actionSeconds: next.room.actionSeconds,
-        });
-      }
+      const next = await fetchJsonWithClerkRetry<ActiveRoomsPayload>("/api/rooms/active", undefined, sessionTokenRef.current);
       setPayload(next);
       setError(null);
       setSignInNeeded(false);
@@ -64,10 +58,18 @@ export function AdminClient() {
     return () => window.clearTimeout(timer);
   }, [isLoaded, isSignedIn, refresh]);
 
-  const room = payload?.room ?? null;
-  const participants = payload && "participants" in payload ? payload.participants ?? [] : [];
-  const audit = payload?.audit ?? [];
-  const handNumber = payload && "hand" in payload ? payload.hand?.handNumber ?? 0 : 0;
+  const selected = payload?.rooms.find((entry) => entry.room.id === selectedRoomId) ?? payload?.rooms[0] ?? null;
+  const room = selected?.room ?? null;
+  const settings = settingsDraft && settingsDraft.roomId === room?.id
+    ? settingsDraft.values
+    : room ? roomSettings(room) : { maxSeats: 6, startingStack: 10000, smallBlind: 50, bigBlind: 100, actionSeconds: 45 };
+  const participants = selected?.participants ?? [];
+  const audit = selected?.audit ?? [];
+  const handNumber = selected?.hand?.handNumber ?? 0;
+
+  function editSettings(change: Partial<EditableSettings>) {
+    if (room) setSettingsDraft({ roomId: room.id, values: { ...settings, ...change } });
+  }
 
   function manage(command: string, participantId?: string, extra?: Record<string, unknown>) {
     if (!room) return;
@@ -78,6 +80,7 @@ export function AdminClient() {
           method: "PATCH",
           body: JSON.stringify({ command, participantId, ...extra }),
         }, sessionTokenRef.current);
+        if (command === "update_settings") setSettingsDraft(null);
         await refresh();
       } catch (caught) {
         setError(errorMessage(caught));
@@ -108,7 +111,7 @@ export function AdminClient() {
       <section className="admin-layout" aria-labelledby="admin-title">
         <div className="admin-heading">
           <span className="admin-heading__icon"><LockKey size={24} weight="duotone" aria-hidden="true" /></span>
-          <div><p className="eyebrow">仅房主可见</p><h1 id="admin-title">牌桌管理</h1><p>创建、锁定或结束当前的好友牌局。</p></div>
+          <div><p className="eyebrow">仅房主可见</p><h1 id="admin-title">牌桌管理</h1><p>管理自己的私密牌桌，最多同时开 3 桌。</p></div>
           <button className="secondary-button refresh-button" type="button" onClick={() => void refresh()} disabled={isPending}>
             <ArrowsClockwise size={17} weight="bold" aria-hidden="true" /> 刷新
           </button>
@@ -117,12 +120,30 @@ export function AdminClient() {
         {error ? <div className="notice notice-error" role="alert">{error}{signInNeeded ? <a href={loginUrl(`${process.env.NEXT_PUBLIC_DP_URL ?? "https://dp.horizonpivots.com"}/admin`)}>重新登录</a> : null}</div> : null}
 
         {!payload && !error ? <AdminSkeleton /> : null}
-        {payload && !room ? (
+        {payload && payload.rooms.length === 0 ? (
           <div className="admin-empty">
             <DoorOpen size={36} weight="duotone" aria-hidden="true" />
             <h2>还没有活动牌桌</h2>
             <p>从首页开一桌，再把房间号单独发给朋友。</p>
             <Link className="primary-button" href="/">去开一桌 <ArrowRight size={18} weight="bold" aria-hidden="true" /></Link>
+          </div>
+        ) : null}
+
+        {payload && payload.rooms.length > 0 ? (
+          <div className="admin-room-picker">
+            <div className="admin-room-picker__heading">
+              <div><h2>我的牌桌</h2><p>{payload.rooms.length} / {payload.maxRooms} 桌正在使用</p></div>
+              {payload.rooms.length < payload.maxRooms ? <Link className="secondary-button" href="/">再开一桌 <ArrowRight size={17} weight="bold" aria-hidden="true" /></Link> : null}
+            </div>
+            <div className="admin-room-picker__list" role="group" aria-label="选择要管理的牌桌">
+              {payload.rooms.map((entry, index) => (
+                <button key={entry.room.id} type="button" className="admin-room-choice" aria-pressed={room?.id === entry.room.id} onClick={() => setSelectedRoomId(entry.room.id)}>
+                  <span>牌桌 {index + 1}</span>
+                  <strong>{entry.room.status === "playing" ? "进行中" : entry.room.status === "paused" ? "已暂停" : "等待加入"}</strong>
+                  <small>编号尾号 {entry.room.id.slice(-6).toUpperCase()}</small>
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -136,7 +157,7 @@ export function AdminClient() {
 
               <div className="room-code-panel">
                 <span>房间号</span>
-                <strong>{room.code ?? "仅在牌桌内显示"}</strong>
+                <strong>{room.code ?? "请重置房间号以查看"}</strong>
                 <button className="icon-button" type="button" onClick={() => void copyCode()} disabled={!room.code} aria-label="复制房间号" title="复制房间号">
                   {copied ? <Check size={18} weight="bold" aria-hidden="true" /> : <Copy size={18} weight="bold" aria-hidden="true" />}
                 </button>
@@ -153,11 +174,11 @@ export function AdminClient() {
                 <form className="admin-settings" onSubmit={updateSettings}>
                   <div className="admin-settings__heading"><div><h3>开局前设置</h3><p>第一手开始后，座位和盲注会保持不变。</p></div><button className="secondary-button" type="submit" disabled={isPending || settings.bigBlind <= settings.smallBlind}>保存设置</button></div>
                   <div className="admin-settings__grid">
-                    <AdminNumberField label="座位数" value={settings.maxSeats} min={2} max={9} step={1} onChange={(maxSeats) => setSettings({ ...settings, maxSeats })} />
-                    <AdminNumberField label="起始筹码" value={settings.startingStack} min={1000} max={1000000} step={500} onChange={(startingStack) => setSettings({ ...settings, startingStack })} />
-                    <AdminNumberField label="小盲" value={settings.smallBlind} min={1} max={50000} step={1} onChange={(smallBlind) => setSettings({ ...settings, smallBlind })} />
-                    <AdminNumberField label="大盲" value={settings.bigBlind} min={2} max={100000} step={1} onChange={(bigBlind) => setSettings({ ...settings, bigBlind })} />
-                    <AdminNumberField label="行动时间" value={settings.actionSeconds} min={15} max={120} step={5} suffix="秒" onChange={(actionSeconds) => setSettings({ ...settings, actionSeconds })} />
+                    <AdminNumberField label="座位数" value={settings.maxSeats} min={2} max={9} step={1} onChange={(maxSeats) => editSettings({ maxSeats })} />
+                    <AdminNumberField label="起始筹码" value={settings.startingStack} min={1000} max={1000000} step={500} onChange={(startingStack) => editSettings({ startingStack })} />
+                    <AdminNumberField label="小盲" value={settings.smallBlind} min={1} max={50000} step={1} onChange={(smallBlind) => editSettings({ smallBlind })} />
+                    <AdminNumberField label="大盲" value={settings.bigBlind} min={2} max={100000} step={1} onChange={(bigBlind) => editSettings({ bigBlind })} />
+                    <AdminNumberField label="行动时间" value={settings.actionSeconds} min={15} max={120} step={5} suffix="秒" onChange={(actionSeconds) => editSettings({ actionSeconds })} />
                   </div>
                 </form>
               ) : null}
@@ -214,6 +235,16 @@ export function AdminClient() {
 
 function AdminSkeleton() {
   return <div className="admin-skeleton" aria-label="正在读取牌桌"><span /><span /><span /></div>;
+}
+
+function roomSettings(room: RoomState["room"]): EditableSettings {
+  return {
+    maxSeats: room.maxSeats,
+    startingStack: room.startingStack,
+    smallBlind: room.smallBlind,
+    bigBlind: room.bigBlind,
+    actionSeconds: room.actionSeconds,
+  };
 }
 
 function formatChips(value: number) {

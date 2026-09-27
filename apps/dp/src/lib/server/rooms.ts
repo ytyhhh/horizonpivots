@@ -71,16 +71,16 @@ export async function roomByPublicId(publicId: string) {
   return data as unknown as DbRoom | null;
 }
 
-export async function activeRoomForOwner(ownerUserId: string) {
+export async function activeRoomsForOwner(ownerUserId: string) {
   const { data, error } = await dpAdminClient()
     .from("dp_rooms")
     .select(roomColumns)
     .eq("owner_clerk_user_id", ownerUserId)
     .in("status", ["lobby", "active", "paused"])
     .gt("expires_at", new Date().toISOString())
-    .maybeSingle();
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return data as unknown as DbRoom | null;
+  return (data ?? []) as unknown as DbRoom[];
 }
 
 export async function participantsForRoom(roomId: string) {
@@ -201,7 +201,7 @@ export async function roomStatePayload(
   const [participants, stored, sealedCode] = await Promise.all([
     participantsForRoom(room.id),
     options?.stored ? Promise.resolve(options.stored) : gameStateForRoom(room.id),
-    actor.isOwner ? ownerRoomCode() : Promise.resolve(null),
+    actor.isOwner ? ownerRoomCode(room.public_id) : Promise.resolve(null),
   ]);
   if (!stored || stored.version !== room.version || stored.state.tableId !== room.id) {
     throw new Error("Poker state is unavailable or inconsistent.");

@@ -19,7 +19,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     }
     const actor = await actorForRoom(room);
     if (!actor) {
-      const [owner, sealedCode] = await Promise.all([ownerIdentity(), ownerRoomCode()]);
+      const [owner, sealedCode] = await Promise.all([ownerIdentity(), ownerRoomCode(room.public_id)]);
       const hasOwnerHint = sealedCode?.roomId === room.id;
       const isCurrentOwner = ownsRoom(owner.userId, room.owner_clerk_user_id);
       const reason = isCurrentOwner

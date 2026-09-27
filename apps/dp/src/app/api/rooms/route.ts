@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { ownerIdentity } from "@/lib/server/owner";
 import { apiError, assertMutationOrigin, json, readJson } from "@/lib/server/http";
-import { createRoomRecord, isOpenRoomConflict, parseRoomSettings } from "@/lib/server/operations";
+import { createRoomRecord, parseRoomSettings } from "@/lib/server/operations";
+import { isRoomLimitConflict, MAX_OWNER_ROOMS } from "@/lib/server/room-limit";
 import { generateOpaqueToken, generateRoomCode, hashRoomCode, sealOwnerRoomCode } from "@/lib/server/security";
 import { ownerCodeCookie } from "@/lib/server/session";
 
@@ -53,11 +54,11 @@ export async function POST(request: Request) {
       },
     }, { status: 201 });
     const sealed = sealOwnerRoomCode(created.room_id, code);
-    const cookie = ownerCodeCookie(sealed, expiresAt);
+    const cookie = ownerCodeCookie(sealed, expiresAt, created.public_id);
     response.cookies.set(cookie.name, cookie.value, cookie.options);
     return response;
   } catch (caught) {
-    if (isOpenRoomConflict(caught)) return apiError(409, "ACTIVE_ROOM_EXISTS", "你已经有一个活动牌桌，请先前往管理页。");
+    if (isRoomLimitConflict(caught)) return apiError(409, "ROOM_LIMIT_REACHED", `你已有 ${MAX_OWNER_ROOMS} 个活动牌桌，请先在管理页结束其中一个。`);
     const error = caught && typeof caught === "object"
       ? caught as { code?: unknown; message?: unknown; status?: unknown }
       : null;

@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { loginUrl } from "@horizon/platform";
 import {
   ArrowRight,
@@ -86,6 +87,7 @@ export function LobbyClient({ canCreate }: LobbyClientProps) {
             <div><UsersThree size={22} weight="duotone" aria-hidden="true" /><span><strong>2-9 位朋友</strong><small>昵称加入，无需注册</small></span></div>
             <div><CardsThree size={22} weight="duotone" aria-hidden="true" /><span><strong>完整德扑规则</strong><small>边池、全下与平分底池</small></span></div>
           </div>
+          {canCreate ? <Link className="secondary-button lobby-admin-button" href="/admin">管理我的牌桌 <ArrowRight size={17} weight="bold" aria-hidden="true" /></Link> : null}
         </div>
 
         <div className="lobby-console">

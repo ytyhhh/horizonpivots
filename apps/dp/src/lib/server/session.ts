@@ -20,13 +20,17 @@ export function guestCookie(token: string, expiresAt: Date) {
   };
 }
 
-export async function ownerRoomCode() {
-  return openOwnerRoomCode((await cookies()).get(DP_OWNER_CODE_COOKIE_NAME)?.value);
+export async function ownerRoomCode(publicId: string) {
+  const jar = await cookies();
+  return openOwnerRoomCode(
+    jar.get(`${DP_OWNER_CODE_COOKIE_NAME}-${publicId}`)?.value
+      ?? jar.get(DP_OWNER_CODE_COOKIE_NAME)?.value,
+  );
 }
 
-export function ownerCodeCookie(value: string, expiresAt: Date) {
+export function ownerCodeCookie(value: string, expiresAt: Date, publicId: string) {
   return {
-    name: DP_OWNER_CODE_COOKIE_NAME,
+    name: `${DP_OWNER_CODE_COOKIE_NAME}-${publicId}`,
     value,
     options: {
       httpOnly: true,

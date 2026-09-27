@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     if (error) return apiError(500, "JOIN_FAILED", "暂时无法加入牌桌，请稍后再试。");
     if (data?.public_id) {
       const response = json({ roomId: data.public_id });
-      const cookie = ownerCodeCookie(sealOwnerRoomCode(data.id, code), new Date(data.expires_at));
+      const cookie = ownerCodeCookie(sealOwnerRoomCode(data.id, code), new Date(data.expires_at), data.public_id);
       response.cookies.set(cookie.name, cookie.value, cookie.options);
       return response;
     }
