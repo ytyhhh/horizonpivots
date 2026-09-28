@@ -47,22 +47,6 @@ export function mapCandidateProfileRow(row: Record<string, unknown>, userId: str
   return { ...parsed, userId };
 }
 
-export function mergeExtractedProfile(
-  current: CandidateProfile,
-  extracted: Pick<CandidateProfile, "graduationYear" | "education" | "major" | "skills" | "experiences" | "projectDomains">,
-): CandidateProfile {
-  return {
-    ...current,
-    graduationYear: current.graduationYear ?? extracted.graduationYear ?? null,
-    education: current.education?.trim() ? current.education : extracted.education ?? "",
-    major: current.major?.trim() ? current.major : extracted.major ?? "",
-    skills: current.skills.length ? current.skills : extracted.skills,
-    experiences: current.experiences.length ? current.experiences : extracted.experiences,
-    projectDomains: current.projectDomains.length ? current.projectDomains : extracted.projectDomains,
-    confirmed: false,
-  };
-}
-
 export function profileSkills(profile: CandidateProfile): string[] {
   return Array.from(new Set([
     ...profile.skills,

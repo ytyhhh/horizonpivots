@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "隐私说明",
-  description: "了解校招雷达如何处理简历、结构化求职画像、收藏与公开招聘信息。",
+  description: "了解校招雷达如何处理手动填写的求职画像、收藏与公开招聘信息。",
   alternates: { canonical: "/privacy" },
 };
 
@@ -14,13 +14,13 @@ export default function PrivacyPage() {
         隐私说明
       </h1>
       <p className="mt-4 text-sm leading-7 text-muted">
-        校招雷达允许你手动填写结构化求职画像，无需上传简历。上传的原文件仅短暂用于解析。
+        校招雷达允许你手动填写结构化求职画像，不再接收简历文件。
       </p>
       <div className="mt-10 grid gap-px overflow-hidden rounded-[1.2rem] bg-border/70 text-sm leading-7 text-muted">
         <section className="bg-surface p-6 sm:p-8">
-          <h2 className="text-lg font-semibold text-foreground">简历处理</h2>
+          <h2 className="text-lg font-semibold text-foreground">求职画像</h2>
           <p className="mt-2">
-            PDF 或 DOCX 仅用于提取学历、专业、毕业年份、技能和经历摘要；只补充画像中的空白基础字段。处理成功或失败后都会删除原文件。
+            目前只支持手动填写学历、专业、毕业年份、学校、工作与项目经历、技能、语言能力和证书；不提供 PDF 或 DOCX 上传与解析。既有画像仍可查看、修改或清除。
           </p>
         </section>
         <section className="bg-surface p-6 sm:p-8">

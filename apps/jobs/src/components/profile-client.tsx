@@ -2,21 +2,17 @@
 
 import {
   CheckCircle,
-  FileDoc,
-  FilePdf,
   Plus,
-  ShieldCheck,
   SpinnerGap,
   Trash,
-  UploadSimple,
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ProfileStructuredEditor } from "@/components/profile-structured-editor";
 import { INDUSTRIES, type CandidateProfile } from "@/types";
 
-type UploadState = "idle" | "uploading" | "success" | "error";
+type FeedbackState = "idle" | "success" | "error";
 type BusyAction = "saving" | "deleting" | null;
 
 function normalizeProfile(profile: CandidateProfile): CandidateProfile {
@@ -235,13 +231,10 @@ export function ProfileClient({
   initialProfile: CandidateProfile;
   demoMode: boolean;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState(() => normalizeProfile(initialProfile));
-  const [uploadState, setUploadState] = useState<UploadState>("idle");
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>("idle");
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [message, setMessage] = useState("");
-  const [dragging, setDragging] = useState(false);
-  const [entryMode, setEntryMode] = useState<"manual" | "upload">("manual");
   const [dirty, setDirty] = useState(false);
 
   function updateField<K extends keyof CandidateProfile>(
@@ -256,56 +249,6 @@ export function ProfileClient({
     setDirty(true);
   }
 
-  async function submitFile(file?: File) {
-    if (!file) return;
-    setMessage("");
-    if (dirty) {
-      setUploadState("error");
-      setMessage("请先保存手填草稿，再上传简历补充空白字段。");
-      if (inputRef.current) inputRef.current.value = "";
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadState("error");
-      setMessage("文件不能超过 5 MB");
-      return;
-    }
-    const valid =
-      file.type === "application/pdf" ||
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    if (!valid) {
-      setUploadState("error");
-      setMessage("仅支持 PDF 或 DOCX");
-      return;
-    }
-
-    setUploadState("uploading");
-    const body = new FormData();
-    body.set("resume", file);
-    try {
-      const response = await fetch("/api/resumes", { method: "POST", body });
-      const data = (await response.json()) as {
-        profile?: CandidateProfile;
-        message?: string;
-      };
-      if (!response.ok) throw new Error(data.message ?? "解析失败");
-      if (data.profile) {
-        setProfile(normalizeProfile(data.profile));
-        setDirty(false);
-      }
-      setUploadState("success");
-      setMessage(
-        demoMode
-          ? "演示模式已完成安全校验并载入示例画像。"
-          : "解析完成，仅补充了空白基础字段；请检查后保存或确认画像。",
-      );
-    } catch (error) {
-      setUploadState("error");
-      setMessage(error instanceof Error ? error.message : "解析失败，请稍后重试");
-    }
-  }
-
   async function saveProfile(confirmed: boolean) {
     setMessage("");
     setBusyAction("saving");
@@ -315,7 +258,7 @@ export function ProfileClient({
         confirmed,
         version: Math.max(1, current.version + 1),
       }));
-      setUploadState("success");
+      setFeedbackState("success");
       setMessage(confirmed ? "已在本次演示会话中确认画像。" : "已在本次演示会话中保存草稿。");
       setDirty(false);
       setBusyAction(null);
@@ -354,7 +297,7 @@ export function ProfileClient({
         detail?: string;
       } | null;
       if (response.status === 409) {
-        setUploadState("error");
+        setFeedbackState("error");
         setMessage(data?.message ?? "画像已在其他页面更新，请刷新后再保存。");
         return;
       }
@@ -368,11 +311,11 @@ export function ProfileClient({
               version: current.version + 1,
             }),
       );
-      setUploadState("success");
+      setFeedbackState("success");
       setMessage(confirmed ? "画像已保存并用于推荐。" : "草稿已保存，确认前不会用于推荐。");
       setDirty(false);
     } catch (error) {
-      setUploadState("error");
+      setFeedbackState("error");
       setMessage(error instanceof Error ? error.message : "暂时无法保存，请稍后重试。");
     } finally {
       setBusyAction(null);
@@ -392,7 +335,7 @@ export function ProfileClient({
     setBusyAction("deleting");
     if (demoMode) {
       setProfile((current) => emptyProfile(current));
-      setUploadState("idle");
+      setFeedbackState("idle");
       setMessage("本次演示会话中的画像已清除，收藏岗位未受影响。");
       setDirty(false);
       setBusyAction(null);
@@ -406,11 +349,11 @@ export function ProfileClient({
       } | null;
       if (!response.ok) throw new Error(data?.message ?? "清除失败");
       setProfile((current) => emptyProfile(current));
-      setUploadState("idle");
+      setFeedbackState("idle");
       setMessage("画像和推荐缓存已清除，收藏岗位已保留。");
       setDirty(false);
     } catch (error) {
-      setUploadState("error");
+      setFeedbackState("error");
       setMessage(error instanceof Error ? error.message : "暂时无法清除，请稍后重试。");
     } finally {
       setBusyAction(null);
@@ -419,93 +362,8 @@ export function ProfileClient({
 
   return (
     <>
-      <div className="mb-6 inline-flex rounded-full border border-border bg-surface p-1" aria-label="建立画像的方式">
-        <button type="button" aria-pressed={entryMode === "manual"} onClick={() => setEntryMode("manual")} className={`min-h-11 rounded-full px-5 text-sm font-semibold ${entryMode === "manual" ? "bg-accent text-white" : "text-muted"}`}>手动填写</button>
-        <button type="button" aria-pressed={entryMode === "upload"} onClick={() => setEntryMode("upload")} className={`min-h-11 rounded-full px-5 text-sm font-semibold ${entryMode === "upload" ? "bg-accent text-white" : "text-muted"}`}>上传简历辅助填写</button>
-      </div>
-      <p className="mb-5 text-sm text-muted">{entryMode === "manual" ? "不上传文件也能建立画像；可先保存草稿，确认后再用于推荐。" : "解析仅补充未填写的基础字段，手动填写的条目和求职偏好不会被覆盖。"}</p>
-
-      <div className={`grid items-start gap-5 ${entryMode === "upload" ? "lg:grid-cols-[.72fr_1.28fr]" : "max-w-4xl"}`}>
-        {entryMode === "upload" ? <section className="panel-shell">
-          <div className="panel-core p-5 sm:p-6">
-            <div className="flex items-start gap-3">
-              <span className="grid size-10 place-items-center rounded-full bg-accent-soft text-accent">
-                <ShieldCheck size={22} weight="duotone" aria-hidden="true" />
-              </span>
-              <div>
-                <h2 className="font-semibold">上传后解析，原文件立即删除</h2>
-                <p className="mt-1 text-xs leading-5 text-muted">
-                  只解析非敏感的基础信息；手填条目不会被覆盖，也不会长期保存原文件。
-                </p>
-              </div>
-            </div>
-
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                event.currentTarget.value = "";
-                void submitFile(file);
-              }}
-            />
-            <button
-              type="button"
-              disabled={busyAction !== null}
-              onClick={() => inputRef.current?.click()}
-              onDragEnter={(event) => {
-                event.preventDefault();
-                setDragging(true);
-              }}
-              onDragOver={(event) => event.preventDefault()}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setDragging(false);
-                submitFile(event.dataTransfer.files[0]);
-              }}
-              className={`mt-6 grid min-h-60 w-full place-items-center rounded-[1rem] border border-dashed p-6 text-center disabled:cursor-not-allowed disabled:opacity-55 ${
-                dragging
-                  ? "border-accent bg-accent-soft"
-                  : "bg-background hover:border-accent"
-              }`}
-            >
-              {uploadState === "uploading" ? (
-                <div data-reveal>
-                  <SpinnerGap
-                    size={34}
-                    weight="bold"
-                    className="mx-auto animate-spin text-accent"
-                    aria-hidden="true"
-                  />
-                  <p className="mt-4 font-semibold">正在安全解析</p>
-                  <p className="mt-2 text-xs text-muted">通常需要几秒钟</p>
-                </div>
-              ) : (
-                <div>
-                  <UploadSimple
-                    size={34}
-                    weight="duotone"
-                    className="mx-auto text-accent"
-                    aria-hidden="true"
-                  />
-                  <p className="mt-4 font-semibold">选择或拖入简历</p>
-                  <p className="mt-2 text-xs text-muted">
-                    PDF（需可复制文字）/ DOCX，最大 5 MB
-                  </p>
-                  <div className="mt-4 flex justify-center gap-2 text-subtle">
-                    <FilePdf size={20} weight="duotone" aria-hidden="true" />
-                    <FileDoc size={20} weight="duotone" aria-hidden="true" />
-                  </div>
-                </div>
-              )}
-            </button>
-
-          </div>
-        </section> : null}
-
+      <p className="mb-5 text-sm text-muted">手动填写画像，可先保存草稿；确认后才会用于岗位推荐。</p>
+      <div className="max-w-4xl">
         <section className="panel-shell">
           <div className="panel-core p-5 sm:p-7">
             <div className="flex items-start justify-between gap-4">
@@ -514,7 +372,7 @@ export function ProfileClient({
                   求职画像
                 </h2>
                 <p className="mt-1 text-sm text-muted">
-                  自己填写或检查简历提取结果；保存草稿不会生成推荐，确认后才会用于匹配。
+                  填写你的经历与求职偏好；保存草稿不会生成推荐，确认后才会用于匹配。
                 </p>
               </div>
               <button
@@ -574,7 +432,7 @@ export function ProfileClient({
             <div className="mt-7 grid gap-6 border-t border-border/70 pt-7">
               <div>
                 <h3 className="font-semibold">技能与证书</h3>
-                <p className="mt-1 text-xs leading-5 text-muted">以下字段可手动填写，也可保留简历解析得到的技能与摘要。</p>
+                <p className="mt-1 text-xs leading-5 text-muted">填写能体现你实际经历和能力的信息，所有字段都可以留空。</p>
               </div>
               <EditableList
                 id="profile-skills"
@@ -676,17 +534,17 @@ export function ProfileClient({
             </div>
 
             {message ? (
-              <div role={uploadState === "error" ? "alert" : "status"} className={`mt-7 flex gap-2 rounded-[0.85rem] p-3 text-xs leading-5 ${uploadState === "error" ? "bg-danger-soft text-danger" : "bg-accent-soft text-accent"}`}>
-                {uploadState === "error" ? <WarningCircle size={17} weight="fill" className="shrink-0" /> : <CheckCircle size={17} weight="fill" className="shrink-0" />}
+              <div role={feedbackState === "error" ? "alert" : "status"} className={`mt-7 flex gap-2 rounded-[0.85rem] p-3 text-xs leading-5 ${feedbackState === "error" ? "bg-danger-soft text-danger" : "bg-accent-soft text-accent"}`}>
+                {feedbackState === "error" ? <WarningCircle size={17} weight="fill" className="shrink-0" /> : <CheckCircle size={17} weight="fill" className="shrink-0" />}
                 {message}
               </div>
             ) : null}
             {dirty ? <p className="mt-6 text-xs font-semibold text-accent" role="status">有尚未保存的修改</p> : null}
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={() => saveProfile(false)} disabled={busyAction !== null || uploadState === "uploading"} className="tactile inline-flex min-h-12 items-center justify-center rounded-full border border-border px-5 text-sm font-semibold hover:border-accent hover:text-accent disabled:opacity-55">
+              <button type="button" onClick={() => saveProfile(false)} disabled={busyAction !== null} className="tactile inline-flex min-h-12 items-center justify-center rounded-full border border-border px-5 text-sm font-semibold hover:border-accent hover:text-accent disabled:opacity-55">
                 保存草稿
               </button>
-              <button type="button" onClick={() => saveProfile(true)} disabled={busyAction !== null || uploadState === "uploading"} className="tactile inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-strong disabled:opacity-55">
+              <button type="button" onClick={() => saveProfile(true)} disabled={busyAction !== null} className="tactile inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-strong disabled:opacity-55">
                 {busyAction === "saving" ? <SpinnerGap size={18} className="animate-spin" aria-hidden="true" /> : null}
                 {busyAction === "saving" ? "正在保存" : "确认并用于推荐"}
               </button>

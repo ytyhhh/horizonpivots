@@ -69,19 +69,6 @@ export const candidateProfileUpdateSchema = z.object({
   profile: candidateProfileSchema.omit({ version: true }).strict(),
 }).strict();
 
-export const resumeFileSchema = z
-  .instanceof(File)
-  .refine((file) => file.size > 0, "文件不能为空")
-  .refine((file) => file.size <= 5 * 1024 * 1024, "文件不能超过 5 MB")
-  .refine(
-    (file) =>
-      [
-        "application/pdf",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ].includes(file.type),
-    "仅支持 PDF 或 DOCX",
-  );
-
 export const rawXixiccJobSchema = z.object({
   company: z.string().trim().min(1),
   cohort: z.string().nullable().optional(),
@@ -151,24 +138,3 @@ export const officialJobExtractionSchema = z.object({
 });
 
 export const officialJobExtractionsSchema = z.array(officialJobExtractionSchema).max(100);
-
-export const resumeExtractionSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    graduationYear: { type: ["integer", "null"] },
-    education: { type: "string" },
-    major: { type: "string" },
-    skills: { type: "array", items: { type: "string" }, maxItems: 40 },
-    experiences: { type: "array", items: { type: "string" }, maxItems: 12 },
-    projectDomains: { type: "array", items: { type: "string" }, maxItems: 20 },
-  },
-  required: [
-    "graduationYear",
-    "education",
-    "major",
-    "skills",
-    "experiences",
-    "projectDomains",
-  ],
-} as const;

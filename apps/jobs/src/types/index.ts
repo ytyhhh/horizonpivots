@@ -82,6 +82,7 @@ export interface CandidateProfile {
   skills: string[];
   experiences: string[];
   projectDomains: string[];
+  /** Optional so historical profile rows remain compatible. */
   educations?: EducationEntry[];
   workExperiences?: WorkExperienceEntry[];
   projects?: ProjectEntry[];

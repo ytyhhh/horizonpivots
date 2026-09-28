@@ -2,13 +2,13 @@
 
 面向 2027 届秋招与全年级实习的公开招聘信息聚合和简历匹配 MVP。
 
-项目在没有云服务密钥时可以完整运行演示模式；配置 Supabase 和 OpenAI 后，会自动启用邮箱验证码、私有临时简历存储、结构化解析、用户画像、收藏、真实数据同步和公开网页发现。
+项目在没有云服务密钥时可以运行演示模式；配置 Clerk、Supabase 和 SiliconFlow 后，可保存手动填写的求职画像、收藏、岗位推荐并同步公开招聘信息。简历文件上传与解析已停用。
 
 ## 技术栈
 
 - Next.js 16.2.11 Active LTS、React 19、TypeScript、Tailwind CSS v4
 - Supabase PostgreSQL、Auth、Storage、RLS、pgvector、pg_cron、pg_net
-- Firecrawl `@firecrawl/pdf-inspector` 与 Mammoth（本地 PDF/DOCX 文本提取）、硅基流动 DeepSeek（结构化解析）、SiliconFlow `BAAI/bge-m3`（语义检索向量）
+- SiliconFlow DeepSeek（公开岗位信息提取）、`BAAI/bge-m3`（语义检索向量）
 - Vitest、Playwright
 
 ## 本地启动
@@ -114,14 +114,12 @@ gh workflow run cuhksz-jobs.yml --repo ytyhhh/hiring --ref main
 gh run list --repo ytyhhh/hiring --workflow cuhksz-jobs.yml
 ```
 
-## 简历隐私
+## 求职画像隐私
 
-- 仅接受 PDF、DOCX，最大 5 MB。
-- 文本型 PDF 使用 `pdf-inspector`、DOCX 使用 Mammoth 在服务端本地提取文字；扫描件、图片型 PDF 或文字编码异常的 PDF 会提示改传 DOCX 或可复制文字的 PDF，不会自动调用 OCR。
-- 真实模式下文件先进入按用户隔离的私有 `resume-temp` 桶。
-- 简历原文只在服务端本地提取为文本后发送给硅基流动 DeepSeek；简历内容被视为不可信数据，不允许改变系统指令。
-- 原文件在成功或失败路径的 `finally` 中删除。
-- 结构化画像不包含姓名、电话、邮箱、照片、性别、年龄、民族和详细地址。
+- 画像只通过表单手动填写；`/api/resumes` 不再接受文件上传，旧版客户端请求会收到 `410`。
+- 保存草稿不会用于推荐，确认画像后才参与本人岗位匹配。
+- 既有画像数据保持可用；清除画像时仍会删除旧的解析任务记录和残留临时文件。
+- 画像不收集姓名、电话、邮箱、照片、性别、年龄、民族和详细地址。
 
 ## 质量检查
 

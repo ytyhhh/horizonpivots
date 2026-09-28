@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "简历画像",
-  description: "手动填写或安全解析简历，确认后用于岗位推荐。",
+  description: "手动填写并确认用于岗位推荐的求职画像。",
   robots: { index: false, follow: false },
 };
 
@@ -41,7 +41,7 @@ export default async function ProfilePage() {
           让岗位先理解你的经历
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted sm:text-base">
-          可直接手动填写并保存草稿，也可上传简历辅助填写。上传的原文件在解析后删除。
+          手动填写教育、经历、技能和求职偏好。可以先保存草稿，确认后再用于岗位推荐。
         </p>
       </div>
       <div className="mt-8">

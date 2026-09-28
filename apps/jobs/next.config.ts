@@ -7,8 +7,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ["@horizon/platform"],
   turbopack: { root: workspaceRoot },
-  // pdf-inspector is a native N-API module and must be loaded with Node.js require.
-  serverExternalPackages: ["@firecrawl/pdf-inspector"],
   async headers() {
     return [
       {
