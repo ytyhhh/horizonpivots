@@ -5,8 +5,8 @@ import { dpAdminClient } from "./supabase";
 
 const SHOWDOWN_DISPLAY_MS = 8_000;
 
-export async function advanceRoomIfDue(room: DbRoom) {
-  const stored = await gameStateForRoom(room.id);
+export async function advanceRoomIfDue(room: DbRoom, current?: Awaited<ReturnType<typeof gameStateForRoom>>) {
+  const stored = current ?? await gameStateForRoom(room.id);
   if (!stored) return false;
   let state = stored.state;
   if (state.status === "playing") return false;

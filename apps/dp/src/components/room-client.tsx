@@ -61,23 +61,32 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [actionPending, setActionPending] = useState(false);
   const [isPending, startTransition] = useTransition();
   const requestInFlight = useRef(false);
+  const refreshQueued = useRef(false);
   const latestState = useRef<RoomState | null>(null);
   const queuedVersion = useRef<number | null>(null);
 
   const refresh = useCallback(async (silent = false) => {
-    if (requestInFlight.current) return;
+    if (requestInFlight.current) {
+      refreshQueued.current = true;
+      return;
+    }
     requestInFlight.current = true;
     if (!silent) setConnection("connecting");
     try {
-      const next = await fetchJsonWithClerkRetry<RoomState>(`/api/rooms/${encodeURIComponent(roomId)}/state`, undefined, sessionTokenRef.current);
-      setState(next);
-      setError(null);
-      setSignInNeeded(false);
-      setConnection((current) => current === "live" ? current : "polling");
-    } catch (caught) {
-      setError(errorMessage(caught));
-      setSignInNeeded(caught instanceof ApiError && caught.status === 401);
-      setConnection("offline");
+      do {
+        refreshQueued.current = false;
+        try {
+          const next = await fetchJsonWithClerkRetry<RoomState>(`/api/rooms/${encodeURIComponent(roomId)}/state`, undefined, sessionTokenRef.current);
+          setState((current) => current && current.room.version > next.room.version ? current : next);
+          setError(null);
+          setSignInNeeded(false);
+          setConnection((current) => current === "live" ? current : "polling");
+        } catch (caught) {
+          setError(errorMessage(caught));
+          setSignInNeeded(caught instanceof ApiError && caught.status === 401);
+          setConnection("offline");
+        }
+      } while (refreshQueued.current);
     } finally {
       requestInFlight.current = false;
     }
@@ -113,7 +122,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
   useEffect(() => {
     if (!isLoaded) return;
-    const intervalMs = connection === "live" ? 60_000 : 15_000;
+    const intervalMs = connection === "live" ? 60_000 : connection === "offline" ? 5_000 : 30_000;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refresh(true);
     }, intervalMs);
@@ -121,19 +130,28 @@ export function RoomClient({ roomId }: RoomClientProps) {
   }, [connection, isLoaded, refresh]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !state?.viewer.isOwner || connection !== "live") return;
+    if (!isLoaded || !state?.room.status || connection === "offline") return;
+    const active = state.room.status === "playing" || (state.hand?.phase === "showdown" && !state.match.result);
+    const intervalMs = active ? 2_000 : connection === "live" ? 10_000 : 4_000;
+    let pulseInFlight = false;
     const interval = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible" || pulseInFlight) return;
+      pulseInFlight = true;
       void fetchJsonWithClerkRetry<{ version: number }>(
         `/api/rooms/${encodeURIComponent(roomId)}/heartbeat`,
         undefined,
         sessionTokenRef.current,
       ).then(({ version }) => {
         if (version !== latestState.current?.room.version) void refresh(true);
-      }).catch(() => setConnection("polling"));
-    }, 10_000);
+      }).catch(() => {
+        setConnection("polling");
+        void refresh(true);
+      }).finally(() => {
+        pulseInFlight = false;
+      });
+    }, intervalMs);
     return () => window.clearInterval(interval);
-  }, [connection, isLoaded, isSignedIn, refresh, roomId, state?.viewer.isOwner]);
+  }, [connection, isLoaded, refresh, roomId, state?.hand?.phase, state?.match.result, state?.room.status]);
 
   useEffect(() => {
     const onVisibilityChange = () => {

@@ -1,7 +1,7 @@
 import { apiError, json } from "@/lib/server/http";
 import { ensureParticipantInGame, isVersionConflict } from "@/lib/server/operations";
 import { advanceRoomIfDue } from "@/lib/server/advance";
-import { actorForRoom, roomByPublicId, roomStatePayload } from "@/lib/server/rooms";
+import { actorForRoom, gameStateForRoom, roomByPublicId, roomStatePayload } from "@/lib/server/rooms";
 import { ownerIdentity, ownsRoom } from "@/lib/server/owner";
 import { ownerRoomCode } from "@/lib/server/session";
 
@@ -10,6 +10,7 @@ export const preferredRegion = "sin1";
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const startedAt = performance.now();
   const { id } = await context.params;
   try {
     let room = await roomByPublicId(id);
@@ -18,6 +19,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
     }
     const actor = await actorForRoom(room);
+    const authenticatedAt = performance.now();
     if (!actor) {
       const [owner, sealedCode] = await Promise.all([ownerIdentity(), ownerRoomCode(room.public_id)]);
       const hasOwnerHint = sealedCode?.roomId === room.id;
@@ -34,22 +36,35 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       if (hasOwnerHint && !owner.userId) return apiError(401, "SIGN_IN_REQUIRED", "房主登录状态暂时不可用，请重新登录后返回牌桌。");
       return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
     }
-    if (actor.role !== "spectator") {
+    let stored = await gameStateForRoom(room.id);
+    if (!stored) return apiError(503, "STATE_UNAVAILABLE", "牌桌正在同步，请稍后重试。");
+    if (actor.role !== "spectator" && !stored.state.players.some((player) => player.id === actor.participantId)) {
       await ensureParticipantInGame(room.id, actor.participantId);
       room = await roomByPublicId(id);
       if (!room) return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
+      stored = await gameStateForRoom(room.id);
+      if (!stored) return apiError(503, "STATE_UNAVAILABLE", "牌桌正在同步，请稍后重试。");
     }
     try {
       const roomToAdvance = room;
-      if (await advanceRoomIfDue(roomToAdvance)) {
+      if (room.status !== "active" && await advanceRoomIfDue(roomToAdvance, stored)) {
         room = await roomByPublicId(id);
         if (!room) return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
+        stored = await gameStateForRoom(room.id);
+        if (!stored) return apiError(503, "STATE_UNAVAILABLE", "牌桌正在同步，请稍后重试。");
       }
     } catch (caught) {
       if (!isVersionConflict(caught)) throw caught;
     }
     if (!room) return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
-    return json(await roomStatePayload(room, actor));
+    if (!stored) return apiError(503, "STATE_UNAVAILABLE", "牌桌正在同步，请稍后重试。");
+    const payload = await roomStatePayload(room, actor, { stored });
+    const completedAt = performance.now();
+    return json(payload, {
+      headers: {
+        "Server-Timing": `auth;dur=${Math.round(authenticatedAt - startedAt)}, state;dur=${Math.round(completedAt - authenticatedAt)}`,
+      },
+    });
   } catch (caught) {
     const error = caught as { code?: unknown; message?: unknown };
     console.error(JSON.stringify({

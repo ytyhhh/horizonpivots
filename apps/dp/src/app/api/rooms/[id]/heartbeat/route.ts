@@ -1,7 +1,6 @@
 import { apiError, json } from "@/lib/server/http";
 import { advanceRoomIfDue } from "@/lib/server/advance";
 import { isVersionConflict } from "@/lib/server/operations";
-import { ownerIdentity, ownsRoom } from "@/lib/server/owner";
 import { actorForRoom, roomByPublicId } from "@/lib/server/rooms";
 
 export const runtime = "nodejs";
@@ -13,14 +12,10 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   try {
     let room = await roomByPublicId(id);
     if (!room) return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
-    const owner = await ownerIdentity();
-    if (!ownsRoom(owner.userId, room.owner_clerk_user_id)) {
-      return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
-    }
     const actor = await actorForRoom(room);
-    if (!actor?.isOwner) return apiError(503, "OWNER_SEAT_SYNCING", "房主座位正在同步。");
+    if (!actor) return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
     try {
-      if (room.status !== "active" && await advanceRoomIfDue(room)) {
+      if (actor.isOwner && room.status !== "active" && await advanceRoomIfDue(room)) {
         room = await roomByPublicId(id);
         if (!room) return apiError(404, "ROOM_NOT_FOUND", "牌桌不存在或会话已经失效。");
       }

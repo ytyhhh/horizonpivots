@@ -113,31 +113,29 @@ export async function actorForRoom(room: DbRoom): Promise<RoomActor | null> {
 }
 
 async function ownerActorForRoom(room: DbRoom): Promise<RoomActor | null> {
-  const { data, error } = await dpAdminClient()
+  const { data: seat, error } = await dpAdminClient()
     .from("dp_participants")
-    .update({ last_seen_at: new Date().toISOString() })
+    .select("id,last_seen_at")
     .eq("room_id", room.id)
     .eq("kind", "owner")
     .eq("clerk_user_id", room.owner_clerk_user_id)
     .not("status", "in", "(left,kicked)")
-    .select("id,role")
     .maybeSingle();
   if (error) throw error;
-  if (data) return { participantId: data.id as string, role: "owner", isOwner: true };
-
-  // A missed heartbeat is not proof that Clerk ownership or the seat vanished.
-  // Read the seat before denying the owner during an intermittent update race.
-  const { data: seat, error: seatError } = await dpAdminClient()
-    .from("dp_participants")
-    .select("id")
-    .eq("room_id", room.id)
-    .eq("kind", "owner")
-    .eq("clerk_user_id", room.owner_clerk_user_id)
-    .not("status", "in", "(left,kicked)")
-    .maybeSingle();
-  if (seatError) throw seatError;
   if (!seat) return null;
-  console.warn(JSON.stringify({ event: "dp_owner_heartbeat_missed" }));
+
+  // Version checks can run every few seconds. One touch per seven seconds is
+  // enough for the fifteen-second online threshold without writing each poll.
+  const cutoff = new Date(Date.now() - 7_000).toISOString();
+  if (Date.parse(seat.last_seen_at) < Date.now() - 7_000) {
+    const { error: touchError } = await dpAdminClient()
+      .from("dp_participants")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("id", seat.id)
+      .lt("last_seen_at", cutoff);
+    // A failed presence touch must not revoke a valid Clerk owner/seat.
+    if (touchError) console.warn(JSON.stringify({ event: "dp_owner_heartbeat_missed" }));
+  }
   return { participantId: seat.id as string, role: "owner", isOwner: true };
 }
 
